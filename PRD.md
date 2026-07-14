@@ -475,6 +475,7 @@ erDiagram
 
 - `CONTEXT.md` — 领域词汇表(Live/Mocked、三角色、Primary Role、核心领域名词)
 - `docs/adr/0001` — 匹配引擎选型
-- `docs/adr/0002` — 后端栈与 AWS 服务映射
+- `docs/adr/0002` — 后端栈与 AWS 服务映射(2026-07-14 amendment:App Runner → ECS Fargate)
+- `backend/README.md` — 后端脚手架说明:目录结构、本地/生产环境差异、环境变量表
 - `docs/adr/0003` — LinkedIn 双实现(已 Go:Live 凭证已获批,Simulated 仍用于自动化测试)
 - `privacy.html` — 已生成的隐私政策页面(S3 托管用)
