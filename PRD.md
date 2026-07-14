@@ -255,7 +255,11 @@ Flutter (iOS / Android)
         │  HTTPS / REST (JSON)
         ▼
 ┌─────────────────────────────────────────────┐
-│  AWS App Runner — 单容器 FastAPI (Python)    │
+│  Application Load Balancer(HTTPS 终止)       │
+└──────┬────────────────────────────────────────┘
+       ▼
+┌─────────────────────────────────────────────┐
+│  AWS ECS Fargate — 单容器 FastAPI (Python)   │
 │  ├─ Auth (GitHub OAuth · IdentityProvider)  │
 │  ├─ Trust Gateway & Trust Score Engine      │
 │  ├─ Growth Plaza Service (GitHub 轮询)       │
@@ -271,8 +275,9 @@ Flutter (iOS / Android)
  EventBridge (每日定时触发 Growth Plaza 轮询)
 ```
 
+- 计算:原选型为 App Runner,因 AWS 已停止向新账号开放 App Runner 访问权限,已于 2026-07-14 改为 **ECS Fargate**(单任务、desired count = 1,不做自动伸缩,匹配演示规模)+ **Application Load Balancer** 承担 HTTPS 终止与健康检查;容器镜像存放于 **ECR**(详见 ADR-0002 amendment)。
 - 认证:GitHub-OAuth 为根的自建 JWT;不使用 Cognito。
-- 密钥:全部走 AWS 环境配置(App Runner env / Secrets Manager),严禁入 git。
+- 密钥:全部走 AWS 环境配置(ECS 任务定义 env / Secrets Manager),严禁入 git。
 
 ### 5.2 REST API 一览(v1)
 
