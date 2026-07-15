@@ -4,7 +4,7 @@ FastAPI backend for Builder Plaza. See [`../PRD.md`](../PRD.md) for product scop
 
 ## Current state
 
-This is a scaffold, not a feature build. It boots, serves `GET /health`, and has one passing test. The full database schema (11 tables, from the PRD's ERD) exists as SQLAlchemy models and an Alembic migration, but no route uses the database yet. None of the F1–F10 modules in the PRD exist yet — auth and every route are still to be built.
+This is a scaffold, not a feature build. It boots, serves `GET /health` and `GET /health/db` (the latter actually queries the live RDS database), and has one passing test. The full database schema (11 tables, from the PRD's ERD) exists as SQLAlchemy models and an Alembic migration, and is confirmed wired up end to end. None of the F1–F10 modules in the PRD exist yet — auth and every real route are still to be built.
 
 ## Stack
 
@@ -22,7 +22,8 @@ backend/
     db/
       base.py            # SQLAlchemy engine, session, declarative Base
       models.py           # all 11 ORM models, mirrors PRD.md 6.1 ERD
-    main.py             # FastAPI app, GET /health
+      session.py          # get_db() -- FastAPI dependency, yields a Session per request
+    main.py             # FastAPI app, GET /health, GET /health/db
   alembic/
     env.py               # wired to app.core.config.settings, not alembic.ini
     versions/0001_initial_schema.py  # creates the pgvector extension + all tables
@@ -159,8 +160,9 @@ docker run --rm -p 8000:8000 --env-file ../.env builder-plaza-backend
 ## Deliberately deferred
 
 - **`sentence-transformers` / `scikit-learn`** (the SBERT + Gaussian-process matching engine from ADR-0001) are left out of `requirements.txt`. They pull in `torch` and meaningfully slow down every install; add them when F5 (matching engine) actually starts.
-- **No route uses the database yet** — the schema is live on RDS (see Database section above), but no FastAPI endpoint opens a session or queries anything yet.
+- **No feature routes exist yet** — `GET /health/db` proves the DB wiring (session dependency, real query, real result) works, but it isn't a real endpoint, just a probe. The first actual F1–F10 route is still to be built.
 - **No auth is wired up yet** — `pyjwt` is installed, `JWT_SECRET` is read, but there's no `IdentityProvider`, no GitHub OAuth flow, no JWT issuance.
+- **`GET /health/db` has no pytest test.** `test_health.py` deliberately needs zero setup — no `.env`, no database — so anyone can clone the repo and get a green test run immediately. Testing `/health/db` for real would mean either hitting the shared RDS instance from every test run (couples CI to a live shared resource, and to whoever's `.env` is present) or mocking the DB session (which the codebase's testing philosophy elsewhere avoids, since a mocked-DB test can pass while the real query is broken). Once CI is set up, this needs a real decision — most likely a disposable Postgres service container in GitHub Actions, not the shared dev RDS instance.
 
 ## What was verified when this scaffold was built
 
@@ -177,3 +179,4 @@ docker run --rm -p 8000:8000 --env-file ../.env builder-plaza-backend
 - The RDS instance (`builder-plaza-dev`, PostgreSQL, `ap-southeast-1`) was provisioned and `alembic upgrade head` was run against it **for real** — succeeded.
 - Confirmed independently of Alembic's own bookkeeping: queried `pg_tables` directly and got back all 11 application tables plus `alembic_version`; queried `pg_extension` and confirmed `vector` is installed.
 - `pytest` re-run after the DB work: still 1 passed, no regressions.
+- Added `app/db/session.py` (`get_db()` FastAPI dependency) and `GET /health/db`; started `uvicorn` for real and curled it against the live RDS instance — got back `{"status": "ok", "users_count": 0}` (0 is correct, no rows seeded yet). Confirms the dependency-injection wiring, not just the raw SQLAlchemy connection.
