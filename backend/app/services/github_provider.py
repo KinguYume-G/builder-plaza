@@ -155,7 +155,11 @@ class GitHubDev:
         top_languages, topics, stars = aggregate_repos(repos)
 
         return {
-            "login": login,
+            # GitHub logins are case-insensitive; store the CANONICAL casing
+            # GitHub returns, never the raw typed string. Otherwise the same
+            # person typing a different case creates a duplicate user row and
+            # their LinkedIn identity looks "already bound to another user".
+            "login": user.get("login") or login,
             "name": user.get("name"),
             "avatar_url": user.get("avatar_url"),
             "public_repos": user.get("public_repos") or 0,

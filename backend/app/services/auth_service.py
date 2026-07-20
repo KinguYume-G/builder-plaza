@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.security import create_access_token
@@ -7,8 +7,11 @@ from app.services import completeness
 
 
 def get_user_by_github_login(db: Session, github_login: str) -> User | None:
+    # Case-insensitive: GitHub logins are case-insensitive, so a differently
+    # cased login must resolve to the SAME user row (belt-and-suspenders on top
+    # of storing the canonical casing at connect time).
     return db.execute(
-        select(User).where(User.github_login == github_login)
+        select(User).where(func.lower(User.github_login) == github_login.lower())
     ).scalar_one_or_none()
 
 
