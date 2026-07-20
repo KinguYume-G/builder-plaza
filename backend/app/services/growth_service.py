@@ -46,7 +46,9 @@ def normalize_event(raw: dict, repo_full_name: str) -> dict:
     event_type = raw.get("type")
     if event_type == "PushEvent":
         commits = payload.get("commits") or []
-        detail = f"{len(commits)} commit(s)"
+        # The events API sometimes omits the commits list; "size" still counts.
+        count = len(commits) or payload.get("size") or 0
+        detail = f"{count} commit(s)"
         if commits:
             detail += f": {commits[-1].get('message', '')[:80]}"
     elif event_type == "PullRequestEvent":

@@ -308,6 +308,14 @@ class _ProfileTab extends StatelessWidget {
         const SizedBox(height: 16),
         if (auth.githubSummary != null) _GithubCard(summary: auth.githubSummary!),
         const SizedBox(height: 24),
+        // F10: verified activity + ownership evidence for this user.
+        BrutalButton(
+          label: 'Verified activity & evidence',
+          color: Palette.mustard,
+          textColor: Palette.ink,
+          onPressed: () => context.push('/users/${user.id}/evidence'),
+        ),
+        const SizedBox(height: 12),
         // Intent editor entry.
         BrutalButton(
           label: 'Edit intent',

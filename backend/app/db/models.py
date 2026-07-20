@@ -59,6 +59,9 @@ class User(Base):
     # completes once both sources are connected and a role has been picked.
     github_profile: Mapped[dict | None] = mapped_column(JSONB)
     linkedin_profile: Mapped[dict | None] = mapped_column(JSONB)
+    # F10 Verified Activity: cached normalised public events + fetch time.
+    github_events: Mapped[list | None] = mapped_column(JSONB)
+    github_events_fetched_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     onboarding_complete: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
     created_at: Mapped[datetime] = created_at_col()
     updated_at: Mapped[datetime] = updated_at_col()
