@@ -14,6 +14,7 @@ from app.routers import (
     intent,
     matches,
     me,
+    mocked,
     projects,
     requests,
     role_postings,
@@ -42,6 +43,7 @@ app.include_router(users.router)
 app.include_router(matches.router)
 app.include_router(requests.router)
 app.include_router(role_postings.router)
+app.include_router(mocked.router)
 
 
 # --- F4 scheduled growth refresh ------------------------------------------
