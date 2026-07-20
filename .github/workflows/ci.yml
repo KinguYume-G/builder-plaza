@@ -1,0 +1,45 @@
+# CI: every push runs the backend pytest suite and the Flutter analyze +
+# widget tests. The backend suite is deliberately PURE (no DB, no network, no
+# AWS) so CI needs no services or secrets; DB-touching behaviour is exercised
+# by the local integration_test flow instead (see integration_test/e2e_test.dart).
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements*.txt
+      - name: Install deps (CPU-only torch keeps the cache small)
+        run: |
+          pip install --index-url https://download.pytorch.org/whl/cpu torch
+          pip install -r requirements.txt -r requirements-dev.txt
+      - name: pytest
+        run: python -m pytest -q
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter analyze
+      - name: widget tests
+        run: flutter test
