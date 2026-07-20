@@ -31,6 +31,14 @@ class Settings(BaseSettings):
     linkedin_redirect_uri: str = "http://localhost:8000/auth/linkedin/callback"
     linkedin_mode: str = "simulated"  # "simulated" | "live" -- see ADR-0003
 
+    # F6 Trust Score component weights (renormalised over the components that
+    # are actually available for a given user, so a missing source -- e.g. no
+    # LinkedIn tenure on the live OIDC path -- never zeroes the score).
+    trust_weight_github: float = 0.45
+    trust_weight_linkedin: float = 0.20
+    trust_weight_peer: float = 0.25
+    trust_weight_payment: float = 0.10
+
     aws_region: str = "ap-southeast-1"
     s3_bucket_name: str = ""
     # Explicit creds for the builderplaza account that OWNS the bucket. We build

@@ -308,6 +308,14 @@ class _ProfileTab extends StatelessWidget {
         const SizedBox(height: 16),
         if (auth.githubSummary != null) _GithubCard(summary: auth.githubSummary!),
         const SizedBox(height: 24),
+        // F6: trust-score breakdown.
+        BrutalButton(
+          label: 'Trust score',
+          color: Palette.lime,
+          textColor: Palette.ink,
+          onPressed: () => context.push('/users/${user.id}/trust'),
+        ),
+        const SizedBox(height: 12),
         // F10: verified activity + ownership evidence for this user.
         BrutalButton(
           label: 'Verified activity & evidence',

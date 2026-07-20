@@ -8,6 +8,7 @@ import 'screens/onboarding/github_connect_screen.dart';
 import 'screens/onboarding/linkedin_step_screen.dart';
 import 'screens/onboarding/role_select_screen.dart';
 import 'screens/profile/evidence_screen.dart';
+import 'screens/profile/trust_screen.dart';
 import 'screens/projects/intent_editor_screen.dart';
 import 'screens/projects/project_detail_screen.dart';
 import 'screens/projects/project_form_screen.dart';
@@ -146,6 +147,11 @@ GoRouter createRouter(AuthProvider auth) {
         path: '/projects/:id',
         builder: (context, state) =>
             ProjectDetailScreen(projectId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/users/:id/trust',
+        builder: (context, state) =>
+            TrustScreen(userId: state.pathParameters['id']!),
       ),
       GoRoute(
         path: '/users/:id/evidence',
