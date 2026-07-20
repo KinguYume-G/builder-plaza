@@ -1,3 +1,4 @@
+import uuid
 from urllib.parse import urlencode
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -17,7 +18,7 @@ from app.schemas.trust import (
     LinkedInProfileOut,
 )
 from app.schemas.user import UserOut
-from app.services import completeness, github_oauth
+from app.services import completeness, github_oauth, linkedin_oauth
 from app.services.auth_service import issue_token, upsert_github_profile, upsert_user
 from app.services.github_provider import GitHubAPIError, GitHubDev, GitHubUserNotFound
 from app.services.identity_provider import get_identity_provider
@@ -107,6 +108,81 @@ def linkedin_bind(
     db.commit()
     db.refresh(current_user)
     return UserOut.from_user(current_user)
+
+
+@router.get("/linkedin/mode")
+def linkedin_mode() -> dict:
+    """Report which LinkedIn implementation is active (ADR-0003). Public: the
+    client uses it to decide between the simulated consent screen and the real
+    OIDC redirect."""
+    return {"mode": settings.linkedin_mode}
+
+
+@router.get("/linkedin/login")
+def linkedin_login(current_user: User = Depends(get_current_user)) -> dict:
+    """Kick off the real LinkedIn OIDC flow: return the authorize URL the client
+    should send the browser to. The signed state carries the current user's id so
+    the callback knows who to bind."""
+    state = linkedin_oauth.create_state_token(current_user.id)
+    return {"authorize_url": linkedin_oauth.build_authorize_url(state)}
+
+
+@router.get("/linkedin/callback")
+async def linkedin_callback(
+    code: str | None = Query(default=None),
+    state: str | None = Query(default=None),
+    error: str | None = Query(default=None),
+    error_description: str | None = Query(default=None),
+    db: Session = Depends(get_db),
+) -> RedirectResponse:
+    """LinkedIn redirects here after consent. Verify state, exchange the code,
+    fetch OIDC userinfo, and bind the identity to the user who started the flow.
+
+    All failure paths 302 back to the frontend with a ``linkedin=<status>`` flag
+    rather than surfacing an error page, so an interrupted flow can be retried
+    without leaving a half-baked account (F1)."""
+    error_redirect = RedirectResponse(
+        f"{settings.frontend_url}/#/onboarding/linkedin?linkedin=error", status_code=302
+    )
+
+    if error or not code or not state:
+        return error_redirect
+
+    user_id = linkedin_oauth.verify_state_token(state)
+    if user_id is None:
+        return error_redirect
+
+    try:
+        user_uuid = uuid.UUID(user_id)
+    except ValueError:
+        return error_redirect
+
+    user = db.get(User, user_uuid)
+    if user is None:
+        return error_redirect
+
+    try:
+        access_token = await linkedin_oauth.exchange_code_for_token(code)
+        claims = await linkedin_oauth.fetch_userinfo(access_token)
+    except linkedin_oauth.LinkedInOAuthError:
+        return error_redirect
+
+    sub = claims["sub"]
+    existing = db.query(User).filter(User.linkedin_sub == sub, User.id != user.id).first()
+    if existing is not None:
+        return RedirectResponse(
+            f"{settings.frontend_url}/#/onboarding/linkedin?linkedin=conflict",
+            status_code=302,
+        )
+
+    user.linkedin_sub = sub
+    user.linkedin_profile = linkedin_oauth.map_userinfo_to_profile(claims)
+    completeness.compute(user)
+    db.commit()
+
+    return RedirectResponse(
+        f"{settings.frontend_url}/#/onboarding/role?linkedin=ok", status_code=302
+    )
 
 
 @router.get("/github/login")

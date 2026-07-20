@@ -96,6 +96,41 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  /// GET /auth/linkedin/mode → which LinkedIn onboarding path the backend is
+  /// configured for: "live" (real OIDC redirect) or "simulated" (mock consent).
+  ///
+  /// Falls back to "simulated" on any failure so the safe mock path is used
+  /// rather than accidentally exposing a broken live flow.
+  Future<String> fetchLinkedInMode() async {
+    try {
+      final res =
+          await _api.dio.get<Map<String, dynamic>>('/auth/linkedin/mode');
+      final mode = res.data?['mode'] as String?;
+      return mode == 'live' ? 'live' : 'simulated';
+    } catch (e) {
+      _error = ApiClient.describeError(e);
+      return 'simulated';
+    }
+  }
+
+  /// GET /auth/linkedin/login (Bearer) → the real LinkedIn OIDC `authorize_url`
+  /// the browser should be redirected to. Returns null on failure and sets
+  /// [error].
+  Future<String?> linkedInLoginUrl() async {
+    _error = null;
+    _setLoading(true);
+    try {
+      final res =
+          await _api.dio.get<Map<String, dynamic>>('/auth/linkedin/login');
+      return res.data?['authorize_url'] as String?;
+    } catch (e) {
+      _error = ApiClient.describeError(e);
+      return null;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
   /// GET /auth/linkedin/profiles → the list of (simulated) profiles to choose
   /// from. Returns an empty list on failure and sets [error].
   Future<List<LinkedInProfile>> fetchLinkedInProfiles() async {

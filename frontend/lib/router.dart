@@ -5,7 +5,7 @@ import 'screens/connectivity_screen.dart';
 import 'screens/home/home_shell.dart';
 import 'screens/login_screen.dart';
 import 'screens/onboarding/github_connect_screen.dart';
-import 'screens/onboarding/linkedin_simulated_screen.dart';
+import 'screens/onboarding/linkedin_step_screen.dart';
 import 'screens/onboarding/role_select_screen.dart';
 import 'screens/projects/intent_editor_screen.dart';
 import 'screens/projects/project_detail_screen.dart';
@@ -34,6 +34,11 @@ import 'theme/palette.dart';
 /// screen. An onboarding-complete user landing on `/` is sent to `/home`; a new
 /// user to `/onboarding/github`. The old system-check screen now lives at `/dev`.
 GoRouter createRouter(AuthProvider auth) {
+  // One-shot guard: after returning from a real LinkedIn OIDC redirect we
+  // re-sync /me exactly once so the freshly-bound identity is reflected in the
+  // gating below (the redirect is a full-page reload, so this resets per load).
+  var linkedinResync = false;
+
   return GoRouter(
     initialLocation: '/',
     refreshListenable: auth,
@@ -42,6 +47,25 @@ GoRouter createRouter(AuthProvider auth) {
       if (!auth.bootstrapped) return null;
 
       final loc = state.matchedLocation;
+
+      // Returned from the LinkedIn LIVE redirect (`?linkedin=ok|error|conflict`).
+      final linkedinResult = state.uri.queryParameters['linkedin'];
+      if (linkedinResult != null) {
+        // Re-fetch /me once so a now-bound LinkedIn is picked up; loadMe()
+        // notifies listeners → this redirect re-runs and gating proceeds.
+        if (!linkedinResync) {
+          linkedinResync = true;
+          auth.loadMe();
+          return null;
+        }
+        // Surface an OIDC failure on the live LinkedIn screen (carrying the
+        // result param so it can render a retryable error).
+        if (linkedinResult == 'error' || linkedinResult == 'conflict') {
+          if (loc != '/onboarding/linkedin') {
+            return '/onboarding/linkedin?linkedin=$linkedinResult';
+          }
+        }
+      }
 
       // Dev tools stay reachable so debugging is easy during the demo.
       const devRoutes = {'/dev', '/login'};
@@ -93,7 +117,9 @@ GoRouter createRouter(AuthProvider auth) {
       ),
       GoRoute(
         path: '/onboarding/linkedin',
-        builder: (context, state) => const LinkedInSimulatedScreen(),
+        builder: (context, state) => LinkedInStepScreen(
+          result: state.uri.queryParameters['linkedin'],
+        ),
       ),
       GoRoute(
         path: '/onboarding/role',
