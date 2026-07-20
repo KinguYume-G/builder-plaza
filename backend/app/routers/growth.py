@@ -1,8 +1,11 @@
-"""F4 Growth Plaza: manual refresh + the plaza feed."""
+"""F4 Growth Plaza: manual refresh, the plaza feed, and the scheduled-refresh
+hook EventBridge calls daily in production."""
 
 import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
+
+from app.core.config import settings
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -67,6 +70,19 @@ def project_growth(
         .all()
     )
     return [_post_out(post) for post in posts]
+
+
+@router.post("/internal/growth-refresh-all")
+def growth_refresh_all(
+    x_internal_token: str = Header(default=""),
+    db: Session = Depends(get_db),
+) -> dict:
+    """Scheduled path (EventBridge daily, ADR-0002). Guarded by a shared
+    secret header, not user JWTs; disabled when no token is configured."""
+    if not settings.internal_task_token or x_internal_token != settings.internal_task_token:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+    written = growth_service.refresh_all_active(db)
+    return {"refreshed_projects": written}
 
 
 @router.get("/plaza", response_model=list[PlazaItemOut])

@@ -1,6 +1,9 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../api/api_client.dart';
 import '../models/project_card.dart';
@@ -32,6 +35,13 @@ class ProjectsProvider extends ChangeNotifier {
   bool _loadingDiscovery = false;
   bool _uploading = false;
   String? _error;
+
+  /// NFR offline cache: true when [discovery] was served from the last
+  /// successful response because the network is unreachable.
+  bool _discoveryFromCache = false;
+  bool get discoveryFromCache => _discoveryFromCache;
+
+  static const _discoveryCacheKey = 'bp_cache_discovery';
 
   List<ProjectCard> get mine => _mine;
   List<ProjectCard> get discovery => _discovery;
@@ -75,8 +85,21 @@ class ProjectsProvider extends ChangeNotifier {
         },
       );
       _discovery = _parseList(res.data);
+      _discoveryFromCache = false;
+      // NFR: persist the unfiltered feed for offline read-only viewing.
+      if ((stage == null || stage.isEmpty) && (q == null || q.isEmpty)) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(_discoveryCacheKey, jsonEncode(res.data));
+      }
     } catch (e) {
       _error = ApiClient.describeError(e);
+      // NFR offline fallback: serve the cached feed read-only.
+      final prefs = await SharedPreferences.getInstance();
+      final cached = prefs.getString(_discoveryCacheKey);
+      if (cached != null) {
+        _discovery = _parseList(jsonDecode(cached) as List<dynamic>);
+        _discoveryFromCache = true;
+      }
     } finally {
       _loadingDiscovery = false;
       notifyListeners();

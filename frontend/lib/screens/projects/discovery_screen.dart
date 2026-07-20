@@ -117,6 +117,13 @@ class _PlazaBodyState extends State<PlazaBody> {
             ],
           ),
           const SizedBox(height: 14),
+          // NFR: make it visible when the feed is served from the offline cache.
+          if ((_growthMode && growth.feedFromCache) ||
+              (!_growthMode && provider.discoveryFromCache)) ...[
+            const BrutalBadge(
+                label: 'OFFLINE · SHOWING CACHED FEED', color: Palette.ink200),
+            const SizedBox(height: 12),
+          ],
           if (_growthMode) ...[
             // Role filter for the growth feed.
             SingleChildScrollView(

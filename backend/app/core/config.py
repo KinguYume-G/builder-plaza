@@ -31,6 +31,10 @@ class Settings(BaseSettings):
     linkedin_redirect_uri: str = "http://localhost:8000/auth/linkedin/callback"
     linkedin_mode: str = "simulated"  # "simulated" | "live" -- see ADR-0003
 
+    # Shared secret for infrastructure-triggered endpoints (EventBridge daily
+    # growth refresh). Empty disables those endpoints entirely.
+    internal_task_token: str = ""
+
     # F6 Trust Score component weights (renormalised over the components that
     # are actually available for a given user, so a missing source -- e.g. no
     # LinkedIn tenure on the live OIDC path -- never zeroes the score).

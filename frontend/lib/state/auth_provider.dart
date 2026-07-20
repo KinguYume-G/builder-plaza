@@ -1,6 +1,9 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../api/api_client.dart';
 import '../models/github_summary.dart';
@@ -190,16 +193,26 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  /// GET /me (Bearer) → set [currentUser].
+  /// GET /me (Bearer) → set [currentUser]. NFR: the last successful profile
+  /// is cached so the app still shows YOUR profile read-only when offline.
   Future<bool> loadMe() async {
     _error = null;
     _setLoading(true);
     try {
       final res = await _api.dio.get<Map<String, dynamic>>('/me');
       _currentUser = User.fromJson(res.data!);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('bp_cache_me', jsonEncode(res.data));
       return true;
     } catch (e) {
       _error = ApiClient.describeError(e);
+      final prefs = await SharedPreferences.getInstance();
+      final cached = prefs.getString('bp_cache_me');
+      if (cached != null && _currentUser == null) {
+        _currentUser =
+            User.fromJson(jsonDecode(cached) as Map<String, dynamic>);
+        return true; // offline read-only session
+      }
       return false;
     } finally {
       _setLoading(false);

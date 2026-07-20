@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../api/api_client.dart';
 import '../models/growth_post.dart';
@@ -14,6 +17,12 @@ class GrowthProvider extends ChangeNotifier {
   bool _loadingFeed = false;
   bool _refreshing = false;
   String? _error;
+
+  /// NFR offline cache flag (see ProjectsProvider.discoveryFromCache).
+  bool _feedFromCache = false;
+  bool get feedFromCache => _feedFromCache;
+
+  static const _feedCacheKey = 'bp_cache_plaza_growth';
 
   List<PlazaItem> get feed => _feed;
   bool get loadingFeed => _loadingFeed;
@@ -37,8 +46,22 @@ class GrowthProvider extends ChangeNotifier {
           .whereType<Map<String, dynamic>>()
           .map(PlazaItem.fromJson)
           .toList();
+      _feedFromCache = false;
+      if ((role == null || role.isEmpty) && (stage == null || stage.isEmpty)) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(_feedCacheKey, jsonEncode(res.data));
+      }
     } catch (e) {
       _error = ApiClient.describeError(e);
+      final prefs = await SharedPreferences.getInstance();
+      final cached = prefs.getString(_feedCacheKey);
+      if (cached != null) {
+        _feed = (jsonDecode(cached) as List<dynamic>)
+            .whereType<Map<String, dynamic>>()
+            .map(PlazaItem.fromJson)
+            .toList();
+        _feedFromCache = true;
+      }
     } finally {
       _loadingFeed = false;
       notifyListeners();
