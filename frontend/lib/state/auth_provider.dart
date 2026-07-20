@@ -1,4 +1,6 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../api/api_client.dart';
 import '../models/github_summary.dart';
@@ -213,6 +215,53 @@ class AuthProvider extends ChangeNotifier {
       notifyListeners();
     } catch (_) {
       // Non-fatal — the home screen degrades gracefully without a summary.
+    }
+  }
+
+  /// F2: upload a profile avatar via the presigned-S3 three-step flow
+  /// (mirrors the F3 screenshot upload). Refreshes [currentUser] on success.
+  Future<bool> uploadAvatar(XFile file) async {
+    _error = null;
+    try {
+      final bytes = await file.readAsBytes();
+      final name = file.name.toLowerCase();
+      final contentType = file.mimeType ??
+          (name.endsWith('.png')
+              ? 'image/png'
+              : name.endsWith('.webp')
+                  ? 'image/webp'
+                  : 'image/jpeg');
+
+      final signRes = await _api.dio.post<Map<String, dynamic>>(
+        '/me/avatar-upload-url',
+        data: {'content_type': contentType},
+      );
+      final uploadUrl = signRes.data!['upload_url'] as String;
+      final key = signRes.data!['key'] as String;
+
+      // Bare Dio: the presigned URL is the credential; our Bearer token must
+      // NOT be sent to object storage.
+      await Dio().put<void>(
+        uploadUrl,
+        data: Stream.fromIterable([bytes]),
+        options: Options(
+          headers: {
+            'Content-Type': contentType,
+            Headers.contentLengthHeader: bytes.length,
+          },
+          contentType: contentType,
+        ),
+      );
+
+      final res = await _api.dio
+          .post<Map<String, dynamic>>('/me/avatar', data: {'key': key});
+      _currentUser = User.fromJson(res.data!);
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _error = ApiClient.describeError(e);
+      notifyListeners();
+      return false;
     }
   }
 

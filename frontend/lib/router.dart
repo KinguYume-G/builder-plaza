@@ -9,6 +9,7 @@ import 'screens/onboarding/linkedin_step_screen.dart';
 import 'screens/market/market_screen.dart';
 import 'screens/market/posting_detail_screen.dart';
 import 'screens/market/posting_form_screen.dart';
+import 'screens/mocked/mocked_suite_screen.dart';
 import 'screens/onboarding/role_select_screen.dart';
 import 'screens/profile/evidence_screen.dart';
 import 'screens/profile/trust_screen.dart';
@@ -152,6 +153,10 @@ GoRouter createRouter(AuthProvider auth) {
         path: '/projects/:id',
         builder: (context, state) =>
             ProjectDetailScreen(projectId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/mocked',
+        builder: (context, state) => const MockedSuiteScreen(),
       ),
       GoRoute(
         path: '/market',

@@ -22,11 +22,19 @@ class UserOut(BaseModel):
     # surface themselves; excluded so UserOut stays a clean client contract.
     github_profile: dict | None = Field(default=None, exclude=True)
     linkedin_profile: dict | None = Field(default=None, exclude=True)
+    avatar_s3_key: str | None = Field(default=None, exclude=True)
 
     @computed_field  # type: ignore[prop-decorator]
     @property
     def avatar_url(self) -> str | None:
-        # F1: reuse the real GitHub avatar until Phase 3 presigns avatar_s3_key.
+        # F2: an uploaded avatar (presigned from S3) beats the GitHub one.
+        if self.avatar_s3_key:
+            from app.services import s3_service
+
+            try:
+                return s3_service.presigned_get(self.avatar_s3_key)
+            except Exception:
+                pass  # fall through to the GitHub avatar
         if self.github_profile:
             return self.github_profile.get("avatar_url")
         return None

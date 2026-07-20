@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/github_summary.dart';
@@ -261,6 +262,23 @@ class _ProfileTab extends StatelessWidget {
     await context.read<AuthProvider>().confirmRole(role);
   }
 
+  /// F2: pick an image and upload it as the profile avatar.
+  Future<void> _uploadAvatar(BuildContext context) async {
+    final picker = ImagePicker();
+    final file = await picker.pickImage(
+        source: ImageSource.gallery, maxWidth: 1024, maxHeight: 1024);
+    if (file == null || !context.mounted) return;
+    final auth = context.read<AuthProvider>();
+    final ok = await auth.uploadAvatar(file);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+          content: Text(ok
+              ? 'Avatar updated.'
+              : auth.error ?? 'Avatar upload failed.')),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
@@ -277,7 +295,29 @@ class _ProfileTab extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _Avatar(url: user.avatarUrl),
+                  GestureDetector(
+                    onTap: () => _uploadAvatar(context),
+                    child: Stack(
+                      children: [
+                        _Avatar(url: user.avatarUrl),
+                        Positioned(
+                          right: -2,
+                          bottom: -2,
+                          child: Container(
+                            padding: const EdgeInsets.all(3),
+                            decoration: BoxDecoration(
+                              color: Palette.cobalt,
+                              border: Border.all(
+                                  color: Palette.ink, width: 1.5),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: const Icon(Icons.photo_camera,
+                                size: 12, color: Palette.paper),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                   const SizedBox(width: 14),
                   Expanded(
                     child: Column(
@@ -351,6 +391,13 @@ class _ProfileTab extends StatelessWidget {
           label: 'Edit intent',
           color: Palette.plum,
           onPressed: () => context.push('/intent'),
+        ),
+        const SizedBox(height: 12),
+        // F9: the clearly-labelled simulated capability suite.
+        BrutalButton(
+          label: 'Simulated suite (demo)',
+          color: Palette.tomato,
+          onPressed: () => context.push('/mocked'),
         ),
         const SizedBox(height: 24),
         Text('SWITCH ROLE',
@@ -549,6 +596,8 @@ class _CompletenessCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
+          // F2: the two gate thresholds (40% = can browse/apply, 70% = full
+          // posting rights) are drawn as ink ticks on the bar.
           Container(
             height: 22,
             decoration: BoxDecoration(
@@ -557,16 +606,57 @@ class _CompletenessCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(6),
             ),
             clipBehavior: Clip.antiAlias,
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: FractionallySizedBox(
-                widthFactor: clamped / 100,
-                child: Container(color: accent),
-              ),
+            child: Stack(
+              children: [
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: FractionallySizedBox(
+                    widthFactor: clamped / 100,
+                    child: Container(color: accent),
+                  ),
+                ),
+                for (final gate in const [40, 70])
+                  Align(
+                    alignment:
+                        Alignment(gate / 50 - 1, 0), // 0-100% → -1..1
+                    child: Container(width: 2.5, color: Palette.ink),
+                  ),
+              ],
             ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              _GateLabel(label: 'GATE 40 · APPLY', met: clamped >= 40),
+              const SizedBox(width: 10),
+              _GateLabel(label: 'GATE 70 · POST', met: clamped >= 70),
+            ],
           ),
         ],
       ),
+    );
+  }
+}
+
+class _GateLabel extends StatelessWidget {
+  const _GateLabel({required this.label, required this.met});
+
+  final String label;
+  final bool met;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(met ? Icons.check_box : Icons.check_box_outline_blank,
+            size: 14, color: met ? Palette.ink : Palette.ink400),
+        const SizedBox(width: 4),
+        Text(label,
+            style: AppType.mono(
+                size: 9,
+                weight: FontWeight.w700,
+                color: met ? Palette.ink : Palette.ink400)),
+      ],
     );
   }
 }
