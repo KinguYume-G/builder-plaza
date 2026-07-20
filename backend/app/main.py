@@ -1,19 +1,22 @@
-from fastapi import Depends, FastAPI
-from sqlalchemy import text
-from sqlalchemy.orm import Session
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
-from app.core.config import settings
-from app.db.session import get_db
+from app.routers import auth, health, intent, me, projects
 
 app = FastAPI(title="Builder Plaza API", version="0.1.0")
 
+# Flutter web runs on a different origin and authenticates with Bearer tokens
+# (not cookies), so a wildcard origin with credentials disabled is enough.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+    allow_credentials=False,
+)
 
-@app.get("/health")
-def health() -> dict[str, str]:
-    return {"status": "ok", "environment": settings.environment}
-
-
-@app.get("/health/db")
-def health_db(db: Session = Depends(get_db)) -> dict[str, str | int]:
-    user_count = db.execute(text("SELECT COUNT(*) FROM users")).scalar_one()
-    return {"status": "ok", "users_count": user_count}
+app.include_router(health.router)
+app.include_router(auth.router)
+app.include_router(me.router)
+app.include_router(projects.router)
+app.include_router(intent.router)
