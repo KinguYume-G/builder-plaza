@@ -3,9 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
+import '../../models/growth_post.dart';
 import '../../models/project_card.dart';
 import '../../models/repo_activity.dart';
 import '../../state/auth_provider.dart';
+import '../../state/growth_provider.dart';
 import '../../state/projects_provider.dart';
 import '../../theme/palette.dart';
 import '../../theme/typography.dart';
@@ -13,6 +15,7 @@ import '../../widgets/brutal_badge.dart';
 import '../../widgets/brutal_button.dart';
 import '../../widgets/brutal_card.dart';
 import '../../widgets/brutal_scaffold.dart';
+import '../../widgets/growth_post_card.dart';
 import '../login_screen.dart' show kRoleColors;
 
 /// Full project detail: hero, owner, intent, needs, demo link, team division,
@@ -29,6 +32,7 @@ class ProjectDetailScreen extends StatefulWidget {
 class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   ProjectCard? _card;
   List<RepoActivity>? _activity;
+  List<GrowthPost>? _growth;
   bool _loading = true;
   bool _archiving = false;
   String? _error;
@@ -59,12 +63,44 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
       } else {
         setState(() => _activity = const []);
       }
+      await _loadGrowth();
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _loading = false;
         _error = 'Could not load this project.';
       });
+    }
+  }
+
+  /// Best-effort load of the F4 growth history; failures leave the section
+  /// showing its empty state rather than erroring the whole screen.
+  Future<void> _loadGrowth() async {
+    try {
+      final growth = await context
+          .read<GrowthProvider>()
+          .fetchProjectGrowth(widget.projectId);
+      if (mounted) setState(() => _growth = growth);
+    } catch (_) {
+      if (mounted) setState(() => _growth = const []);
+    }
+  }
+
+  Future<void> _refreshGrowth() async {
+    final provider = context.read<GrowthProvider>();
+    final post = await provider.refreshGrowth(widget.projectId);
+    if (!mounted) return;
+    if (post != null) {
+      setState(() => _growth = [post, ...?_growth]);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('New growth update posted.')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text(provider.error ??
+                'No new GitHub activity since the last update.')),
+      );
     }
   }
 
@@ -331,6 +367,40 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
             title: 'LINKED REPOS',
             child: _RepoActivityList(
                 repos: card.repoFullNames, activity: _activity),
+          ),
+        ],
+        if (card.repoFullNames.isNotEmpty || (_growth?.isNotEmpty ?? false)) ...[
+          const SizedBox(height: 16),
+          _Section(
+            title: 'GROWTH',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (isOwner && card.repoFullNames.isNotEmpty) ...[
+                  BrutalButton(
+                    label: 'Refresh growth',
+                    color: Palette.lime,
+                    textColor: Palette.ink,
+                    loading: context.watch<GrowthProvider>().refreshing,
+                    onPressed: context.watch<GrowthProvider>().refreshing
+                        ? null
+                        : _refreshGrowth,
+                  ),
+                  const SizedBox(height: 12),
+                ],
+                if (_growth == null)
+                  Text('Loading growth updates…',
+                      style: AppType.mono(size: 12, color: Palette.ink400))
+                else if (_growth!.isEmpty)
+                  Text('No growth updates yet.',
+                      style: AppType.mono(size: 12, color: Palette.ink400))
+                else
+                  for (final post in _growth!) ...[
+                    GrowthPostCard(post: post),
+                    const SizedBox(height: 10),
+                  ],
+              ],
+            ),
           ),
         ],
         if (isOwner) ...[

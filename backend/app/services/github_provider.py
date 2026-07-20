@@ -12,6 +12,8 @@ from typing import Protocol
 
 import httpx
 
+from app.core.config import settings
+
 GITHUB_API_BASE = "https://api.github.com"
 
 # Public API without a token is rate-limited (60 req/hr/IP); keep timeouts short
@@ -21,6 +23,14 @@ _HEADERS = {
     "Accept": "application/vnd.github+json",
     "User-Agent": "builder-plaza-trust-gateway",
 }
+
+
+def github_headers() -> dict:
+    """Request headers, with the optional server PAT (5000 req/hr vs 60)."""
+    headers = dict(_HEADERS)
+    if settings.github_token:
+        headers["Authorization"] = f"Bearer {settings.github_token}"
+    return headers
 
 # Activity window and event types that count toward recent_activity_count.
 _ACTIVITY_WINDOW = timedelta(days=90)
@@ -110,7 +120,7 @@ def fetch_repo_activity(full_name: str) -> dict:
     "error": ...}`` instead of raising, so one bad repo never sinks the request.
     """
     try:
-        with httpx.Client(timeout=_TIMEOUT, headers=_HEADERS) as client:
+        with httpx.Client(timeout=_TIMEOUT, headers=github_headers()) as client:
             response = client.get(f"{GITHUB_API_BASE}/repos/{full_name}")
     except httpx.HTTPError as exc:
         return {"repo": full_name, "error": f"request failed: {exc}"}
@@ -137,7 +147,7 @@ class GitHubDev:
     """Fetches real public GitHub data by username via the public REST API."""
 
     def fetch(self, login: str) -> dict:
-        with httpx.Client(timeout=_TIMEOUT, headers=_HEADERS) as client:
+        with httpx.Client(timeout=_TIMEOUT, headers=github_headers()) as client:
             user = self._get_user(client, login)
             repos = self._get_repos(client, login)
             events = self._get_events(client, login)

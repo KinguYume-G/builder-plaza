@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import auth, health, intent, me, projects
+from app.routers import auth, growth, health, intent, me, projects
 
 app = FastAPI(title="Builder Plaza API", version="0.1.0")
 
@@ -20,3 +20,4 @@ app.include_router(auth.router)
 app.include_router(me.router)
 app.include_router(projects.router)
 app.include_router(intent.router)
+app.include_router(growth.router)

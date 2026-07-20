@@ -14,6 +14,11 @@ class Settings(BaseSettings):
 
     jwt_secret: str = "change-me"
 
+    # Optional PAT for server-side GitHub reads. Unauthenticated the public API
+    # allows 60 req/hr/IP, which F1/F4/F5/F6/F10 exhaust quickly; a token lifts
+    # this to 5000/hr. Public data only -- the token grants no extra scopes.
+    github_token: str = ""
+
     github_client_id: str = ""
     github_client_secret: str = ""
     github_redirect_uri: str = "http://localhost:8000/auth/github/callback"
