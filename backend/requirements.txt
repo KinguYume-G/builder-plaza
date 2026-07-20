@@ -9,3 +9,5 @@ pyjwt>=2.10
 httpx>=0.28
 boto3>=1.35
 python-multipart>=0.0.20
+sentence-transformers>=5.0
+scikit-learn>=1.5

@@ -14,6 +14,7 @@ import '../../widgets/brutal_card.dart';
 import '../../widgets/brutal_scaffold.dart';
 import '../../widgets/project_list_card.dart';
 import '../login_screen.dart' show kRoleColors;
+import '../matches/matches_screen.dart';
 import '../projects/discovery_screen.dart';
 
 /// The one shared Home shell for every role (PRD: shared pages implemented
@@ -71,8 +72,13 @@ class _HomeShellState extends State<HomeShell> {
       );
     }
 
-    final titles = [_roleTitle(user.primaryRole), 'The Plaza', 'Profile'];
-    final barColors = [roleColor, Palette.lime, roleColor];
+    final titles = [
+      _roleTitle(user.primaryRole),
+      'The Plaza',
+      'Matches',
+      'Profile',
+    ];
+    final barColors = [roleColor, Palette.lime, Palette.cobalt, roleColor];
 
     return BrutalScaffold(
       title: titles[index],
@@ -86,6 +92,7 @@ class _HomeShellState extends State<HomeShell> {
               children: [
                 _HomeTab(user: user, roleColor: roleColor),
                 const PlazaBody(),
+                const MatchesBody(),
                 _ProfileTab(user: user, roleColor: roleColor),
               ],
             ),
@@ -392,6 +399,7 @@ class _BottomNav extends StatelessWidget {
     const items = [
       (Icons.home_filled, 'Home'),
       (Icons.grid_view, 'Plaza'),
+      (Icons.join_inner, 'Match'),
       (Icons.person, 'Profile'),
     ];
     return Container(
