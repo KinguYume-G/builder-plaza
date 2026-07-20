@@ -2,3 +2,14 @@
 .env.*
 !.env.example
 .DS_Store
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# AWS credentials — never commit
+rootkey.csv
+*rootkey*.csv
+credentials.csv
+.aws/
