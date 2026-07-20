@@ -54,6 +54,12 @@ class User(Base):
     trust_score: Mapped[float] = mapped_column(Numeric(5, 2), nullable=False, server_default="0")
     reverify_flag: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
     avatar_s3_key: Mapped[str | None] = mapped_column(String)
+    # F1 Dual-Source Trust Gateway: cached GitHub summary (GithubSummary shape)
+    # and the bound LinkedIn identity/profile (OIDC-shaped claims). onboarding
+    # completes once both sources are connected and a role has been picked.
+    github_profile: Mapped[dict | None] = mapped_column(JSONB)
+    linkedin_profile: Mapped[dict | None] = mapped_column(JSONB)
+    onboarding_complete: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
     created_at: Mapped[datetime] = created_at_col()
     updated_at: Mapped[datetime] = updated_at_col()
 
