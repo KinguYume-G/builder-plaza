@@ -9,6 +9,7 @@ import '../../theme/typography.dart';
 import '../../widgets/brutal_badge.dart';
 import '../../widgets/brutal_button.dart';
 import '../../widgets/brutal_card.dart';
+import '../../widgets/request_form_sheet.dart';
 import '../login_screen.dart' show kRoleColors;
 
 /// F5: the match round. Every card carries the Match Reason; exploratory
@@ -264,6 +265,19 @@ class _CredibilitySheet extends StatelessWidget {
                   ),
               ],
               const SizedBox(height: 16),
+              BrutalButton(
+                label: 'Request collaboration',
+                color: Palette.plum,
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  showRequestFormSheet(
+                    context,
+                    toUserId: candidate.id,
+                    toUserLogin: candidate.githubLogin,
+                  );
+                },
+              ),
+              const SizedBox(height: 10),
               BrutalButton(
                 label: 'Trust score',
                 color: Palette.lime,

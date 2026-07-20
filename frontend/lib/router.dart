@@ -9,6 +9,8 @@ import 'screens/onboarding/linkedin_step_screen.dart';
 import 'screens/onboarding/role_select_screen.dart';
 import 'screens/profile/evidence_screen.dart';
 import 'screens/profile/trust_screen.dart';
+import 'screens/requests/conversation_screen.dart';
+import 'screens/requests/requests_screen.dart';
 import 'screens/projects/intent_editor_screen.dart';
 import 'screens/projects/project_detail_screen.dart';
 import 'screens/projects/project_form_screen.dart';
@@ -147,6 +149,17 @@ GoRouter createRouter(AuthProvider auth) {
         path: '/projects/:id',
         builder: (context, state) =>
             ProjectDetailScreen(projectId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/requests',
+        builder: (context, state) => const RequestsScreen(),
+      ),
+      GoRoute(
+        path: '/conversations/:id',
+        builder: (context, state) => ConversationScreen(
+          conversationId: state.pathParameters['id']!,
+          counterpartLogin: state.extra as String?,
+        ),
       ),
       GoRoute(
         path: '/users/:id/trust',

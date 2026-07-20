@@ -179,6 +179,13 @@ class _HomeTab extends StatelessWidget {
               ],
             ),
           ),
+          const SizedBox(height: 16),
+          // F7: requests inbox + conversations.
+          BrutalButton(
+            label: 'Requests & messages',
+            color: Palette.plum,
+            onPressed: () => context.push('/requests'),
+          ),
           const SizedBox(height: 24),
           Row(
             children: [

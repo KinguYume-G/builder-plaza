@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import 'router.dart';
 import 'state/auth_provider.dart';
+import 'state/collab_provider.dart';
 import 'state/growth_provider.dart';
 import 'state/matches_provider.dart';
 import 'state/projects_provider.dart';
@@ -47,6 +48,7 @@ class _BuilderPlazaAppState extends State<BuilderPlazaApp> {
         ChangeNotifierProvider(create: (_) => ProjectsProvider()),
         ChangeNotifierProvider(create: (_) => GrowthProvider()),
         ChangeNotifierProvider(create: (_) => MatchesProvider()),
+        ChangeNotifierProvider(create: (_) => CollabProvider()),
       ],
       child: MaterialApp.router(
         title: 'Builder Plaza',
