@@ -6,6 +6,9 @@ import 'screens/home/home_shell.dart';
 import 'screens/login_screen.dart';
 import 'screens/onboarding/github_connect_screen.dart';
 import 'screens/onboarding/linkedin_step_screen.dart';
+import 'screens/market/market_screen.dart';
+import 'screens/market/posting_detail_screen.dart';
+import 'screens/market/posting_form_screen.dart';
 import 'screens/onboarding/role_select_screen.dart';
 import 'screens/profile/evidence_screen.dart';
 import 'screens/profile/trust_screen.dart';
@@ -149,6 +152,19 @@ GoRouter createRouter(AuthProvider auth) {
         path: '/projects/:id',
         builder: (context, state) =>
             ProjectDetailScreen(projectId: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/market',
+        builder: (context, state) => const MarketScreen(),
+      ),
+      GoRoute(
+        path: '/market/new',
+        builder: (context, state) => const PostingFormScreen(),
+      ),
+      GoRoute(
+        path: '/market/:id',
+        builder: (context, state) =>
+            PostingDetailScreen(postingId: state.pathParameters['id']!),
       ),
       GoRoute(
         path: '/requests',

@@ -186,6 +186,14 @@ class _HomeTab extends StatelessWidget {
             color: Palette.plum,
             onPressed: () => context.push('/requests'),
           ),
+          const SizedBox(height: 12),
+          // F8: the request market.
+          BrutalButton(
+            label: 'Request market',
+            color: Palette.mustard,
+            textColor: Palette.ink,
+            onPressed: () => context.push('/market'),
+          ),
           const SizedBox(height: 24),
           Row(
             children: [
