@@ -28,8 +28,21 @@
 	<true/>
 	<key>NSAppTransportSecurity</key>
 	<dict>
-		<key>NSAllowsArbitraryLoads</key>
-		<true/>
+		<!-- Scoped to just the demo ALB (HTTP only, no ACM cert on the
+		     student AWS account; see docs/DEPLOYMENT.md and REPORT.md
+		     "Known limitations"). ATS stays fully enforced for every other
+		     host the app talks to (GitHub avatars, S3 presigned uploads,
+		     LinkedIn OIDC, etc.) instead of disabling it app-wide. -->
+		<key>NSExceptionDomains</key>
+		<dict>
+			<key>builder-plaza-alb-270417897.ap-southeast-1.elb.amazonaws.com</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+				<key>NSIncludesSubdomains</key>
+				<false/>
+			</dict>
+		</dict>
 	</dict>
 	<key>UIApplicationSceneManifest</key>
 	<dict>

@@ -10,6 +10,8 @@ watermarked "Simulated for demo" in the UI, per ADR-0003.
 
 from typing import Protocol
 
+from fastapi import HTTPException, status
+
 from app.core.config import settings
 
 # OIDC-shaped preset profiles + our tenure_years extension. `sub` is the stable
@@ -86,9 +88,26 @@ class LinkedInSimulated:
 
 
 def get_identity_provider() -> IdentityProvider:
-    """Select the LinkedIn implementation by settings.linkedin_mode."""
+    """Select the LinkedIn implementation by settings.linkedin_mode.
+
+    This `IdentityProvider` abstraction only ever had a simulated
+    implementation (ADR-0003's LinkedInSimulated). The real OIDC flow was
+    built as its own separate path instead -- see `linkedin_oauth.py` and the
+    dedicated `/auth/linkedin/login` + `/auth/linkedin/callback` routes in
+    `routers/auth.py` -- because it needs a browser redirect + callback
+    round trip that doesn't fit this list/get-profile shape. The Flutter
+    client already routes correctly by mode (`linkedin_step_screen.dart`
+    picks the live-redirect screen or the simulated-consent screen), so
+    `/auth/linkedin/profiles` and `/auth/linkedin/bind` -- which only make
+    sense for the simulated, in-app consent flow -- are simulated-mode-only
+    by design, not an unfinished live implementation.
+    """
     if settings.linkedin_mode == "live":
-        # TODO(ADR-0003): wire LinkedInLive (real OIDC) once the go decision's
-        # production path is implemented. Simulated stays mandatory for tests.
-        raise NotImplementedError("LinkedInLive is not implemented yet")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                "This endpoint is simulated-mode only. LINKEDIN_MODE=live uses "
+                "/auth/linkedin/login and /auth/linkedin/callback instead."
+            ),
+        )
     return LinkedInSimulated()

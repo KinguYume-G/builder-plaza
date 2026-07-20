@@ -1,0 +1,530 @@
+{
+  "info": {
+    "name": "Builder Plaza API",
+    "description": "Testing evidence collection for dev doc §17.4 / assignment 'Automated System Testing'. Run 'Auth > Dev login' first (local/test backend only, environment=local) to populate {{token}}; most other requests inherit it via collection-level Bearer auth. Set {{other_user_id}} manually to a second user's id (e.g. copy owner_id from a GET /projects response, or dev-login a second github_login and copy user.id) before running the Matches/Trust/Requests folders -- there is no generic user-search endpoint. GitHub/LinkedIn OAuth *callback* requests are included for API-contract completeness only; they need a real code/state from the provider and will 400 if run directly.\n\nVerified 2026-07-20 with `newman run` against a local backend (fresh Postgres+pgvector, migrated, no seed data): 57/58 requests behaved exactly as documented (the one failure is the LinkedIn-callback redirect target, localhost:3000, not running in that environment -- expected). Two things to know when running the whole collection with a single {{token}}: (1) 'accept'/'decline' on a request you sent yourself correctly 403 -- that's the ownership rule working, not a bug; run those as the recipient's token to see 200. (2) POST /users/{id}/reviews needs {{request_id}} to point at an ACCEPTED request, so run the Requests & Conversations folder (as both parties) before Trust & Evidence if you want that one to succeed rather than 422 on an empty id.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8000" },
+    { "key": "token", "value": "" },
+    { "key": "project_id", "value": "" },
+    { "key": "posting_id", "value": "" },
+    { "key": "request_id", "value": "" },
+    { "key": "conversation_id", "value": "" },
+    { "key": "match_id", "value": "" },
+    { "key": "other_user_id", "value": "" },
+    { "key": "internal_task_token", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "GET /health",
+          "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{base_url}}/health" }
+        },
+        {
+          "name": "GET /health/db",
+          "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{base_url}}/health/db" }
+        }
+      ]
+    },
+    {
+      "name": "Auth (F1 Dual-Source Trust Gateway)",
+      "item": [
+        {
+          "name": "Dev login (local/test only)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const body = pm.response.json();",
+                  "  pm.collectionVariables.set('token', body.access_token);",
+                  "  pm.test('token captured', () => pm.expect(body.access_token).to.be.a('string'));",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"github_login\": \"demo-builder\",\n  \"primary_role\": \"builder\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}/auth/dev-login"
+          }
+        },
+        {
+          "name": "GitHub connect (real public GitHub data)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  pm.collectionVariables.set('token', pm.response.json().access_token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"github_login\": \"torvalds\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}/auth/github/connect"
+          }
+        },
+        {
+          "name": "GET /auth/linkedin/mode",
+          "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{base_url}}/auth/linkedin/mode" }
+        },
+        {
+          "name": "GET /auth/linkedin/profiles (simulated only)",
+          "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{base_url}}/auth/linkedin/profiles" }
+        },
+        {
+          "name": "POST /auth/linkedin/bind (simulated only)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"profile_id\": \"li_ryan\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}/auth/linkedin/bind"
+          }
+        },
+        {
+          "name": "GET /auth/linkedin/login (live OIDC authorize URL)",
+          "request": { "method": "GET", "url": "{{base_url}}/auth/linkedin/login" }
+        },
+        {
+          "name": "GET /auth/github/login (browser redirect)",
+          "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{base_url}}/auth/github/login" }
+        },
+        {
+          "name": "GET /auth/github/callback (reference only -- needs real code/state)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": "{{base_url}}/auth/github/callback?code=REPLACE_ME&state=REPLACE_ME"
+          }
+        },
+        {
+          "name": "GET /auth/linkedin/callback (reference only -- needs real code/state)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": "{{base_url}}/auth/linkedin/callback?code=REPLACE_ME&state=REPLACE_ME"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Me & Profile (F2)",
+      "item": [
+        { "name": "GET /me", "request": { "method": "GET", "url": "{{base_url}}/me" } },
+        {
+          "name": "POST /me/role",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"primary_role\": \"builder\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}/me/role"
+          }
+        },
+        {
+          "name": "POST /me/avatar-upload-url",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content_type\": \"image/png\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}/me/avatar-upload-url"
+          }
+        },
+        { "name": "GET /me/github-summary", "request": { "method": "GET", "url": "{{base_url}}/me/github-summary" } },
+        {
+          "name": "DELETE /me/avatar",
+          "request": { "method": "DELETE", "url": "{{base_url}}/me/avatar" }
+        },
+        { "name": "GET /me/intent", "request": { "method": "GET", "url": "{{base_url}}/me/intent" } },
+        {
+          "name": "PUT /me/intent",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"intent_type\": \"open_to_chat\",\n  \"note\": \"Happy to chat about Flutter + FastAPI projects.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}/me/intent"
+          }
+        },
+        {
+          "name": "DELETE /me/intent",
+          "request": { "method": "DELETE", "url": "{{base_url}}/me/intent" }
+        }
+      ]
+    },
+    {
+      "name": "Projects (F3 Project Card)",
+      "item": [
+        {
+          "name": "POST /projects",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('project_id', pm.response.json().id);",
+                  "}",
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"VectorDB Proxy\",\n  \"stage\": \"building\",\n  \"needs\": \"Looking for a Rust contributor for the async cache layer\",\n  \"demo_url\": \"https://example.com/demo\",\n  \"team_division\": \"One founder, one backend contributor wanted\",\n  \"repo_full_names\": [\"octocat/Hello-World\"]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}/projects"
+          }
+        },
+        {
+          "name": "GET /projects (discovery feed)",
+          "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{base_url}}/projects?limit=20&offset=0" }
+        },
+        { "name": "GET /projects/mine", "request": { "method": "GET", "url": "{{base_url}}/projects/mine" } },
+        {
+          "name": "GET /projects/{{project_id}}",
+          "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{base_url}}/projects/{{project_id}}" }
+        },
+        {
+          "name": "PATCH /projects/{{project_id}}",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"VectorDB Proxy v2\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}/projects/{{project_id}}"
+          }
+        },
+        {
+          "name": "GET /projects/{{project_id}}/repo-activity",
+          "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{base_url}}/projects/{{project_id}}/repo-activity" }
+        },
+        {
+          "name": "POST /projects/{{project_id}}/screenshots-upload-url",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content_type\": \"image/png\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}/projects/{{project_id}}/screenshots-upload-url"
+          }
+        },
+        {
+          "name": "DELETE /projects/{{project_id}} (archive, run last)",
+          "request": { "method": "DELETE", "url": "{{base_url}}/projects/{{project_id}}" }
+        }
+      ]
+    },
+    {
+      "name": "Growth Plaza (F4)",
+      "item": [
+        {
+          "name": "GET /plaza",
+          "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{base_url}}/plaza?limit=30&offset=0" }
+        },
+        {
+          "name": "GET /projects/{{project_id}}/growth",
+          "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{base_url}}/projects/{{project_id}}/growth" }
+        },
+        {
+          "name": "POST /projects/{{project_id}}/refresh-growth",
+          "request": { "method": "POST", "url": "{{base_url}}/projects/{{project_id}}/refresh-growth" }
+        },
+        {
+          "name": "POST /internal/growth-refresh-all (shared-secret, not JWT)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "X-Internal-Token", "value": "{{internal_task_token}}" }],
+            "url": "{{base_url}}/internal/growth-refresh-all"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Matching (F5)",
+      "item": [
+        {
+          "name": "GET /matches",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const matches = pm.response.json();",
+                  "  if (matches.length > 0) pm.collectionVariables.set('match_id', matches[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "GET", "url": "{{base_url}}/matches?refresh=true" }
+        },
+        {
+          "name": "POST /matches/{{match_id}}/dismiss",
+          "request": { "method": "POST", "url": "{{base_url}}/matches/{{match_id}}/dismiss" }
+        },
+        {
+          "name": "GET /users/{{other_user_id}}/credibility-summary",
+          "request": { "method": "GET", "url": "{{base_url}}/users/{{other_user_id}}/credibility-summary" }
+        }
+      ]
+    },
+    {
+      "name": "Trust & Evidence (F6 / F10)",
+      "item": [
+        {
+          "name": "GET /users/{{other_user_id}}/trust-score",
+          "request": { "method": "GET", "url": "{{base_url}}/users/{{other_user_id}}/trust-score" }
+        },
+        {
+          "name": "GET /users/{{other_user_id}}/activity-timeline",
+          "request": { "method": "GET", "url": "{{base_url}}/users/{{other_user_id}}/activity-timeline" }
+        },
+        {
+          "name": "GET /users/{{other_user_id}}/ownership-evidence",
+          "request": { "method": "GET", "url": "{{base_url}}/users/{{other_user_id}}/ownership-evidence" }
+        },
+        {
+          "name": "GET /users/{{other_user_id}}/reviews",
+          "request": { "method": "GET", "url": "{{base_url}}/users/{{other_user_id}}/reviews" }
+        },
+        {
+          "name": "POST /users/{{other_user_id}}/reviews (needs an accepted request between the two users)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"collab_request_id\": \"{{request_id}}\",\n  \"stars\": 5,\n  \"tags\": [\"responsive\", \"clear-communicator\"]\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}/users/{{other_user_id}}/reviews"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Requests & Conversations (F7 Controlled DM)",
+      "item": [
+        {
+          "name": "POST /requests",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('request_id', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"to_user\": \"{{other_user_id}}\",\n  \"intent_type\": \"collaboration\",\n  \"pitch\": \"I'd love to help build the Rust caching layer for this project.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}/requests"
+          }
+        },
+        { "name": "GET /requests/inbox", "request": { "method": "GET", "url": "{{base_url}}/requests/inbox" } },
+        { "name": "GET /requests/sent", "request": { "method": "GET", "url": "{{base_url}}/requests/sent" } },
+        {
+          "name": "POST /requests/{{request_id}}/accept (run as the recipient's token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  pm.collectionVariables.set('conversation_id', pm.response.json().conversation_id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": { "method": "POST", "url": "{{base_url}}/requests/{{request_id}}/accept" }
+        },
+        {
+          "name": "POST /requests/{{request_id}}/decline (alternative to accept)",
+          "request": { "method": "POST", "url": "{{base_url}}/requests/{{request_id}}/decline" }
+        },
+        {
+          "name": "POST /requests/{{request_id}}/withdraw (sender only, alternative)",
+          "request": { "method": "POST", "url": "{{base_url}}/requests/{{request_id}}/withdraw" }
+        },
+        { "name": "GET /conversations", "request": { "method": "GET", "url": "{{base_url}}/conversations" } },
+        {
+          "name": "GET /conversations/{{conversation_id}}/messages",
+          "request": { "method": "GET", "url": "{{base_url}}/conversations/{{conversation_id}}/messages" }
+        },
+        {
+          "name": "POST /conversations/{{conversation_id}}/messages",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"body\": \"Great, let's start with the API contract.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}/conversations/{{conversation_id}}/messages"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Request Market (F8)",
+      "item": [
+        {
+          "name": "POST /role-postings (team_role)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  pm.collectionVariables.set('posting_id', pm.response.json().id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"posting_type\": \"team_role\",\n  \"role_desc\": \"Looking for a Flutter developer to join the founding team.\",\n  \"skills\": [\"flutter\", \"dart\"],\n  \"stage\": \"building\",\n  \"tech_stack\": \"Flutter + FastAPI\",\n  \"commitment\": \"10hrs/week\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}/role-postings"
+          }
+        },
+        {
+          "name": "POST /role-postings (maintainer, needs {{project_id}} with a linked repo)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"posting_type\": \"maintainer\",\n  \"role_desc\": \"Need help triaging issues on this repo.\",\n  \"project_id\": \"{{project_id}}\",\n  \"access_tier\": \"limited\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}/role-postings"
+          }
+        },
+        {
+          "name": "GET /role-postings",
+          "request": { "method": "GET", "url": "{{base_url}}/role-postings?posting_type=team_role" }
+        },
+        {
+          "name": "GET /role-postings/{{posting_id}}",
+          "request": { "method": "GET", "url": "{{base_url}}/role-postings/{{posting_id}}" }
+        },
+        {
+          "name": "PATCH /role-postings/{{posting_id}}",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"commitment\": \"15hrs/week\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}/role-postings/{{posting_id}}"
+          }
+        },
+        {
+          "name": "DELETE /role-postings/{{posting_id}} (close, run last)",
+          "request": { "method": "DELETE", "url": "{{base_url}}/role-postings/{{posting_id}}" }
+        }
+      ]
+    },
+    {
+      "name": "Mocked Suite (F9 -- SIMULATED, labelled academic demo)",
+      "item": [
+        {
+          "name": "GET /founder/shortlist/ai",
+          "request": { "method": "GET", "url": "{{base_url}}/founder/shortlist/ai" }
+        },
+        {
+          "name": "GET /sandbox/demo-log",
+          "request": { "method": "GET", "url": "{{base_url}}/sandbox/demo-log" }
+        },
+        {
+          "name": "GET /me/agent-access",
+          "request": { "method": "GET", "url": "{{base_url}}/me/agent-access" }
+        },
+        {
+          "name": "POST /pow-challenge",
+          "request": { "method": "POST", "url": "{{base_url}}/pow-challenge" }
+        }
+      ]
+    }
+  ]
+}

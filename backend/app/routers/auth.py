@@ -19,7 +19,12 @@ from app.schemas.trust import (
 )
 from app.schemas.user import UserOut
 from app.services import completeness, github_oauth, linkedin_oauth
-from app.services.auth_service import issue_token, upsert_github_profile, upsert_user
+from app.services.auth_service import (
+    get_user_by_github_login,
+    issue_token,
+    upsert_github_profile,
+    upsert_user,
+)
 from app.services.github_provider import GitHubAPIError, GitHubDev, GitHubUserNotFound
 from app.services.identity_provider import get_identity_provider
 
@@ -48,7 +53,18 @@ def dev_login(payload: DevLoginIn, db: Session = Depends(get_db)) -> TokenOut:
 @router.post("/github/connect", response_model=GithubConnectOut)
 def github_connect(payload: GithubConnectIn, db: Session = Depends(get_db)) -> GithubConnectOut:
     """Connect GitHub by public username (F1): fetch REAL public data, cache the
-    summary onto the user, and mint our JWT."""
+    summary onto the user, and mint our JWT.
+
+    Security note: naming a public github_login proves nothing about who is
+    calling this endpoint (GitHub logins are shown throughout the app on
+    project cards, matches, etc.), so this can never be allowed to re-issue a
+    token for an account that has already finished onboarding -- that would
+    be a full account takeover for anyone who knows a user's public GitHub
+    username. Accounts still mid-onboarding hold no private data yet, so this
+    endpoint stays open for the legitimate "resume onboarding" case (e.g.
+    after a reinstall). A fully set-up account must come back through real
+    GitHub OAuth (/auth/github/login) or dev-login instead.
+    """
     try:
         summary = GitHubDev().fetch(payload.github_login)
     except GitHubUserNotFound:
@@ -60,6 +76,17 @@ def github_connect(payload: GithubConnectIn, db: Session = Depends(get_db)) -> G
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail=f"GitHub API error: {exc}",
+        )
+
+    existing = get_user_by_github_login(db, summary["login"])
+    if existing is not None and existing.onboarding_complete:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                "This account already exists and is fully set up. Naming a "
+                "public GitHub username here doesn't prove ownership -- sign "
+                "in with GitHub OAuth instead."
+            ),
         )
 
     user = upsert_github_profile(db, github_login=summary["login"], github_profile=summary)

@@ -278,6 +278,14 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
+  /// Test-only: seed [currentUser] directly so widget tests can reach the
+  /// authenticated UI without a real network round trip.
+  @visibleForTesting
+  void debugSetUser(User user) {
+    _currentUser = user;
+    notifyListeners();
+  }
+
   /// Clear token + user + cached summary.
   Future<void> logout() async {
     await _api.clearToken();

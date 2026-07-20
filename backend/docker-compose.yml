@@ -1,0 +1,21 @@
+# Local-only Postgres+pgvector for running the API integration tests
+# (backend/tests/test_integration_*.py). Never used for production — the
+# live app runs against RDS (see docs/DEPLOYMENT.md). Throwaway data.
+#
+# Usage:
+#   docker compose up -d
+#   DATABASE_URL=postgresql+psycopg://postgres:postgres@localhost:55432/builder_plaza_test \
+#     python -m pytest -v
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: builder_plaza_test
+    ports:
+      - "55432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10

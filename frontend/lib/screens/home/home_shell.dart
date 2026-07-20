@@ -19,13 +19,31 @@ import '../matches/matches_screen.dart';
 import '../projects/discovery_screen.dart';
 
 /// The one shared Home shell for every role (PRD: shared pages implemented
-/// once). A brutalist bottom nav switches between three tabs:
+/// once). Below [kWideLayoutBreakpoint] a brutalist bottom nav switches
+/// between four tabs; at or above it, the same four destinations move into
+/// a side rail so the tab strip stops eating vertical space on tablet/
+/// desktop/web:
 ///   0 · Home     — the user's own projects + collaboration intent
 ///   1 · Plaza    — the public discovery feed
-///   2 · Profile  — identity summary, GitHub activity, switch role, logout
+///   2 · Match    — F5 matching results
+///   3 · Profile  — identity summary, GitHub activity, switch role, logout
 ///
 /// Builders land on Home; Collaborators / Founders lead with the Plaza (they're
 /// here to discover projects, not post them).
+
+/// Shared nav destinations for both the narrow bottom nav and the wide side
+/// rail, so the two layouts can never drift out of sync with each other.
+const _kNavItems = [
+  (Icons.home_filled, 'Home'),
+  (Icons.grid_view, 'Plaza'),
+  (Icons.join_inner, 'Match'),
+  (Icons.person, 'Profile'),
+];
+
+/// Viewport width at which [HomeShell] switches from a bottom nav (phones)
+/// to a side rail (tablet/desktop/web) — dev doc §15's mobile/wide split.
+const double kWideLayoutBreakpoint = 700;
+
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key, this.initialIndex});
 
@@ -85,25 +103,47 @@ class _HomeShellState extends State<HomeShell> {
       title: titles[index],
       titleBarColor: barColors[index],
       actions: const [_RoleDot()],
-      body: Column(
-        children: [
-          Expanded(
-            child: IndexedStack(
-              index: index,
-              children: [
-                _HomeTab(user: user, roleColor: roleColor),
-                const PlazaBody(),
-                const MatchesBody(),
-                _ProfileTab(user: user, roleColor: roleColor),
-              ],
-            ),
-          ),
-          _BottomNav(
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final tabs = IndexedStack(
             index: index,
-            accent: roleColor,
-            onTap: (i) => setState(() => _index = i),
-          ),
-        ],
+            children: [
+              _HomeTab(user: user, roleColor: roleColor),
+              const PlazaBody(),
+              const MatchesBody(),
+              _ProfileTab(user: user, roleColor: roleColor),
+            ],
+          );
+
+          if (constraints.maxWidth >= kWideLayoutBreakpoint) {
+            // Tablet/desktop/web: a side rail replaces the bottom nav so
+            // the tab strip doesn't eat vertical space on a wide viewport.
+            return Row(
+              key: const Key('home_shell_wide_layout'),
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _SideRail(
+                  index: index,
+                  accent: roleColor,
+                  onTap: (i) => setState(() => _index = i),
+                ),
+                Expanded(child: tabs),
+              ],
+            );
+          }
+
+          return Column(
+            key: const Key('home_shell_narrow_layout'),
+            children: [
+              Expanded(child: tabs),
+              _BottomNav(
+                index: index,
+                accent: roleColor,
+                onTap: (i) => setState(() => _index = i),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -458,12 +498,6 @@ class _BottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const items = [
-      (Icons.home_filled, 'Home'),
-      (Icons.grid_view, 'Plaza'),
-      (Icons.join_inner, 'Match'),
-      (Icons.person, 'Profile'),
-    ];
     return Container(
       decoration: const BoxDecoration(
         color: Palette.cream100,
@@ -474,11 +508,61 @@ class _BottomNav extends StatelessWidget {
         top: false,
         child: Row(
           children: [
-            for (var i = 0; i < items.length; i++)
+            for (var i = 0; i < _kNavItems.length; i++)
               Expanded(
                 child: _NavItem(
-                  icon: items[i].$1,
-                  label: items[i].$2,
+                  icon: _kNavItems[i].$1,
+                  label: _kNavItems[i].$2,
+                  selected: index == i,
+                  accent: accent,
+                  onTap: () => onTap(i),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Side rail (tablet / desktop / web — width >= kWideLayoutBreakpoint)
+// -----------------------------------------------------------------------------
+
+/// The wide-viewport counterpart to [_BottomNav]. Same destinations, same
+/// [_NavItem] visual language, just stacked vertically down a fixed-width
+/// rail instead of spread across the bottom of the screen.
+class _SideRail extends StatelessWidget {
+  const _SideRail({
+    required this.index,
+    required this.accent,
+    required this.onTap,
+  });
+
+  final int index;
+  final Color accent;
+  final ValueChanged<int> onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 96,
+      decoration: const BoxDecoration(
+        color: Palette.cream100,
+        border: Border(right: BorderSide(color: Palette.ink, width: 2)),
+      ),
+      child: SafeArea(
+        right: false,
+        child: Column(
+          children: [
+            const SizedBox(height: 20),
+            for (var i = 0; i < _kNavItems.length; i++)
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                child: _NavItem(
+                  icon: _kNavItems[i].$1,
+                  label: _kNavItems[i].$2,
                   selected: index == i,
                   accent: accent,
                   onTap: () => onTap(i),

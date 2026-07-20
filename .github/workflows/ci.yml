@@ -1,7 +1,8 @@
-# CI: every push runs the backend pytest suite and the Flutter analyze +
-# widget tests. The backend suite is deliberately PURE (no DB, no network, no
-# AWS) so CI needs no services or secrets; DB-touching behaviour is exercised
-# by the local integration_test flow instead (see integration_test/e2e_test.dart).
+# CI: every push runs the backend pytest suite (pure unit tests plus the
+# test_integration_*.py layer, which needs the `db` service below) and the
+# Flutter analyze + widget tests. No AWS credentials are used or required --
+# S3/GitHub/Bedrock calls touched by integration tests are exercised only
+# where they degrade gracefully without network access.
 name: ci
 
 on:
@@ -14,6 +15,21 @@ jobs:
     defaults:
       run:
         working-directory: backend
+    services:
+      db:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: builder_plaza_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/builder_plaza_test
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

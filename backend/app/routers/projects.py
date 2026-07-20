@@ -207,6 +207,11 @@ def add_screenshot(
     db: Session = Depends(get_db),
 ) -> ProjectCardOut:
     card = _get_owned_card(db, project_id, current_user)
+    if not payload.key.startswith(f"screenshots/{card.id}/"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not a screenshot key for this project",
+        )
     if not s3_service.object_exists(payload.key):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
