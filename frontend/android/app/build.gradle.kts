@@ -43,6 +43,9 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        // Lets integration_test/e2e_test.dart be packaged as an instrumented
+        // test APK for real-device clouds -- see src/androidTest/.
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     signingConfigs {
@@ -65,4 +68,14 @@ android {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    // Instrumentation-only; nothing here ships in the release APK. Pinned to
+    // these versions because the integration_test plugin resolves androidx.test
+    // and junit strictly, and Gradle's consistent resolution rejects anything
+    // newer on the androidTest classpath.
+    androidTestImplementation("androidx.test:runner:1.2.0")
+    androidTestImplementation("androidx.test:rules:1.2.0")
+    androidTestImplementation("junit:junit:4.12")
 }

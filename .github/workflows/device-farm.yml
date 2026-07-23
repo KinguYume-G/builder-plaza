@@ -1,0 +1,61 @@
+# Real-device testing on AWS Device Farm: the E2E flows as an Android
+# instrumented test, plus Device Farm's built-in fuzz crawler, on actual
+# Samsung hardware.
+#
+# Deliberately NOT on push. Device Farm bills per device-minute once the
+# one-off free trial is used up, and the emulator tier in ci.yml already gates
+# every commit; this is the "does it work on real hardware" check you run
+# before a demo or a hand-in.
+#
+# Setup, once:
+#   1. Subscribe the AWS account to Device Farm (open the Device Farm console
+#      in us-west-2 once -- the API returns SubscriptionRequiredException
+#      until that happens).
+#   2. Create an IAM user with AWSDeviceFarmFullAccess -- NOT the root key --
+#      and add its credentials as the repo secrets below.
+name: device-farm
+
+on:
+  workflow_dispatch:
+    inputs:
+      api_base_url:
+        description: Public backend the devices should talk to
+        default: http://builder-plaza-alb-270417897.ap-southeast-1.elb.amazonaws.com
+      max_devices:
+        description: Device pool size (bills per device-minute, per device)
+        default: "2"
+
+jobs:
+  device-farm:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.DEVICEFARM_AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.DEVICEFARM_AWS_SECRET_ACCESS_KEY }}
+      API_BASE_URL: ${{ inputs.api_base_url }}
+      DF_MAX_DEVICES: ${{ inputs.max_devices }}
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+
+      - name: Fail early if the credentials are missing
+        run: |
+          if [ -z "$AWS_ACCESS_KEY_ID" ]; then
+            echo "::error::Set DEVICEFARM_AWS_ACCESS_KEY_ID / \
+          DEVICEFARM_AWS_SECRET_ACCESS_KEY (see the workflow header)."
+            exit 1
+          fi
+
+      - name: Build, upload and run on Device Farm
+        run: bash ../.github/scripts/device-farm.sh
