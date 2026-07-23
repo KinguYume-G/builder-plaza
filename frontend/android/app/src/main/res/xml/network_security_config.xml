@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Scoped to just the demo ALB (HTTP only, no ACM cert on the student AWS
+     account; see docs/DEPLOYMENT.md and REPORT.md "Known limitations").
+     Cleartext stays blocked for every other host the app talks to (GitHub
+     avatars, S3 presigned uploads, LinkedIn OIDC, etc.) instead of setting
+     android:usesCleartextTraffic="true" app-wide. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">builder-plaza-alb-270417897.ap-southeast-1.elb.amazonaws.com</domain>
+    </domain-config>
+</network-security-config>

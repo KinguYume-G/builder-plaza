@@ -55,6 +55,24 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   integration_test:
     sdk: flutter
+  flutter_launcher_icons: ^0.14.4
+
+# Launcher icons / web favicon, generated from the Builder Plaza logo with
+# `dart run flutter_launcher_icons`. The generated files are committed, so a
+# plain `flutter build` (and CI) needs no extra step.
+flutter_launcher_icons:
+  image_path: "assets/icon/app_icon.png"
+  android: true
+  # Adaptive icon: transparent logo on the brand navy, so the launcher can mask
+  # it to whatever shape the device uses (Samsung One UI rounds it heavily).
+  adaptive_icon_background: "#1B2E4F"
+  adaptive_icon_foreground: "assets/icon/app_icon_foreground.png"
+  ios: true
+  remove_alpha_ios: true
+  web:
+    generate: true
+    background_color: "#FFFFFF"
+    theme_color: "#1B2E4F"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
