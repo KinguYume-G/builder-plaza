@@ -41,6 +41,15 @@ jobs:
           --health-retries 10
     env:
       DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/builder_plaza_test
+      # Placeholders, not credentials: the OAuth tests assert that the
+      # authorize URL and /auth/*/login redirect carry whatever client_id is
+      # configured, and both degrade to 503 when it is blank. Locally these
+      # come from .env; CI has no .env, which is why those three tests were
+      # failing. No network call is made with them.
+      GITHUB_CLIENT_ID: ci-placeholder-github-client-id
+      GITHUB_CLIENT_SECRET: ci-placeholder-github-client-secret
+      LINKEDIN_CLIENT_ID: ci-placeholder-linkedin-client-id
+      LINKEDIN_CLIENT_SECRET: ci-placeholder-linkedin-client-secret
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
