@@ -153,6 +153,17 @@ jobs:
       - run: flutter pub get
         working-directory: frontend
 
+      # The AVD wants ~7.4 GB for its userdata partition and the runner is down
+      # to ~5.6 GB free by this point (CPU torch + the Flutter SDK + the system
+      # image), which makes the emulator die with "Not enough space to create
+      # userdata partition" before adb ever sees it. Neither toolchain below is
+      # used by this repo and together they are the bulk of the runner image.
+      - name: Reclaim disk for the emulator image
+        run: |
+          sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/share/boost \
+            /usr/local/lib/node_modules /opt/hostedtoolcache/CodeQL
+          df -h /
+
       # Without this the emulator falls back to software rendering and times out.
       - name: Enable KVM
         run: |
@@ -169,6 +180,11 @@ jobs:
           arch: x86_64
           profile: pixel_6
           disable-animations: true
+          # Belt and braces with the disk reclaim above: cap userdata instead
+          # of accepting the image's multi-gigabyte default.
+          emulator-options: >-
+            -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+            -no-snapshot -camera-back none -partition-size 2048
           working-directory: frontend
           script: bash ../.github/scripts/android-e2e.sh
 
