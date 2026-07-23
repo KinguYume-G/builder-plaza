@@ -183,12 +183,19 @@ injected as task environment variables.
   and CI-runnable without AWS credentials. Full third-party-inclusive
   end-to-end coverage lives in `integration_test/e2e_test.dart` instead,
   now run automatically on an emulator by the `android-e2e` CI job.
-- **Device testing is one emulated configuration, not a real-device grid.**
-  The `android-e2e` job covers a single API-34 x86_64 Pixel 6 image, so it
-  catches crashes and regressions but not OEM-specific behaviour (Samsung
-  One UI, older API levels, low-memory hardware). A real-device matrix would
-  mean AWS Device Farm or Firebase Test Lab, i.e. cloud credentials and
-  per-device-minute cost that the student account does not budget for.
+- **On real hardware, only the crawl runs; the scripted E2E flows do not.**
+  The `device-farm` workflow runs the app on real Samsung devices in AWS
+  Device Farm, where the built-in fuzz crawl passes. The instrumentation run
+  carrying `e2e_test.dart` is refused at scheduling with "Signing error with
+  app or tests ... at our end" and a zeroed counter set. It is isolated to
+  the test package — the fuzz run re-signs and installs the same app upload
+  fine — and survives forcing a v1/JAR signature, compressed native
+  libraries, and a single-dex test APK, each verified against real devices.
+  The test APK also meets every requirement in Device Farm's upload
+  validation docs. Device Farm's documented way out is `skipAppResign`,
+  offered only on private device slots, which the student account does not
+  budget for. Scripted E2E coverage therefore comes from the emulator tier
+  in `ci.yml`; the real-device tier contributes crash/ANR coverage only.
 - **Adaptive layout is a single breakpoint, not three.** `HomeShell` switches
   between a bottom nav and a side rail at 700px; it does not add a distinct
   desktop layout (e.g. a secondary detail panel) above 1100px. The side

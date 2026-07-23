@@ -49,19 +49,6 @@ android {
     }
 
     signingConfigs {
-        // AWS Device Farm re-signs every uploaded APK with its own
-        // certificate, and that step fails ("Signing error with app or
-        // tests") unless a v1/JAR signature is present -- which AGP omits by
-        // default at this minSdk. The debug config signs both the app and the
-        // androidTest APK, so forcing v1+v2 here is what makes the
-        // instrumentation run schedulable at all.
-        getByName("debug") {
-            enableV1Signing = true
-            enableV2Signing = true
-            enableV3Signing = false
-            enableV4Signing = false
-        }
-
         if (hasReleaseKeystore) {
             create("release") {
                 storeFile = file(keystoreProperties.getProperty("storeFile"))
