@@ -1,12 +1,19 @@
-# CI: every push runs the backend pytest suite (pure unit tests plus the
-# test_integration_*.py layer, which needs the `db` service below) and the
-# Flutter analyze + widget tests. No AWS credentials are used or required --
-# S3/GitHub/Bedrock calls touched by integration tests are exercised only
-# where they degrade gracefully without network access.
+# The full test pyramid, bottom to top:
 #
-# CD: once both test jobs are green, `release` builds the Android APKs and
-# attaches them to a GitHub Release, so every push to main lands an
-# installable build (see the job comment for the knobs).
+#   backend      pytest -- pure unit tests plus the test_integration_*.py
+#                layer, which needs the `db` service below.
+#   frontend     flutter analyze + the widget/model tests.
+#   android-e2e  integration_test/e2e_test.dart driven on a real Android
+#                emulator against a live uvicorn + seeded Postgres, i.e. the
+#                Firebase Test Lab / Device Farm "instrumented test" tier.
+#   android-e2e  a UI Exerciser Monkey pass -- the same idea as a Test Lab
+#   (crawl step) Robo crawl: pseudo-randomly hammer the installed release APK
+#                and fail on any crash or ANR the scripted flows never reach.
+#   release      builds the APKs and publishes a GitHub Release.
+#
+# No AWS credentials are used or required -- S3/GitHub/Bedrock calls touched
+# by the tests are exercised only where they degrade gracefully without
+# network access.
 name: ci
 
 on:
@@ -64,6 +71,109 @@ jobs:
       - name: widget tests
         run: flutter test
 
+  # Device-level testing. Boots an Android emulator, points the app at a live
+  # backend on the host (10.0.2.2 is the emulator's alias for it), then runs
+  # the scripted E2E flows followed by a Monkey crawl for the paths those
+  # flows never touch. Both stages fail the build on an app crash.
+  android-e2e:
+    runs-on: ubuntu-latest
+    needs: [backend, frontend]
+    timeout-minutes: 45
+    services:
+      db:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: builder_plaza_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/builder_plaza_e2e
+      JWT_SECRET: e2e-secret-not-for-prod
+      # dev-login and the simulated LinkedIn consent screen are local-only.
+      ENVIRONMENT: local
+      LINKEDIN_MODE: simulated
+      # Optional: lifts the anonymous 60 req/hr/IP GitHub limit that the
+      # onboarding flow can trip on a busy shared runner IP.
+      GITHUB_TOKEN: ${{ secrets.GH_PUBLIC_READ_TOKEN }}
+      API_BASE_URL: http://10.0.2.2:8000
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements*.txt
+      - name: Install backend deps (CPU-only torch keeps the cache small)
+        working-directory: backend
+        run: |
+          pip install --index-url https://download.pytorch.org/whl/cpu torch
+          pip install -r requirements.txt
+
+      - name: Migrate + seed
+        working-directory: backend
+        run: |
+          alembic upgrade head
+          python seed.py --no-github
+
+      - name: Start uvicorn
+        working-directory: backend
+        run: |
+          uvicorn app.main:app --host 0.0.0.0 --port 8000 --log-level warning \
+            > "$RUNNER_TEMP/uvicorn.log" 2>&1 &
+          for _ in $(seq 1 60); do
+            curl -sf http://localhost:8000/health && exit 0
+            sleep 2
+          done
+          echo "backend never became healthy:"; cat "$RUNNER_TEMP/uvicorn.log"; exit 1
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+        working-directory: frontend
+
+      # Without this the emulator falls back to software rendering and times out.
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: E2E flows + Monkey crawl on emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          working-directory: frontend
+          script: bash ../.github/scripts/android-e2e.sh
+
+      - name: Upload crash logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-e2e-logs-${{ github.run_number }}
+          path: |
+            ${{ runner.temp }}/uvicorn.log
+            frontend/build/e2e-logs/
+          retention-days: 14
+          if-no-files-found: ignore
+
   # Builds the sideloadable Android artefacts. Runs on every push (so a broken
   # build surfaces on feature branches too) but only publishes a GitHub Release
   # from main. Configuration:
@@ -76,7 +186,10 @@ jobs:
   #                                 rejects the upgrade -- uninstall first.
   release:
     runs-on: ubuntu-latest
-    needs: [backend, frontend]
+    # Gated on android-e2e as well: shipping an APK that crashes on launch is
+    # worse than shipping nothing. Drop it from `needs` if the emulator tier
+    # ever turns flaky enough to block real releases.
+    needs: [backend, frontend, android-e2e]
     if: github.event_name == 'push'
     permissions:
       contents: write

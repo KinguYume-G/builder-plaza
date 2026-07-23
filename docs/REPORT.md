@@ -126,9 +126,20 @@ DMs, market, trust blending, activity evidence — runs live.
   700px breakpoint).
 - E2E: `integration_test/e2e_test.dart` drives E2E-1/2/3 against a live
   local backend on the LinkedIn **Simulated** path.
-- CI: `.github/workflows/ci.yml` runs pytest (now including the integration
-  layer, against a Postgres service container) + flutter analyze + widget
-  tests on every push. ✍️ paste coverage screenshots here.
+- Device tier: the `android-e2e` CI job boots an API-34 emulator, migrates
+  and seeds a throwaway Postgres, starts uvicorn on the host, and runs the
+  E2E flows on the device (`10.0.2.2` reaches the host) — the equivalent of
+  a Firebase Test Lab / AWS Device Farm instrumented-test run, on
+  GitHub-hosted runners so it needs no cloud device credentials.
+- Crawl bot: the same job then installs the release APK and runs a
+  **UI/Application Exerciser Monkey** pass (fixed seed, 1500 events,
+  `.github/scripts/android-e2e.sh`) — a Robo-crawl analogue that fails the
+  build on any crash or ANR on screens the scripted flows never reach.
+- CI/CD: `.github/workflows/ci.yml` runs pytest (now including the
+  integration layer, against a Postgres service container) + flutter analyze
+  + widget tests + the device tier on every push; a green run on `main` then
+  builds the fat and per-ABI release APKs and publishes them as a GitHub
+  Release. ✍️ paste coverage screenshots here.
 
 ## 9. Deployment (ADR-0002)
 
@@ -171,7 +182,13 @@ injected as task environment variables.
   through the integration layer, to keep the suite offline-deterministic
   and CI-runnable without AWS credentials. Full third-party-inclusive
   end-to-end coverage lives in `integration_test/e2e_test.dart` instead,
-  run manually against a live local backend.
+  now run automatically on an emulator by the `android-e2e` CI job.
+- **Device testing is one emulated configuration, not a real-device grid.**
+  The `android-e2e` job covers a single API-34 x86_64 Pixel 6 image, so it
+  catches crashes and regressions but not OEM-specific behaviour (Samsung
+  One UI, older API levels, low-memory hardware). A real-device matrix would
+  mean AWS Device Farm or Firebase Test Lab, i.e. cloud credentials and
+  per-device-minute cost that the student account does not budget for.
 - **Adaptive layout is a single breakpoint, not three.** `HomeShell` switches
   between a bottom nav and a side rail at 700px; it does not add a distinct
   desktop layout (e.g. a secondary detail panel) above 1100px. The side
