@@ -98,7 +98,7 @@ class _RequestFormState extends State<_RequestForm> {
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: BrutalCard(
-          accent: Palette.plum,
+          accent: Palette.copper,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -125,7 +125,7 @@ class _RequestFormState extends State<_RequestForm> {
                   for (final intent in kRequestIntentTypes)
                     BrutalBadge(
                       label: kRequestIntentLabels[intent] ?? intent,
-                      color: Palette.plum,
+                      color: Palette.copper,
                       textColor: _intent == intent
                           ? Palette.paper
                           : Palette.ink,
@@ -140,7 +140,7 @@ class _RequestFormState extends State<_RequestForm> {
                 maxLines: 4,
                 maxLength: 1000,
                 style: AppType.body(size: 14),
-                cursorColor: Palette.plum,
+                cursorColor: Palette.copper,
                 decoration: InputDecoration(
                   hintText:
                       'Why you, why them, why now (min 20 chars)…',
@@ -156,7 +156,7 @@ class _RequestFormState extends State<_RequestForm> {
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(6),
                     borderSide: const BorderSide(
-                        color: Palette.plum, width: 2.5),
+                        color: Palette.copper, width: 2.5),
                   ),
                 ),
               ),
@@ -169,7 +169,7 @@ class _RequestFormState extends State<_RequestForm> {
               const SizedBox(height: 12),
               BrutalButton(
                 label: 'Send request',
-                color: Palette.plum,
+                color: Palette.copper,
                 loading: _sending,
                 onPressed: _sending ? null : _send,
               ),

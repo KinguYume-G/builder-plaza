@@ -52,20 +52,29 @@ class _TitleBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final canPop = Navigator.canPop(context);
     return Container(
       decoration: BoxDecoration(
-        color: color,
+        gradient: Palette.glow(color),
         border: const Border(
           bottom: BorderSide(color: Palette.ink, width: 2),
         ),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       child: Row(
         children: [
+          if (canPop) ...[
+            GestureDetector(
+              onTap: () => Navigator.pop(context),
+              behavior: HitTestBehavior.opaque,
+              child: const Icon(Icons.arrow_back, color: Palette.ink, size: 22),
+            ),
+            const SizedBox(width: 14),
+          ],
           Expanded(
             child: Text(
               title.toUpperCase(),
-              style: AppType.display(size: 24, letterSpacing: -0.5),
+              style: AppType.display(size: 20, letterSpacing: -0.5),
               overflow: TextOverflow.ellipsis,
             ),
           ),

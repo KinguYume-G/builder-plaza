@@ -13,8 +13,8 @@ abstract final class AppTheme {
     final base = ThemeData.light(useMaterial3: true);
 
     final colorScheme = ColorScheme.fromSeed(
-      seedColor: Palette.cobalt,
-      primary: Palette.cobalt,
+      seedColor: Palette.teal,
+      primary: Palette.teal,
       onPrimary: Palette.paper,
       surface: Palette.paper,
       onSurface: Palette.ink,
@@ -30,9 +30,9 @@ abstract final class AppTheme {
         displayColor: Palette.ink,
       ),
       textSelectionTheme: const TextSelectionThemeData(
-        cursorColor: Palette.cobalt,
+        cursorColor: Palette.teal,
         selectionColor: Palette.ink200,
-        selectionHandleColor: Palette.cobalt,
+        selectionHandleColor: Palette.teal,
       ),
     );
   }

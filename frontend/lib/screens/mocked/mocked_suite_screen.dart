@@ -238,6 +238,7 @@ class _ShortlistPanelState extends State<_ShortlistPanel> {
         const SizedBox(height: 14),
         for (final candidate in _candidates) ...[
           BrutalCard(
+            flat: true,
             accent: switch (candidate.state) {
               'approved' => Palette.lime,
               'rejected' => Palette.ink200,
@@ -466,7 +467,7 @@ class _PowPanelState extends State<_PowPanel> {
                   child: FractionallySizedBox(
                     widthFactor: _progress.clamp(0, 1),
                     child: Container(
-                        color: done ? Palette.lime : Palette.cobalt),
+                        color: done ? Palette.lime : Palette.teal),
                   ),
                 ),
               ),
@@ -485,7 +486,7 @@ class _PowPanelState extends State<_PowPanel> {
               else
                 BrutalButton(
                   label: _running ? 'Solving…' : 'Solve challenge',
-                  color: Palette.cobalt,
+                  color: Palette.teal,
                   loading: _running,
                   onPressed: _running ? null : _start,
                 ),

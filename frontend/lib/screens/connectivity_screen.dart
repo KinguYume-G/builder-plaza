@@ -105,7 +105,7 @@ class _ConnectivityScreenState extends State<ConnectivityScreen> {
                   const SizedBox(height: 12),
                   BrutalButton(
                     label: 'Continue → Login',
-                    color: Palette.cobalt,
+                    color: Palette.teal,
                     onPressed: () => context.go('/login'),
                   ),
                 ],

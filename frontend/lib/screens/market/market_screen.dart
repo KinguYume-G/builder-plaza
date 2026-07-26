@@ -70,7 +70,7 @@ class _MarketScreenState extends State<MarketScreen> {
           children: [
             BrutalButton(
               label: '＋ Post a role',
-              color: Palette.cobalt,
+              color: Palette.teal,
               onPressed: () => context.push('/market/new'),
             ),
             const SizedBox(height: 14),
@@ -95,7 +95,7 @@ class _MarketScreenState extends State<MarketScreen> {
             TextField(
               controller: _skillController,
               style: AppType.body(size: 15, weight: FontWeight.w500),
-              cursorColor: Palette.cobalt,
+              cursorColor: Palette.teal,
               textInputAction: TextInputAction.search,
               onSubmitted: (_) => _refresh(),
               decoration: InputDecoration(
@@ -114,7 +114,7 @@ class _MarketScreenState extends State<MarketScreen> {
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(6),
                   borderSide: const BorderSide(
-                      color: Palette.cobalt, width: 2.5),
+                      color: Palette.teal, width: 2.5),
                 ),
               ),
             ),
@@ -158,10 +158,11 @@ class _PostingCard extends StatelessWidget {
     final typeColor =
         posting.isMaintainer ? Palette.lime : Palette.mustard;
     final roleColor =
-        kRoleColors[posting.owner.primaryRole] ?? Palette.cobalt;
+        kRoleColors[posting.owner.primaryRole] ?? Palette.teal;
     final isMine = posting.owner.id == myId;
 
     return BrutalCard(
+      flat: true,
       accent: typeColor,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -194,7 +195,7 @@ class _PostingCard extends StatelessWidget {
               if (posting.projectTitle != null)
                 BrutalBadge(
                     label: posting.projectTitle!,
-                    color: Palette.cobalt,
+                    color: Palette.teal,
                     textColor: Palette.paper),
               if (posting.accessTier != null)
                 BrutalBadge(
@@ -217,8 +218,8 @@ class _PostingCard extends StatelessWidget {
               BrutalBadge(
                 label: posting.owner.primaryRole,
                 color: roleColor,
-                textColor: roleColor == Palette.cobalt ||
-                        roleColor == Palette.plum
+                textColor: roleColor == Palette.teal ||
+                        roleColor == Palette.copper
                     ? Palette.paper
                     : Palette.ink,
               ),
@@ -251,7 +252,7 @@ class _PostingCard extends StatelessWidget {
                 Expanded(
                   child: BrutalButton(
                     label: 'Apply',
-                    color: Palette.plum,
+                    color: Palette.copper,
                     onPressed: () => showRequestFormSheet(
                       context,
                       toUserId: posting.owner.id,

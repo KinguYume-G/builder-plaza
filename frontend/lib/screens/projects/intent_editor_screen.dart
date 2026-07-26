@@ -83,7 +83,7 @@ class _IntentEditorScreenState extends State<IntentEditorScreen> {
 
     return BrutalScaffold(
       title: 'Intent',
-      titleBarColor: Palette.plum,
+      titleBarColor: Palette.copper,
       body: !_loaded
           ? const Center(child: CircularProgressIndicator(color: Palette.ink))
           : SingleChildScrollView(
@@ -103,7 +103,7 @@ class _IntentEditorScreenState extends State<IntentEditorScreen> {
                       ),
                       const SizedBox(height: 20),
                       BrutalCard(
-                        accent: Palette.plum,
+                        accent: Palette.copper,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -120,7 +120,7 @@ class _IntentEditorScreenState extends State<IntentEditorScreen> {
                                 for (final type in kIntentTypes)
                                   BrutalBadge(
                                     label: intentLabel(type),
-                                    color: Palette.plum,
+                                    color: Palette.copper,
                                     textColor: Palette.paper,
                                     selected: _selected == type,
                                     onTap: () =>
@@ -152,7 +152,7 @@ class _IntentEditorScreenState extends State<IntentEditorScreen> {
                       const SizedBox(height: 24),
                       BrutalButton(
                         label: 'Save intent',
-                        color: Palette.plum,
+                        color: Palette.copper,
                         loading: _saving,
                         onPressed: (_selected == null || _saving) ? null : _save,
                       ),

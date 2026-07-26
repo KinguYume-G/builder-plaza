@@ -185,7 +185,7 @@ class _PostingFormScreenState extends State<PostingFormScreen> {
                         for (final ProjectCard project in myProjects)
                           BrutalBadge(
                             label: project.title,
-                            color: Palette.cobalt,
+                            color: Palette.teal,
                             textColor: _projectId == project.id
                                 ? Palette.paper
                                 : Palette.ink,
@@ -230,7 +230,7 @@ class _PostingFormScreenState extends State<PostingFormScreen> {
                 const SizedBox(height: 20),
                 BrutalButton(
                   label: 'Publish posting',
-                  color: Palette.cobalt,
+                  color: Palette.teal,
                   loading: _saving,
                   onPressed: _saving ? null : _submit,
                 ),

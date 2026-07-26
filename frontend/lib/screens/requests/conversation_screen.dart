@@ -112,7 +112,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
       title: widget.counterpartLogin != null
           ? '@${widget.counterpartLogin}'
           : 'Conversation',
-      titleBarColor: Palette.cobalt,
+      titleBarColor: Palette.teal,
       body: Column(
         children: [
           Expanded(
@@ -141,7 +141,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
                               const BoxConstraints(maxWidth: 420),
                           decoration: BoxDecoration(
                             color: isMine
-                                ? Palette.cobalt
+                                ? Palette.teal
                                 : Palette.paper,
                             border: Border.all(
                                 color: Palette.ink, width: 2),
@@ -183,7 +183,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
                     child: TextField(
                       controller: _controller,
                       style: AppType.body(size: 14),
-                      cursorColor: Palette.cobalt,
+                      cursorColor: Palette.teal,
                       onSubmitted: (_) => _send(),
                       decoration: InputDecoration(
                         hintText: 'Message…',
@@ -201,7 +201,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(6),
                           borderSide: const BorderSide(
-                              color: Palette.cobalt, width: 2.5),
+                              color: Palette.teal, width: 2.5),
                         ),
                       ),
                     ),
@@ -212,7 +212,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
                     child: Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Palette.cobalt,
+                        color: Palette.teal,
                         border:
                             Border.all(color: Palette.ink, width: 2),
                         borderRadius: BorderRadius.circular(6),

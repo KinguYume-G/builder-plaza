@@ -126,7 +126,7 @@ class _PostingDetailScreenState extends State<PostingDetailScreen> {
                   const Spacer(),
                   BrutalBadge(
                       label: posting.owner.primaryRole,
-                      color: Palette.cobalt,
+                      color: Palette.teal,
                       textColor: Palette.paper),
                 ],
               ),
@@ -178,9 +178,10 @@ class _PostingDetailScreenState extends State<PostingDetailScreen> {
           const SizedBox(height: 10),
           for (final repo in posting.repos) ...[
             BrutalCard(
+              flat: true,
               padding: const EdgeInsets.all(12),
               accent:
-                  repo.error == null ? Palette.cobalt : Palette.ink400,
+                  repo.error == null ? Palette.teal : Palette.ink400,
               child: Row(
                 children: [
                   Expanded(
@@ -214,7 +215,7 @@ class _PostingDetailScreenState extends State<PostingDetailScreen> {
         if (posting.owner.id != myId && posting.status == 'open')
           BrutalButton(
             label: 'Apply for this role',
-            color: Palette.plum,
+            color: Palette.copper,
             onPressed: () => showRequestFormSheet(
               context,
               toUserId: posting.owner.id,

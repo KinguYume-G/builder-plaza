@@ -38,7 +38,7 @@ class _RequestsScreenState extends State<RequestsScreen> {
 
     return BrutalScaffold(
       title: 'Requests',
-      titleBarColor: Palette.plum,
+      titleBarColor: Palette.copper,
       body: RefreshIndicator(
         color: Palette.ink,
         onRefresh: () => context.read<CollabProvider>().fetchAll(),
@@ -49,7 +49,7 @@ class _RequestsScreenState extends State<RequestsScreen> {
               children: [
                 BrutalBadge(
                   label: 'INBOX (${provider.pendingInboxCount})',
-                  color: Palette.plum,
+                  color: Palette.copper,
                   textColor:
                       _tab == 0 ? Palette.paper : Palette.ink,
                   selected: _tab == 0,
@@ -58,7 +58,7 @@ class _RequestsScreenState extends State<RequestsScreen> {
                 const SizedBox(width: 8),
                 BrutalBadge(
                   label: 'SENT',
-                  color: Palette.plum,
+                  color: Palette.copper,
                   textColor: _tab == 1 ? Palette.paper : Palette.ink,
                   selected: _tab == 1,
                   onTap: () => setState(() => _tab = 1),
@@ -66,7 +66,7 @@ class _RequestsScreenState extends State<RequestsScreen> {
                 const SizedBox(width: 8),
                 BrutalBadge(
                   label: 'CHATS (${provider.conversations.length})',
-                  color: Palette.cobalt,
+                  color: Palette.teal,
                   textColor: _tab == 2 ? Palette.paper : Palette.ink,
                   selected: _tab == 2,
                   onTap: () => setState(() => _tab = 2),
@@ -108,7 +108,8 @@ class _RequestsScreenState extends State<RequestsScreen> {
     return [
       for (final conversation in provider.conversations) ...[
         BrutalCard(
-          accent: Palette.cobalt,
+          flat: true,
+          accent: Palette.teal,
           padding: const EdgeInsets.all(14),
           child: InkWell(
             onTap: () => context.push('/conversations/${conversation.id}',
@@ -192,6 +193,7 @@ class _RequestCard extends StatelessWidget {
     final other = isInbox ? request.fromUser : request.toUser;
 
     return BrutalCard(
+      flat: true,
       accent: _stateColor,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -218,7 +220,7 @@ class _RequestCard extends StatelessWidget {
             children: [
               BrutalBadge(
                   label: request.intentLabel,
-                  color: Palette.plum,
+                  color: Palette.copper,
                   textColor: Palette.paper),
               BrutalBadge(label: other.primaryRole, color: Palette.paper),
             ],
@@ -267,7 +269,7 @@ class _RequestCard extends StatelessWidget {
               request.conversationId != null)
             BrutalButton(
               label: 'Open conversation',
-              color: Palette.cobalt,
+              color: Palette.teal,
               onPressed: () => context.push(
                   '/conversations/${request.conversationId}',
                   extra: other.githubLogin),

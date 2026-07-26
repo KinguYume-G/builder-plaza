@@ -91,13 +91,13 @@ class _LinkedInLiveScreenState extends State<LinkedInLiveScreen> {
                     subtitle:
                         'Sign in with LinkedIn so founders can trust who they '
                         'are collaborating with.',
-                    accent: Palette.plum,
+                    accent: Palette.copper,
                   ),
                   const SizedBox(height: 16),
                   // Honest, low-key provenance note. This is a REAL identity
                   // step, so it is NOT watermarked "SIMULATED".
                   BrutalCard(
-                    accent: Palette.cobalt,
+                    accent: Palette.teal,
                     background: Palette.cream100,
                     padding: const EdgeInsets.all(12),
                     child: Row(
@@ -118,7 +118,7 @@ class _LinkedInLiveScreenState extends State<LinkedInLiveScreen> {
                   ),
                   const SizedBox(height: 20),
                   BrutalCard(
-                    accent: Palette.plum,
+                    accent: Palette.copper,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -134,7 +134,7 @@ class _LinkedInLiveScreenState extends State<LinkedInLiveScreen> {
                         const SizedBox(height: 16),
                         BrutalButton(
                           label: 'Sign in with LinkedIn',
-                          color: Palette.plum,
+                          color: Palette.copper,
                           loading: _redirecting || auth.loading,
                           onPressed:
                               _redirecting || auth.loading ? null : _signIn,

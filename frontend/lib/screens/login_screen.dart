@@ -11,9 +11,9 @@ import '../widgets/brutal_card.dart';
 
 /// Role options and their accent colors (shared with the home screen).
 const Map<String, Color> kRoleColors = {
-  'builder': Palette.cobalt,
-  'collaborator': Palette.lime,
-  'founder': Palette.mustard,
+  'builder': Palette.teal,
+  'collaborator': Palette.rose,
+  'founder': Palette.tangerine,
 };
 
 class LoginScreen extends StatefulWidget {
@@ -109,7 +109,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 24),
                   BrutalButton(
                     label: 'Dev Login',
-                    color: Palette.cobalt,
+                    color: Palette.teal,
                     loading: auth.loading,
                     onPressed: auth.loading ? null : _login,
                   ),
@@ -134,7 +134,7 @@ class _BrutalField extends StatelessWidget {
     return TextField(
       controller: controller,
       style: AppType.mono(size: 16, weight: FontWeight.w600),
-      cursorColor: Palette.cobalt,
+      cursorColor: Palette.teal,
       decoration: InputDecoration(
         filled: true,
         fillColor: Palette.paper,
@@ -146,7 +146,7 @@ class _BrutalField extends StatelessWidget {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(6),
-          borderSide: const BorderSide(color: Palette.cobalt, width: 2.5),
+          borderSide: const BorderSide(color: Palette.teal, width: 2.5),
         ),
       ),
     );

@@ -253,7 +253,7 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
 
     return BrutalScaffold(
       title: _isEdit ? 'Edit Project' : 'New Project',
-      titleBarColor: Palette.cobalt,
+      titleBarColor: Palette.teal,
       body: _loading
           ? const Center(child: CircularProgressIndicator(color: Palette.ink))
           : SingleChildScrollView(
@@ -337,7 +337,7 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
                       const SizedBox(height: 24),
                       BrutalButton(
                         label: _isEdit ? 'Save changes' : 'Create project',
-                        color: Palette.cobalt,
+                        color: Palette.teal,
                         loading: _saving,
                         onPressed: _saving ? null : _save,
                       ),
@@ -390,7 +390,7 @@ class _StagePicker extends StatelessWidget {
             for (final stage in kStages)
               BrutalBadge(
                 label: stageLabel(stage),
-                color: Palette.cobalt,
+                color: Palette.teal,
                 textColor: Palette.paper,
                 selected: selected == stage,
                 onTap: () => onSelect(stage),
@@ -440,7 +440,7 @@ class _RepoChipsInput extends StatelessWidget {
               child: TextField(
                 controller: controller,
                 style: AppType.mono(size: 14, weight: FontWeight.w600),
-                cursorColor: Palette.cobalt,
+                cursorColor: Palette.teal,
                 textInputAction: TextInputAction.done,
                 onSubmitted: (_) => onAdd(),
                 decoration: InputDecoration(
@@ -459,7 +459,7 @@ class _RepoChipsInput extends StatelessWidget {
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(6),
                     borderSide:
-                        const BorderSide(color: Palette.cobalt, width: 2.5),
+                        const BorderSide(color: Palette.teal, width: 2.5),
                   ),
                 ),
               ),
@@ -468,7 +468,7 @@ class _RepoChipsInput extends StatelessWidget {
             BrutalButton(
               label: '＋ Add',
               expand: false,
-              color: Palette.cobalt,
+              color: Palette.teal,
               onPressed: onAdd,
             ),
           ],

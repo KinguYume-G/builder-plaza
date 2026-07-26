@@ -98,6 +98,12 @@ class _PlazaBodyState extends State<PlazaBody> {
       child: ListView(
         padding: const EdgeInsets.all(20),
         children: [
+          Text(
+            'Real projects in progress, and the code-driven updates behind '
+            'them',
+            style: AppType.body(size: 13, color: Palette.ink600),
+          ),
+          const SizedBox(height: 16),
           // Projects ↔ Growth feed toggle.
           Row(
             children: [
@@ -174,7 +180,7 @@ class _PlazaBodyState extends State<PlazaBody> {
           TextField(
             controller: _searchController,
             style: AppType.body(size: 15, weight: FontWeight.w500),
-            cursorColor: Palette.cobalt,
+            cursorColor: Palette.teal,
             textInputAction: TextInputAction.search,
             onSubmitted: (_) => _refresh(),
             decoration: InputDecoration(
@@ -191,7 +197,7 @@ class _PlazaBodyState extends State<PlazaBody> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(6),
-                borderSide: const BorderSide(color: Palette.cobalt, width: 2.5),
+                borderSide: const BorderSide(color: Palette.teal, width: 2.5),
               ),
             ),
           ),

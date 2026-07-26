@@ -95,8 +95,7 @@ class _EvidenceScreenState extends State<EvidenceScreen> {
             style: AppType.display(size: 26, height: 1.05)),
         const SizedBox(height: 6),
         Text(
-          'Everything below comes from the public GitHub record — '
-          'nothing is self-reported.',
+          'Everything below comes from the public GitHub record',
           style: AppType.body(size: 13, color: Palette.ink600),
         ),
         const SizedBox(height: 20),
@@ -138,6 +137,7 @@ class _EvidenceScreenState extends State<EvidenceScreen> {
           const SizedBox(height: 10),
           for (final role in evidence.repoRoles.take(6)) ...[
             BrutalCard(
+              flat: true,
               padding: const EdgeInsets.all(12),
               child: Row(
                 children: [
@@ -220,7 +220,7 @@ class _ContinuityChart extends StatelessWidget {
                   toY: weeks[i].count.toDouble(),
                   width: 14,
                   borderRadius: BorderRadius.circular(2),
-                  color: weeks[i].count > 0 ? Palette.cobalt : Palette.ink200,
+                  color: weeks[i].count > 0 ? Palette.teal : Palette.ink200,
                   borderSide: weeks[i].count > 0
                       ? const BorderSide(color: Palette.ink, width: 1.5)
                       : BorderSide.none,
@@ -250,6 +250,7 @@ class _TimelineTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BrutalCard(
+      flat: true,
       padding: const EdgeInsets.all(12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,

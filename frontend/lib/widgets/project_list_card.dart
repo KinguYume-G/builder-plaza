@@ -25,13 +25,14 @@ class ProjectListCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final roleColor =
-        kRoleColors[project.owner.primaryRole] ?? Palette.cobalt;
+        kRoleColors[project.owner.primaryRole] ?? Palette.teal;
     final thumb =
         project.screenshots.isNotEmpty ? project.screenshots.first.url : null;
 
     return GestureDetector(
       onTap: onTap,
       child: BrutalCard(
+        flat: true,
         accent: project.isArchived ? Palette.ink400 : roleColor,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -60,7 +61,7 @@ class ProjectListCard extends StatelessWidget {
                         children: [
                           BrutalBadge(
                             label: stageLabel(project.stage),
-                            color: Palette.cobalt,
+                            color: Palette.teal,
                             textColor: Palette.paper,
                           ),
                           if (project.isArchived)
@@ -69,7 +70,7 @@ class ProjectListCard extends StatelessWidget {
                           if (project.intent != null)
                             BrutalBadge(
                               label: project.intent!.label,
-                              color: Palette.plum,
+                              color: Palette.copper,
                               textColor: Palette.paper,
                             ),
                         ],

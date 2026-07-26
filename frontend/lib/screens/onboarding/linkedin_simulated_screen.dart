@@ -75,7 +75,7 @@ class _LinkedInSimulatedScreenState extends State<LinkedInSimulatedScreen> {
                       subtitle:
                           'Choose a professional identity to link. These '
                           'profiles are simulated for this demo.',
-                      accent: Palette.plum,
+                      accent: Palette.copper,
                     ),
                     const SizedBox(height: 16),
                     // A loud inline disclaimer in addition to the watermark.
@@ -172,7 +172,7 @@ class _ProfileCard extends StatelessWidget {
       child: GestureDetector(
         onTap: disabled ? null : onTap,
         child: BrutalCard(
-          accent: Palette.plum,
+          accent: Palette.copper,
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -195,7 +195,7 @@ class _ProfileCard extends StatelessWidget {
                     const SizedBox(height: 10),
                     BrutalBadge(
                       label: '${_tenure(profile.tenureYears)} yrs',
-                      color: Palette.plum,
+                      color: Palette.copper,
                       textColor: Palette.paper,
                     ),
                   ],

@@ -145,7 +145,7 @@ class _TrustScreenState extends State<TrustScreen> {
         BrutalButton(
           label: 'View verified activity & evidence',
           color: Palette.mustard,
-          textColor: Palette.ink,
+          outline: true,
           onPressed: () => context.push('/users/${widget.userId}/evidence'),
         ),
         const SizedBox(height: 24),
@@ -165,6 +165,7 @@ class _TrustScreenState extends State<TrustScreen> {
         else
           for (final review in reviews) ...[
             BrutalCard(
+              flat: true,
               padding: const EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -215,6 +216,7 @@ class _ComponentCard extends StatelessWidget {
     final pct = ((score ?? 0) / 100).clamp(0.0, 1.0);
 
     return BrutalCard(
+      flat: true,
       padding: const EdgeInsets.all(14),
       accent: component.available ? Palette.lime : Palette.ink200,
       child: Column(
@@ -258,7 +260,7 @@ class _ComponentCard extends StatelessWidget {
                 widthFactor: pct,
                 child: Container(
                     color: component.available
-                        ? Palette.cobalt
+                        ? Palette.teal
                         : Palette.ink200),
               ),
             ),

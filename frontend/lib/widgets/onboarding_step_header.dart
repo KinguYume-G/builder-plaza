@@ -13,7 +13,7 @@ class OnboardingStepHeader extends StatelessWidget {
     required this.step,
     required this.title,
     this.subtitle,
-    this.accent = Palette.cobalt,
+    this.accent = Palette.teal,
   });
 
   final String step;

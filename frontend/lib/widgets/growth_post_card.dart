@@ -34,6 +34,7 @@ class GrowthPostCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: BrutalCard(
+        flat: true,
         accent: Palette.lime,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

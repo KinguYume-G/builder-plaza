@@ -40,6 +40,15 @@ const _kNavItems = [
   (Icons.person, 'Profile'),
 ];
 
+/// Cycling palette for the top-languages bar segments/legend dots.
+const _langColors = [
+  Palette.teal,
+  Palette.tomato,
+  Palette.mustard,
+  Palette.lime,
+  Palette.copper,
+];
+
 /// Viewport width at which [HomeShell] switches from a bottom nav (phones)
 /// to a side rail (tablet/desktop/web) — dev doc §15's mobile/wide split.
 const double kWideLayoutBreakpoint = 700;
@@ -76,8 +85,8 @@ class _HomeShellState extends State<HomeShell> {
     final auth = context.watch<AuthProvider>();
     final user = auth.currentUser;
     final roleColor = user == null
-        ? Palette.plum
-        : (kRoleColors[user.primaryRole] ?? Palette.plum);
+        ? Palette.copper
+        : (kRoleColors[user.primaryRole] ?? Palette.copper);
 
     // Resolve the default tab once the user (and role) is known.
     final index = _index ??=
@@ -86,7 +95,7 @@ class _HomeShellState extends State<HomeShell> {
     if (user == null) {
       return const BrutalScaffold(
         title: 'Home',
-        titleBarColor: Palette.plum,
+        titleBarColor: Palette.copper,
         body: Center(child: CircularProgressIndicator(color: Palette.ink)),
       );
     }
@@ -97,12 +106,11 @@ class _HomeShellState extends State<HomeShell> {
       'Matches',
       'Profile',
     ];
-    final barColors = [roleColor, Palette.lime, Palette.cobalt, roleColor];
+    final barColors = [roleColor, Palette.lime, Palette.teal, roleColor];
 
     return BrutalScaffold(
       title: titles[index],
       titleBarColor: barColors[index],
-      actions: const [_RoleDot()],
       body: LayoutBuilder(
         builder: (context, constraints) {
           final tabs = IndexedStack(
@@ -179,7 +187,7 @@ class _HomeTab extends StatelessWidget {
         children: [
           // Intent card.
           BrutalCard(
-            accent: Palette.plum,
+            accent: Palette.copper,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -196,7 +204,7 @@ class _HomeTab extends StatelessWidget {
                       child: Text(intent == null ? 'set →' : 'edit →',
                           style: AppType.mono(
                               size: 12,
-                              color: Palette.plum,
+                              color: Palette.copper,
                               weight: FontWeight.w700)),
                     ),
                   ],
@@ -208,7 +216,7 @@ class _HomeTab extends StatelessWidget {
                 else ...[
                   BrutalBadge(
                       label: intent.label,
-                      color: Palette.plum,
+                      color: Palette.copper,
                       textColor: Palette.paper),
                   if (intent.note != null && intent.note!.isNotEmpty) ...[
                     const SizedBox(height: 10),
@@ -224,7 +232,8 @@ class _HomeTab extends StatelessWidget {
           // F7: requests inbox + conversations.
           BrutalButton(
             label: 'Requests & messages',
-            color: Palette.plum,
+            color: Palette.copper,
+            outline: true,
             onPressed: () => context.push('/requests'),
           ),
           const SizedBox(height: 12),
@@ -232,7 +241,7 @@ class _HomeTab extends StatelessWidget {
           BrutalButton(
             label: 'Request market',
             color: Palette.mustard,
-            textColor: Palette.ink,
+            outline: true,
             onPressed: () => context.push('/market'),
           ),
           const SizedBox(height: 24),
@@ -248,7 +257,7 @@ class _HomeTab extends StatelessWidget {
           const SizedBox(height: 12),
           BrutalButton(
             label: '＋ New project',
-            color: Palette.cobalt,
+            color: Palette.teal,
             onPressed: () => context.push('/projects/new'),
           ),
           const SizedBox(height: 16),
@@ -344,15 +353,15 @@ class _ProfileTab extends StatelessWidget {
                           right: -2,
                           bottom: -2,
                           child: Container(
-                            padding: const EdgeInsets.all(3),
+                            padding: const EdgeInsets.all(2),
                             decoration: BoxDecoration(
-                              color: Palette.cobalt,
+                              color: Palette.teal,
                               border: Border.all(
                                   color: Palette.ink, width: 1.5),
-                              borderRadius: BorderRadius.circular(4),
+                              borderRadius: BorderRadius.circular(3),
                             ),
                             child: const Icon(Icons.photo_camera,
-                                size: 12, color: Palette.paper),
+                                size: 9, color: Palette.paper),
                           ),
                         ),
                       ],
@@ -363,30 +372,34 @@ class _ProfileTab extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('@${user.githubLogin}',
-                            style: AppType.display(size: 22, height: 1.05),
-                            overflow: TextOverflow.ellipsis),
-                        const SizedBox(height: 10),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            BrutalBadge(
-                                label: user.primaryRole,
-                                color: roleColor,
-                                textColor: roleColor == Palette.cobalt
-                                    ? Palette.paper
-                                    : Palette.ink),
-                            if (user.githubConnected && user.linkedinConnected)
-                              const BrutalBadge(
-                                  label: 'VERIFIED', color: Palette.lime),
-                            if (user.reverifyFlag)
-                              const BrutalBadge(
-                                  label: 'REVERIFY',
-                                  color: Palette.tomato,
-                                  textColor: Palette.paper),
+                            Flexible(
+                              child: Text('@${user.githubLogin}',
+                                  style: AppType.display(
+                                      size: 22, height: 1.05),
+                                  overflow: TextOverflow.ellipsis),
+                            ),
+                            if (user.githubConnected &&
+                                user.linkedinConnected) ...[
+                              const SizedBox(width: 6),
+                              const Tooltip(
+                                message:
+                                    'Verified — GitHub + LinkedIn both connected',
+                                child: Icon(Icons.verified,
+                                    size: 19, color: Palette.lime),
+                              ),
+                            ],
                           ],
                         ),
+                        if (user.reverifyFlag) ...[
+                          const SizedBox(height: 10),
+                          const BrutalBadge(
+                              label: 'REVERIFY',
+                              color: Palette.tomato,
+                              textColor: Palette.paper),
+                        ],
                       ],
                     ),
                   ),
@@ -406,7 +419,7 @@ class _ProfileTab extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        _CompletenessCard(pct: user.completenessPct, accent: roleColor),
+        _CompletenessCard(user: user, accent: roleColor),
         const SizedBox(height: 16),
         if (auth.githubSummary != null) _GithubCard(summary: auth.githubSummary!),
         const SizedBox(height: 24),
@@ -414,7 +427,7 @@ class _ProfileTab extends StatelessWidget {
         BrutalButton(
           label: 'Trust score',
           color: Palette.lime,
-          textColor: Palette.ink,
+          outline: true,
           onPressed: () => context.push('/users/${user.id}/trust'),
         ),
         const SizedBox(height: 12),
@@ -422,14 +435,15 @@ class _ProfileTab extends StatelessWidget {
         BrutalButton(
           label: 'Verified activity & evidence',
           color: Palette.mustard,
-          textColor: Palette.ink,
+          outline: true,
           onPressed: () => context.push('/users/${user.id}/evidence'),
         ),
         const SizedBox(height: 12),
         // Intent editor entry.
         BrutalButton(
           label: 'Edit intent',
-          color: Palette.plum,
+          color: Palette.copper,
+          outline: true,
           onPressed: () => context.push('/intent'),
         ),
         const SizedBox(height: 12),
@@ -437,6 +451,7 @@ class _ProfileTab extends StatelessWidget {
         BrutalButton(
           label: 'Simulated suite (demo)',
           color: Palette.tomato,
+          outline: true,
           onPressed: () => context.push('/mocked'),
         ),
         const SizedBox(height: 24),
@@ -615,7 +630,7 @@ class _NavItem extends StatelessWidget {
             Icon(icon,
                 size: 20,
                 color: selected
-                    ? (accent == Palette.cobalt || accent == Palette.plum
+                    ? (accent == Palette.teal || accent == Palette.copper
                         ? Palette.paper
                         : Palette.ink)
                     : Palette.ink400),
@@ -625,7 +640,7 @@ class _NavItem extends StatelessWidget {
                     size: 9,
                     weight: FontWeight.w700,
                     color: selected
-                        ? (accent == Palette.cobalt || accent == Palette.plum
+                        ? (accent == Palette.teal || accent == Palette.copper
                             ? Palette.paper
                             : Palette.ink)
                         : Palette.ink400)),
@@ -636,34 +651,16 @@ class _NavItem extends StatelessWidget {
   }
 }
 
-/// A small role-colored dot in the title bar actions area.
-class _RoleDot extends StatelessWidget {
-  const _RoleDot();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 16,
-      height: 16,
-      decoration: BoxDecoration(
-        color: Palette.paper,
-        border: Border.all(color: Palette.ink, width: 2),
-        borderRadius: BorderRadius.circular(4),
-      ),
-    );
-  }
-}
-
 /// A chunky brutalist progress bar for profile completeness.
 class _CompletenessCard extends StatelessWidget {
-  const _CompletenessCard({required this.pct, required this.accent});
+  const _CompletenessCard({required this.user, required this.accent});
 
-  final int pct;
+  final User user;
   final Color accent;
 
   @override
   Widget build(BuildContext context) {
-    final clamped = pct.clamp(0, 100);
+    final clamped = user.completenessPct.clamp(0, 100);
     return BrutalCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -680,40 +677,41 @@ class _CompletenessCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          // F2: the two gate thresholds (40% = can browse/apply, 70% = full
-          // posting rights) are drawn as ink ticks on the bar.
           Container(
-            height: 22,
+            height: 14,
             decoration: BoxDecoration(
               color: Palette.cream100,
               border: Border.all(color: Palette.ink, width: 2),
               borderRadius: BorderRadius.circular(6),
             ),
             clipBehavior: Clip.antiAlias,
-            child: Stack(
-              children: [
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: FractionallySizedBox(
-                    widthFactor: clamped / 100,
-                    child: Container(color: accent),
-                  ),
-                ),
-                for (final gate in const [40, 70])
-                  Align(
-                    alignment:
-                        Alignment(gate / 50 - 1, 0), // 0-100% → -1..1
-                    child: Container(width: 2.5, color: Palette.ink),
-                  ),
-              ],
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: FractionallySizedBox(
+                widthFactor: clamped / 100,
+                child: Container(color: accent),
+              ),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
+          // What actually makes up the percentage (40 + 40 + 20) -- icons
+          // instead of the old GATE 40/70 tick labels, which described
+          // discovery/matching thresholds that aren't actually wired up in
+          // the backend yet.
           Row(
             children: [
-              _GateLabel(label: 'GATE 40 · APPLY', met: clamped >= 40),
-              const SizedBox(width: 10),
-              _GateLabel(label: 'GATE 70 · POST', met: clamped >= 70),
+              _CompletenessIcon(
+                  icon: Icons.code, label: 'GITHUB', done: user.githubConnected),
+              const SizedBox(width: 18),
+              _CompletenessIcon(
+                  icon: Icons.badge,
+                  label: 'LINKEDIN',
+                  done: user.linkedinConnected),
+              const SizedBox(width: 18),
+              _CompletenessIcon(
+                  icon: Icons.how_to_reg,
+                  label: 'ROLE',
+                  done: user.onboardingComplete),
             ],
           ),
         ],
@@ -722,24 +720,27 @@ class _CompletenessCard extends StatelessWidget {
   }
 }
 
-class _GateLabel extends StatelessWidget {
-  const _GateLabel({required this.label, required this.met});
+class _CompletenessIcon extends StatelessWidget {
+  const _CompletenessIcon({
+    required this.icon,
+    required this.label,
+    required this.done,
+  });
 
+  final IconData icon;
   final String label;
-  final bool met;
+  final bool done;
 
   @override
   Widget build(BuildContext context) {
+    final color = done ? Palette.lime : Palette.ink400;
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(met ? Icons.check_box : Icons.check_box_outline_blank,
-            size: 14, color: met ? Palette.ink : Palette.ink400),
-        const SizedBox(width: 4),
+        Icon(icon, size: 16, color: color),
+        const SizedBox(width: 5),
         Text(label,
-            style: AppType.mono(
-                size: 9,
-                weight: FontWeight.w700,
-                color: met ? Palette.ink : Palette.ink400)),
+            style: AppType.mono(size: 10, weight: FontWeight.w700, color: color)),
       ],
     );
   }
@@ -753,55 +754,112 @@ class _GithubCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BrutalCard(
-      accent: Palette.cobalt,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('GITHUB ACTIVITY',
+    final topLangs = summary.topLanguages.take(5).toList();
+    final totalLangCount = topLangs.fold<int>(0, (sum, l) => sum + l.count);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('GITHUB ACTIVITY',
+            style: AppType.mono(
+                size: 11, color: Palette.ink400, weight: FontWeight.w700)),
+        const SizedBox(height: 14),
+        // A borderless stat strip instead of another bordered card full of
+        // badges -- four numbers separated by hairline dividers, like a
+        // scoreboard rather than a pile of boxed tags.
+        Row(
+          children: [
+            _Stat(value: '${summary.publicRepos}', label: 'REPOS'),
+            const _StatDivider(),
+            _Stat(value: '${summary.followers}', label: 'FOLLOWERS'),
+            const _StatDivider(),
+            _Stat(value: '${summary.stars}', label: 'STARS'),
+            const _StatDivider(),
+            _Stat(value: '${summary.recentActivityCount}', label: 'RECENT'),
+          ],
+        ),
+        if (topLangs.isNotEmpty && totalLangCount > 0) ...[
+          const SizedBox(height: 22),
+          Text('TOP LANGUAGES',
               style: AppType.mono(
                   size: 11, color: Palette.ink400, weight: FontWeight.w700)),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
+          // GitHub's own repo-language-bar pattern: one bar, proportional
+          // segments, instead of a badge per language.
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: SizedBox(
+              height: 10,
+              child: Row(
+                children: [
+                  for (var i = 0; i < topLangs.length; i++)
+                    Expanded(
+                      flex: topLangs[i].count > 0 ? topLangs[i].count : 1,
+                      child: Container(
+                          color: _langColors[i % _langColors.length]),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
           Wrap(
-            spacing: 8,
+            spacing: 14,
             runSpacing: 8,
             children: [
-              BrutalBadge(
-                  label: '${summary.publicRepos} repos', color: Palette.mustard),
-              BrutalBadge(
-                  label: '${summary.followers} followers',
-                  color: Palette.cobalt,
-                  textColor: Palette.paper),
-              BrutalBadge(
-                  label: '${summary.stars} stars', color: Palette.mustard),
-              BrutalBadge(
-                  label: '${summary.recentActivityCount} recent',
-                  color: Palette.lime),
+              for (var i = 0; i < topLangs.length; i++)
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 9,
+                      height: 9,
+                      decoration: BoxDecoration(
+                        color: _langColors[i % _langColors.length],
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(topLangs[i].language,
+                        style: AppType.mono(size: 12, color: Palette.ink600)),
+                  ],
+                ),
             ],
           ),
-          if (summary.topLanguages.isNotEmpty) ...[
-            const SizedBox(height: 14),
-            Text('TOP LANGUAGES',
-                style: AppType.mono(
-                    size: 10,
-                    color: Palette.ink400,
-                    weight: FontWeight.w700)),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final lang in summary.topLanguages.take(5))
-                  BrutalBadge(
-                      label: '${lang.language} ${lang.count}',
-                      color: Palette.paper,
-                      textColor: Palette.ink),
-              ],
-            ),
-          ],
+        ],
+      ],
+    );
+  }
+}
+
+class _Stat extends StatelessWidget {
+  const _Stat({required this.value, required this.label});
+
+  final String value;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Column(
+        children: [
+          Text(value, style: AppType.display(size: 22)),
+          const SizedBox(height: 2),
+          Text(label,
+              style: AppType.mono(
+                  size: 9, color: Palette.ink400, weight: FontWeight.w700)),
         ],
       ),
     );
+  }
+}
+
+class _StatDivider extends StatelessWidget {
+  const _StatDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(width: 1.5, height: 32, color: Palette.ink200);
   }
 }
 
@@ -813,16 +871,16 @@ class _Avatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 56,
-      height: 56,
+      width: 36,
+      height: 36,
       decoration: BoxDecoration(
         color: Palette.cream100,
         border: Border.all(color: Palette.ink, width: 2),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(7),
       ),
       clipBehavior: Clip.antiAlias,
       child: url == null || url!.isEmpty
-          ? Icon(Icons.person, color: Palette.ink400)
+          ? Icon(Icons.person, size: 18, color: Palette.ink400)
           : Image.network(url!,
               fit: BoxFit.cover,
               errorBuilder: (_, _, _) =>

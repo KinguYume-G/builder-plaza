@@ -61,7 +61,7 @@ class _GithubConnectScreenState extends State<GithubConnectScreen> {
                     subtitle:
                         'Connect a public GitHub account so founders can see '
                         'what you actually build.',
-                    accent: Palette.cobalt,
+                    accent: Palette.teal,
                   ),
                   const SizedBox(height: 24),
                   BrutalCard(
@@ -77,7 +77,7 @@ class _GithubConnectScreenState extends State<GithubConnectScreen> {
                         TextField(
                           controller: _controller,
                           style: AppType.mono(size: 16, weight: FontWeight.w600),
-                          cursorColor: Palette.cobalt,
+                          cursorColor: Palette.teal,
                           textInputAction: TextInputAction.go,
                           onSubmitted: (_) => _connect(),
                           decoration: InputDecoration(
@@ -96,14 +96,14 @@ class _GithubConnectScreenState extends State<GithubConnectScreen> {
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(6),
                               borderSide: const BorderSide(
-                                  color: Palette.cobalt, width: 2.5),
+                                  color: Palette.teal, width: 2.5),
                             ),
                           ),
                         ),
                         const SizedBox(height: 16),
                         BrutalButton(
                           label: 'Connect GitHub',
-                          color: Palette.cobalt,
+                          color: Palette.teal,
                           loading: auth.loading,
                           onPressed: auth.loading ? null : _connect,
                         ),
@@ -127,7 +127,7 @@ class _GithubConnectScreenState extends State<GithubConnectScreen> {
                     const SizedBox(height: 20),
                     BrutalButton(
                       label: 'Next →',
-                      color: connected ? Palette.lime : Palette.cobalt,
+                      color: connected ? Palette.lime : Palette.teal,
                       textColor: Palette.ink,
                       onPressed: () => context.go('/onboarding/linkedin'),
                     ),
@@ -202,7 +202,7 @@ class _SummaryCard extends StatelessWidget {
                   label: '${summary.publicRepos} repos', color: Palette.mustard),
               BrutalBadge(
                   label: '${summary.followers} followers',
-                  color: Palette.cobalt,
+                  color: Palette.teal,
                   textColor: Palette.paper),
               for (final lang in topLangs)
                 BrutalBadge(

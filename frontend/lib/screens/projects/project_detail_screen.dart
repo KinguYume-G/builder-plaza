@@ -200,8 +200,8 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
     return BrutalScaffold(
       title: 'Project',
       titleBarColor: card == null
-          ? Palette.cobalt
-          : (kRoleColors[card.owner.primaryRole] ?? Palette.cobalt),
+          ? Palette.teal
+          : (kRoleColors[card.owner.primaryRole] ?? Palette.teal),
       body: _loading
           ? const Center(child: CircularProgressIndicator(color: Palette.ink))
           : card == null
@@ -232,7 +232,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   }
 
   Widget _body(ProjectCard card, bool isOwner) {
-    final roleColor = kRoleColors[card.owner.primaryRole] ?? Palette.cobalt;
+    final roleColor = kRoleColors[card.owner.primaryRole] ?? Palette.teal;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -246,7 +246,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
           children: [
             BrutalBadge(
                 label: stageLabel(card.stage),
-                color: Palette.cobalt,
+                color: Palette.teal,
                 textColor: Palette.paper),
             BrutalBadge(
               label: card.isArchived ? 'Archived' : 'Active',
@@ -255,7 +255,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
             if (card.intent != null)
               BrutalBadge(
                   label: card.intent!.label,
-                  color: Palette.plum,
+                  color: Palette.copper,
                   textColor: Palette.paper),
           ],
         ),
@@ -279,7 +279,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                       label: card.owner.primaryRole,
                       color: roleColor,
                       textColor:
-                          roleColor == Palette.cobalt ? Palette.paper : Palette.ink,
+                          roleColor == Palette.teal ? Palette.paper : Palette.ink,
                     ),
                   ],
                 ),
@@ -313,7 +313,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                 card.demoUrl!.trim(),
                 style: AppType.body(
                     size: 15,
-                    color: Palette.cobalt,
+                    color: Palette.teal,
                     weight: FontWeight.w700,
                     height: 1.3),
               ),
@@ -407,7 +407,7 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
           const SizedBox(height: 28),
           BrutalButton(
             label: 'Edit',
-            color: Palette.cobalt,
+            color: Palette.teal,
             onPressed: () => context.push('/projects/${card.id}/edit'),
           ),
           const SizedBox(height: 12),
@@ -494,7 +494,8 @@ class _RepoCard extends StatelessWidget {
     final unavailable = !loading && (a == null || a.hasError);
 
     return BrutalCard(
-      accent: unavailable ? Palette.ink400 : Palette.cobalt,
+      flat: true,
+      accent: unavailable ? Palette.ink400 : Palette.teal,
       padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

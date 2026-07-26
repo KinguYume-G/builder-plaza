@@ -52,7 +52,7 @@ class BrutalField extends StatelessWidget {
         TextField(
           controller: controller,
           style: AppType.body(size: 15, weight: FontWeight.w500),
-          cursorColor: Palette.cobalt,
+          cursorColor: Palette.teal,
           maxLines: maxLines,
           maxLength: maxLength,
           keyboardType: keyboardType,
@@ -76,7 +76,7 @@ class BrutalField extends StatelessWidget {
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(6),
               borderSide: BorderSide(
-                  color: hasError ? Palette.tomato : Palette.cobalt,
+                  color: hasError ? Palette.tomato : Palette.teal,
                   width: 2.5),
             ),
           ),

@@ -61,9 +61,34 @@ class _MatchesBodyState extends State<MatchesBody> {
         padding: const EdgeInsets.all(20),
         children: [
           Text(
-            'Matched on verified skills — pull to refresh for a new round '
-            '(the exploration slot changes).',
+            'Matched on verified skills (pull to refresh for a new round)',
             style: AppType.body(size: 13, color: Palette.ink600),
+          ),
+          const SizedBox(height: 10),
+          // Card tint = candidate's role; this is the key so it's actually
+          // decodable, instead of spelling the role out in every card.
+          Wrap(
+            spacing: 14,
+            runSpacing: 6,
+            children: [
+              for (final entry in kRoleColors.entries) ...[
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 9,
+                      height: 9,
+                      decoration: BoxDecoration(
+                          color: entry.value, shape: BoxShape.circle),
+                    ),
+                    const SizedBox(width: 5),
+                    Text(entry.key,
+                        style:
+                            AppType.mono(size: 11, color: Palette.ink600)),
+                  ],
+                ),
+              ],
+            ],
           ),
           const SizedBox(height: 16),
           if (provider.loading && provider.matches.isEmpty)
@@ -113,84 +138,73 @@ class _MatchCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final candidate = match.candidate;
-    final roleColor = kRoleColors[candidate.primaryRole] ?? Palette.cobalt;
+    final roleColor = kRoleColors[candidate.primaryRole] ?? Palette.teal;
+    final hasHeadline = candidate.headline?.isNotEmpty ?? false;
 
     return BrutalCard(
-      accent: match.exploratory ? Palette.mustard : roleColor,
+      flat: true,
+      // Always the real role color -- previously exploratory matches forced
+      // the card to mustard/yellow regardless of role, which both hid the
+      // role color-key and put a caution-yellow wash on a person's card.
+      accent: roleColor,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              GestureDetector(
-                onTap: onTapCandidate,
-                child: Text('@${candidate.githubLogin}',
-                    style: AppType.display(size: 19, height: 1.05)),
-              ),
-              const Spacer(),
-              Text('${(match.score * 100).toStringAsFixed(0)}%',
-                  style: AppType.display(size: 19, color: Palette.ink600)),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              BrutalBadge(
-                label: candidate.primaryRole,
-                color: roleColor,
-                textColor:
-                    roleColor == Palette.cobalt || roleColor == Palette.plum
-                        ? Palette.paper
-                        : Palette.ink,
-              ),
-              BrutalBadge(
-                  label: 'trust ${candidate.trustScore.toStringAsFixed(0)}',
-                  color: Palette.lime),
-              if (match.exploratory)
-                const BrutalBadge(label: 'EXPLORE', color: Palette.mustard),
-            ],
-          ),
-          if (candidate.headline != null &&
-              candidate.headline!.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Text(candidate.headline!,
-                style: AppType.body(
-                    size: 13,
-                    color: Palette.ink600,
-                    weight: FontWeight.w600)),
-          ],
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Palette.cream100,
-              border: Border.all(color: Palette.ink, width: 2),
-              borderRadius: BorderRadius.circular(6),
-            ),
+          GestureDetector(
+            onTap: onTapCandidate,
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('WHY ',
-                    style: AppType.mono(
-                        size: 10,
-                        weight: FontWeight.w700,
-                        color: Palette.ink400)),
+                _CandidateAvatar(url: candidate.avatarUrl),
+                const SizedBox(width: 12),
                 Expanded(
-                  child: Text(match.matchReason,
-                      style: AppType.body(size: 13, height: 1.35)),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('@${candidate.githubLogin}',
+                          style: AppType.display(size: 18, height: 1.05),
+                          overflow: TextOverflow.ellipsis),
+                      if (hasHeadline) ...[
+                        const SizedBox(height: 4),
+                        Text(candidate.headline!,
+                            style: AppType.mono(
+                                size: 12, color: Palette.ink600),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text('${(match.score * 100).toStringAsFixed(0)}%',
+                        style: AppType.display(size: 19)),
+                    if (match.exploratory) ...[
+                      const SizedBox(height: 4),
+                      const BrutalBadge(
+                          label: 'EXPLORE', color: Palette.copper),
+                    ],
+                  ],
                 ),
               ],
             ),
           ),
+          const SizedBox(height: 10),
+          Text(match.matchReason,
+              style:
+                  AppType.body(size: 13, height: 1.35, color: Palette.ink600),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis),
           const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
                 child: BrutalButton(
                   label: 'Credibility',
-                  color: Palette.cobalt,
+                  color: Palette.lime,
+                  outline: true,
                   onPressed: onTapCandidate,
                 ),
               ),
@@ -220,6 +234,32 @@ class _MatchCard extends StatelessWidget {
   }
 }
 
+class _CandidateAvatar extends StatelessWidget {
+  const _CandidateAvatar({this.url});
+
+  final String? url;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        color: Palette.cream100,
+        border: Border.all(color: Palette.ink, width: 2),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: url == null || url!.isEmpty
+          ? Icon(Icons.person, color: Palette.ink400)
+          : Image.network(url!,
+              fit: BoxFit.cover,
+              errorBuilder: (_, _, _) =>
+                  Icon(Icons.person, color: Palette.ink400)),
+    );
+  }
+}
+
 /// Bottom sheet: the plain-language credibility summary + evidence links.
 class _CredibilitySheet extends StatelessWidget {
   const _CredibilitySheet({required this.candidate, required this.summary});
@@ -233,7 +273,7 @@ class _CredibilitySheet extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: BrutalCard(
-          accent: Palette.cobalt,
+          accent: Palette.teal,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -255,7 +295,7 @@ class _CredibilitySheet extends StatelessWidget {
                       children: [
                         Text('■ ',
                             style: AppType.mono(
-                                size: 12, color: Palette.cobalt)),
+                                size: 12, color: Palette.teal)),
                         Expanded(
                           child: Text(highlight,
                               style: AppType.body(size: 13, height: 1.3)),
@@ -267,7 +307,7 @@ class _CredibilitySheet extends StatelessWidget {
               const SizedBox(height: 16),
               BrutalButton(
                 label: 'Request collaboration',
-                color: Palette.plum,
+                color: Palette.copper,
                 onPressed: () {
                   Navigator.of(context).pop();
                   showRequestFormSheet(
@@ -281,7 +321,7 @@ class _CredibilitySheet extends StatelessWidget {
               BrutalButton(
                 label: 'Trust score',
                 color: Palette.lime,
-                textColor: Palette.ink,
+                outline: true,
                 onPressed: () {
                   Navigator.of(context).pop();
                   context.push('/users/${candidate.id}/trust');
@@ -291,7 +331,7 @@ class _CredibilitySheet extends StatelessWidget {
               BrutalButton(
                 label: 'Verified activity & evidence',
                 color: Palette.mustard,
-                textColor: Palette.ink,
+                outline: true,
                 onPressed: () {
                   Navigator.of(context).pop();
                   context.push('/users/${candidate.id}/evidence');
