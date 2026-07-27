@@ -67,8 +67,28 @@ class GrowthPostCard extends StatelessWidget {
                   style: AppType.mono(size: 12, color: Palette.ink600)),
             ],
             const SizedBox(height: 12),
-            Text(post.summary,
-                style: AppType.body(size: 14, height: 1.4)),
+            // Static label, not an animated "sparkle" badge -- Motion Budget
+            // keeps this a one-time-render fact ("this is an AI summary"),
+            // not a persistent effect competing for attention in a feed of
+            // many cards. GrowthPost.summary is always Bedrock-generated
+            // (see models/growth_post.dart), never user-authored.
+            Text('✦ AI SUMMARY',
+                style: AppType.mono(
+                    size: 10.5,
+                    color: Palette.ink400,
+                    weight: FontWeight.w700,
+                    letterSpacing: 0.4)),
+            const SizedBox(height: 6),
+            Container(
+              padding: const EdgeInsets.only(left: 10),
+              decoration: const BoxDecoration(
+                border: Border(
+                  left: BorderSide(color: Palette.lime, width: 2),
+                ),
+              ),
+              child: Text(post.summary,
+                  style: AppType.body(size: 14, height: 1.4)),
+            ),
             const SizedBox(height: 12),
             Wrap(
               spacing: 8,

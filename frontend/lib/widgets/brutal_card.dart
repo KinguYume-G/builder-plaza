@@ -21,6 +21,7 @@ class BrutalCard extends StatelessWidget {
     this.padding = const EdgeInsets.all(16),
     this.shadowOffset = const Offset(4, 4),
     this.flat = false,
+    this.signature = false,
   });
 
   final Widget child;
@@ -29,13 +30,20 @@ class BrutalCard extends StatelessWidget {
   final EdgeInsetsGeometry padding;
   final Offset shadowOffset;
 
-  /// When true, drops the hard offset shadow and thins the border to 1.5px.
+  /// When true, drops the shadow entirely and thins the border to a hairline.
   /// Use this for rows in a repeating list (timeline events, reviews, repo
-  /// roles, ...) -- the shadow reads as "this is a distinct, important
-  /// block", and applying that to every row in a 20-30 item list just
-  /// produces visual noise instead of emphasis. Reserve the default
-  /// (shadowed) look for standalone/hero cards.
+  /// roles, ...) -- any per-row shadow reads as "this is a distinct,
+  /// important block", and applying that to every row in a 20-30 item list
+  /// just produces visual noise instead of emphasis.
   final bool flat;
+
+  /// When true, keeps the full hard-offset "stamp" shadow + 2px ink border.
+  /// This is deliberately rare: reserved for the one card per screen that
+  /// represents externally-verified evidence (Trust Score, Ownership
+  /// Evidence) so the stamp itself carries meaning -- "this is certified
+  /// data" -- instead of being applied to every card as decoration.
+  /// Ignored when [flat] is true.
+  final bool signature;
 
   /// Flat list-row cards keep a single calm tint (no gradient) so the
   /// density fix from flattening long lists doesn't get undone; standalone
@@ -47,24 +55,29 @@ class BrutalCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final useGradient = accent != null && !flat;
+    final borderColor = flat ? Palette.ink200 : Palette.ink;
+    final borderWidth = flat ? 1.25 : (signature ? 2.0 : 1.5);
     return Container(
       decoration: BoxDecoration(
         color: useGradient ? null : _flatFill,
         gradient: useGradient
             ? Palette.glowTint(accent!, background: background)
             : null,
-        border: Border.all(color: Palette.ink, width: flat ? 1.5 : 2),
+        border: Border.all(color: borderColor, width: borderWidth),
         borderRadius: BorderRadius.circular(8),
         boxShadow: flat
             ? const []
-            : [
-                // Hard offset shadow — the brutalist signature. No blur.
-                BoxShadow(
-                  color: Palette.ink,
-                  offset: shadowOffset,
-                  blurRadius: 0,
-                ),
-              ],
+            : (signature
+                ? [
+                    // Hard offset shadow — reserved for verified/certified
+                    // evidence. No blur.
+                    BoxShadow(
+                      color: Palette.ink,
+                      offset: shadowOffset,
+                      blurRadius: 0,
+                    ),
+                  ]
+                : Palette.softShadow),
       ),
       child: Padding(padding: padding, child: child),
     );

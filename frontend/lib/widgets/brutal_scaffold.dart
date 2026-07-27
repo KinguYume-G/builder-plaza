@@ -53,11 +53,16 @@ class _TitleBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final canPop = Navigator.canPop(context);
+    // A calm alpha-blended tint of the role/feature color instead of a full
+    // vivid gradient fill -- the gradient title bar reads as a banner ad on
+    // every single screen; a faint tint + a small accent dot still identifies
+    // "which section am I in" without shouting on every navigation.
+    final tint = Color.alphaBlend(color.withValues(alpha: 0.16), Palette.paper);
     return Container(
       decoration: BoxDecoration(
-        gradient: Palette.glow(color),
+        color: tint,
         border: const Border(
-          bottom: BorderSide(color: Palette.ink, width: 2),
+          bottom: BorderSide(color: Palette.ink200, width: 1.25),
         ),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -70,6 +75,13 @@ class _TitleBar extends StatelessWidget {
               child: const Icon(Icons.arrow_back, color: Palette.ink, size: 22),
             ),
             const SizedBox(width: 14),
+          ] else ...[
+            Container(
+              width: 8,
+              height: 8,
+              margin: const EdgeInsets.only(right: 12),
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            ),
           ],
           Expanded(
             child: Text(

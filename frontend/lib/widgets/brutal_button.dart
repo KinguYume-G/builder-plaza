@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../theme/motion.dart';
 import '../theme/palette.dart';
 import '../theme/typography.dart';
 
@@ -67,6 +68,10 @@ class _BrutalButtonState extends State<BrutalButton> {
     // Gradient fill only for the enabled, filled (non-outline) case -- the
     // one loud/primary button per screen. Outline and disabled stay flat.
     final useGradient = !widget.outline && _enabled;
+    // Signature: the hard offset "stamp" shadow is reserved for that one
+    // primary CTA (see Palette.softShadow doc) -- outline/disabled buttons
+    // get a calmer soft shadow instead of the same stamp as everything else.
+    final isSignature = useGradient;
 
     return GestureDetector(
       onTapDown: (_) => _setPressed(true),
@@ -74,24 +79,28 @@ class _BrutalButtonState extends State<BrutalButton> {
       onTapCancel: () => _setPressed(false),
       onTap: _enabled ? widget.onPressed : null,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 60),
-        curve: Curves.easeOut,
+        duration: AppMotion.press,
+        curve: AppMotion.ease,
         transform: Matrix4.translationValues(translate.dx, translate.dy, 0),
         width: widget.expand ? double.infinity : null,
         decoration: BoxDecoration(
           color: useGradient ? null : fillColor,
           gradient: useGradient ? Palette.glow(fillColor) : null,
-          border: Border.all(color: Palette.ink, width: 2),
+          border: Border.all(
+              color: isSignature ? Palette.ink : Palette.ink200,
+              width: isSignature ? 2 : 1.5),
           borderRadius: BorderRadius.circular(8),
           boxShadow: _pressed
               ? const []
-              : const [
-                  BoxShadow(
-                    color: Palette.ink,
-                    offset: _shadowOffset,
-                    blurRadius: 0,
-                  ),
-                ],
+              : (isSignature
+                  ? const [
+                      BoxShadow(
+                        color: Palette.ink,
+                        offset: _shadowOffset,
+                        blurRadius: 0,
+                      ),
+                    ]
+                  : Palette.softShadow),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
         child: Row(

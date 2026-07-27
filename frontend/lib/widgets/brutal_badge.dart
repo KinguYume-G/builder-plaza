@@ -34,8 +34,9 @@ class BrutalBadge extends StatelessWidget {
     final badge = Container(
       decoration: BoxDecoration(
         color: bg,
-        border: Border.all(color: Palette.ink, width: 2),
-        borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+            color: selected ? Palette.ink : Palette.ink200, width: 1.5),
+        borderRadius: BorderRadius.circular(8),
         boxShadow: selected
             ? const [
                 BoxShadow(

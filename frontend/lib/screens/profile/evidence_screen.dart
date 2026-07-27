@@ -101,8 +101,11 @@ class _EvidenceScreenState extends State<EvidenceScreen> {
         const SizedBox(height: 20),
 
         // --- Ownership Evidence: continuity chart ---
+        // The one certified/verified block on this screen (public GitHub
+        // record, not self-reported) -- keeps the signature hard-shadow.
         BrutalCard(
           accent: Palette.mustard,
+          signature: true,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

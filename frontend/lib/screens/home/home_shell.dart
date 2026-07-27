@@ -667,36 +667,28 @@ class _NavItem extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 4),
         padding: const EdgeInsets.symmetric(vertical: 6),
         decoration: BoxDecoration(
-          color: selected ? accent : Palette.paper,
-          border: Border.all(color: Palette.ink, width: 2),
-          borderRadius: BorderRadius.circular(6),
-          boxShadow: selected
-              ? const [
-                  BoxShadow(
-                      color: Palette.ink, offset: Offset(2, 2), blurRadius: 0),
-                ]
-              : const [],
+          // A calm tint of the role accent instead of a solid fill + hard
+          // shadow -- the nav rail is on-screen permanently, so its selected
+          // state shouldn't compete with the one signature stamp reserved
+          // for verified evidence elsewhere in the app.
+          color: selected
+              ? Color.alphaBlend(accent.withValues(alpha: 0.16), Palette.paper)
+              : Palette.paper,
+          border: Border.all(
+              color: selected ? accent : Palette.ink200,
+              width: selected ? 1.5 : 1.25),
+          borderRadius: BorderRadius.circular(8),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon,
-                size: 20,
-                color: selected
-                    ? (accent == Palette.teal || accent == Palette.copper
-                        ? Palette.paper
-                        : Palette.ink)
-                    : Palette.ink400),
+            Icon(icon, size: 20, color: selected ? accent : Palette.ink400),
             const SizedBox(height: 2),
             Text(label.toUpperCase(),
                 style: AppType.mono(
                     size: 9,
                     weight: FontWeight.w700,
-                    color: selected
-                        ? (accent == Palette.teal || accent == Palette.copper
-                            ? Palette.paper
-                            : Palette.ink)
-                        : Palette.ink400)),
+                    color: selected ? accent : Palette.ink400)),
           ],
         ),
       ),
@@ -817,18 +809,33 @@ class _GithubCard extends StatelessWidget {
             style: AppType.mono(
                 size: 11, color: Palette.ink400, weight: FontWeight.w700)),
         const SizedBox(height: 14),
-        // A borderless stat strip instead of another bordered card full of
-        // badges -- four numbers separated by hairline dividers, like a
-        // scoreboard rather than a pile of boxed tags.
+        // Bento tiles instead of a borderless divided strip: these four
+        // numbers are genuinely heterogeneous metrics (not repeated rows of
+        // the same shape), so grouping them as distinct bordered tiles that
+        // can be scanned at a glance earns the pattern -- unlike a repeating
+        // feed list, where the same treatment would just be noise.
         Row(
           children: [
-            _Stat(value: '${summary.publicRepos}', label: 'REPOS'),
-            const _StatDivider(),
-            _Stat(value: '${summary.followers}', label: 'FOLLOWERS'),
-            const _StatDivider(),
-            _Stat(value: '${summary.stars}', label: 'STARS'),
-            const _StatDivider(),
-            _Stat(value: '${summary.recentActivityCount}', label: 'RECENT'),
+            Expanded(
+                child: _BentoTile(
+                    value: '${summary.publicRepos}', label: 'REPOS')),
+            const SizedBox(width: 10),
+            Expanded(
+                child: _BentoTile(
+                    value: '${summary.followers}', label: 'FOLLOWERS')),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+                child:
+                    _BentoTile(value: '${summary.stars}', label: 'STARS')),
+            const SizedBox(width: 10),
+            Expanded(
+                child: _BentoTile(
+                    value: '${summary.recentActivityCount}',
+                    label: 'RECENT')),
           ],
         ),
         if (topLangs.isNotEmpty && totalLangCount > 0) ...[
@@ -885,34 +892,35 @@ class _GithubCard extends StatelessWidget {
   }
 }
 
-class _Stat extends StatelessWidget {
-  const _Stat({required this.value, required this.label});
+/// A single bento-grid metric tile: hairline border + soft shadow, same
+/// elevation language as [BrutalCard]'s default (non-signature) treatment.
+class _BentoTile extends StatelessWidget {
+  const _BentoTile({required this.value, required this.label});
 
   final String value;
   final String label;
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Palette.paper,
+        border: Border.all(color: Palette.ink200, width: 1.25),
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: Palette.softShadow,
+      ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(value, style: AppType.display(size: 22)),
-          const SizedBox(height: 2),
           Text(label,
               style: AppType.mono(
                   size: 9, color: Palette.ink400, weight: FontWeight.w700)),
+          const SizedBox(height: 4),
+          Text(value, style: AppType.display(size: 20)),
         ],
       ),
     );
-  }
-}
-
-class _StatDivider extends StatelessWidget {
-  const _StatDivider();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(width: 1.5, height: 32, color: Palette.ink200);
   }
 }
 

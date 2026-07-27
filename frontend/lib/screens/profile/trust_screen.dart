@@ -92,9 +92,12 @@ class _TrustScreenState extends State<TrustScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Total.
+        // Total -- the one certified/verified block on this screen, so it
+        // keeps the signature hard-shadow stamp while everything else below
+        // (component rows, peer reviews) stays calm.
         BrutalCard(
           accent: Palette.lime,
+          signature: true,
           child: Row(
             children: [
               Expanded(

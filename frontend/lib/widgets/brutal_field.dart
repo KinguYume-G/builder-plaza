@@ -71,13 +71,14 @@ class BrutalField extends StatelessWidget {
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(6),
               borderSide: BorderSide(
-                  color: hasError ? Palette.tomato : Palette.ink, width: 2),
+                  color: hasError ? Palette.tomato : Palette.ink200,
+                  width: 1.5),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(6),
               borderSide: BorderSide(
                   color: hasError ? Palette.tomato : Palette.teal,
-                  width: 2.5),
+                  width: 2),
             ),
           ),
         ),

@@ -13,11 +13,11 @@ class SimulatedBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: Palette.tomato,
-        border: Border.all(color: Palette.ink, width: 2),
-        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: Palette.ink, width: 1.5),
+        borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

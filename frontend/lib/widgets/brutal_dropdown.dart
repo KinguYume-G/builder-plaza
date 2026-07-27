@@ -33,7 +33,7 @@ class BrutalDropdown<T> extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: Palette.paper,
-        border: Border.all(color: borderColor, width: 2),
+        border: Border.all(color: borderColor, width: 1.5),
         borderRadius: BorderRadius.circular(6),
       ),
       child: DropdownButtonHideUnderline(

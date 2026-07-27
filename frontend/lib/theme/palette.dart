@@ -5,6 +5,21 @@ import 'package:flutter/painting.dart';
 /// All colors used across the app are defined here as a single source of
 /// truth. Never hard-code hex values in widgets — reference [Palette] instead.
 abstract final class Palette {
+  /// Precision-Brutalism elevation: a soft, blurred shadow pair used
+  /// everywhere EXCEPT the one "signature" hard-offset stamp (reserved for
+  /// verified/trust evidence and the single primary CTA per screen — see
+  /// [BrutalCard]'s `signature` flag and `BrutalButton`). Two layers so it
+  /// reads as a real elevated surface rather than a single flat blur.
+  static const List<BoxShadow> softShadow = [
+    BoxShadow(color: Color(0x140A0A0A), offset: Offset(0, 1), blurRadius: 2),
+    BoxShadow(
+      color: Color(0x1F0A0A0A),
+      offset: Offset(0, 6),
+      blurRadius: 16,
+      spreadRadius: -4,
+    ),
+  ];
+
   // Surfaces (warm paper tones)
   static const Color paper = Color(0xFFFFFEF8);
   static const Color cream50 = Color(0xFFFAF6EC);
