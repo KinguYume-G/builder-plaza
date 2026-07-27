@@ -136,12 +136,12 @@ class _TrustScreenState extends State<TrustScreen> {
         Text('COMPONENTS',
             style: AppType.mono(
                 size: 11, color: Palette.ink400, weight: FontWeight.w700)),
-        const SizedBox(height: 10),
-        for (final component in score.components) ...[
-          _ComponentCard(component: component),
-          const SizedBox(height: 10),
+        const SizedBox(height: 4),
+        for (var i = 0; i < score.components.length; i++) ...[
+          if (i > 0) const Divider(color: Palette.ink200, height: 22),
+          _ComponentRow(component: score.components[i]),
         ],
-        const SizedBox(height: 16),
+        const SizedBox(height: 20),
         BrutalButton(
           label: 'View verified activity & evidence',
           color: Palette.mustard,
@@ -163,50 +163,20 @@ class _TrustScreenState extends State<TrustScreen> {
             ),
           )
         else
-          for (final review in reviews) ...[
-            BrutalCard(
-              flat: true,
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text('@${review.reviewerLogin}',
-                          style: AppType.mono(
-                              size: 13, weight: FontWeight.w700)),
-                      const Spacer(),
-                      Text('★' * review.stars + '☆' * (5 - review.stars),
-                          style: AppType.body(
-                              size: 15, color: Palette.mustard)),
-                    ],
-                  ),
-                  if (review.tags.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: [
-                        for (final tag in review.tags)
-                          BrutalBadge(
-                              label: tag,
-                              color: Palette.paper,
-                              textColor: Palette.ink),
-                      ],
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            const SizedBox(height: 10),
+          for (var i = 0; i < reviews.length; i++) ...[
+            if (i > 0) const Divider(color: Palette.ink200, height: 22),
+            _ReviewRow(review: reviews[i]),
           ],
       ],
     );
   }
 }
 
-class _ComponentCard extends StatelessWidget {
-  const _ComponentCard({required this.component});
+/// A trust component's label/score/bar/detail, borderless -- same idea as
+/// the Top Languages bar in Profile: one bordered progress bar carries the
+/// visual weight, everything around it is plain text.
+class _ComponentRow extends StatelessWidget {
+  const _ComponentRow({required this.component});
 
   final TrustComponent component;
 
@@ -215,64 +185,85 @@ class _ComponentCard extends StatelessWidget {
     final score = component.score;
     final pct = ((score ?? 0) / 100).clamp(0.0, 1.0);
 
-    return BrutalCard(
-      flat: true,
-      padding: const EdgeInsets.all(14),
-      accent: component.available ? Palette.lime : Palette.ink200,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(component.label.toUpperCase(),
-                  style: AppType.mono(
-                      size: 11,
-                      weight: FontWeight.w700,
-                      color: component.available
-                          ? Palette.ink
-                          : Palette.ink400)),
-              const SizedBox(width: 8),
-              if (component.simulated)
-                const BrutalBadge(
-                    label: 'SIMULATED',
-                    color: Palette.tomato,
-                    textColor: Palette.paper),
-              const Spacer(),
-              Text(
-                  score == null
-                      ? '—'
-                      : '${score.toStringAsFixed(0)} · w ${(component.weight * 100).toStringAsFixed(0)}%',
-                  style: AppType.mono(size: 12, color: Palette.ink600)),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Container(
-            height: 14,
-            decoration: BoxDecoration(
-              color: Palette.cream100,
-              border: Border.all(color: Palette.ink, width: 2),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: FractionallySizedBox(
-                widthFactor: pct,
-                child: Container(
-                    color: component.available
-                        ? Palette.teal
-                        : Palette.ink200),
-              ),
-            ),
-          ),
-          if (component.detail != null) ...[
-            const SizedBox(height: 8),
-            Text(component.detail!,
-                style: AppType.body(
-                    size: 12, color: Palette.ink600, height: 1.3)),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(component.label.toUpperCase(),
+                style: AppType.mono(
+                    size: 11,
+                    weight: FontWeight.w700,
+                    color:
+                        component.available ? Palette.ink : Palette.ink400)),
+            const SizedBox(width: 8),
+            if (component.simulated)
+              const BrutalBadge(
+                  label: 'SIMULATED',
+                  color: Palette.tomato,
+                  textColor: Palette.paper),
+            const Spacer(),
+            Text(
+                score == null
+                    ? '—'
+                    : '${score.toStringAsFixed(0)} · w ${(component.weight * 100).toStringAsFixed(0)}%',
+                style: AppType.mono(size: 12, color: Palette.ink600)),
           ],
+        ),
+        const SizedBox(height: 8),
+        Container(
+          height: 12,
+          decoration: BoxDecoration(
+            color: Palette.cream100,
+            border: Border.all(color: Palette.ink, width: 2),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: FractionallySizedBox(
+              widthFactor: pct,
+              child: Container(
+                  color: component.available ? Palette.teal : Palette.ink200),
+            ),
+          ),
+        ),
+        if (component.detail != null) ...[
+          const SizedBox(height: 6),
+          Text(component.detail!,
+              style:
+                  AppType.body(size: 12, color: Palette.ink600, height: 1.3)),
         ],
-      ),
+      ],
+    );
+  }
+}
+
+class _ReviewRow extends StatelessWidget {
+  const _ReviewRow({required this.review});
+
+  final PeerReviewItem review;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text('@${review.reviewerLogin}',
+                style: AppType.mono(size: 13, weight: FontWeight.w700)),
+            const Spacer(),
+            Text('★' * review.stars + '☆' * (5 - review.stars),
+                style: AppType.body(size: 15, color: Palette.mustard)),
+          ],
+        ),
+        if (review.tags.isNotEmpty) ...[
+          const SizedBox(height: 6),
+          Text(review.tags.join(', '),
+              style: AppType.mono(size: 11, color: Palette.ink600)),
+        ],
+      ],
     );
   }
 }

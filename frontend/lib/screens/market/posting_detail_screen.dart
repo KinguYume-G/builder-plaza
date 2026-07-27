@@ -79,94 +79,59 @@ class _PostingDetailScreenState extends State<PostingDetailScreen> {
   }
 
   Widget _body(RolePosting posting, String? myId) {
+    final meta = [
+      if (posting.stage != null) posting.stage!,
+      if (posting.techStack != null) posting.techStack!,
+      if (posting.commitment != null) posting.commitment!,
+      if (posting.accessTier != null)
+        kAccessTierLabels[posting.accessTier!] ?? posting.accessTier!,
+    ].join('  ·  ');
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
+        Row(
           children: [
-            BrutalBadge(
-                label:
-                    posting.isMaintainer ? 'MAINTAINER' : 'TEAM ROLE',
-                color: posting.isMaintainer
-                    ? Palette.lime
-                    : Palette.mustard),
+            Icon(posting.isMaintainer ? Icons.build : Icons.groups,
+                size: 15, color: Palette.ink600),
+            const SizedBox(width: 6),
+            Text(posting.isMaintainer ? 'Maintainer' : 'Team role',
+                style: AppType.mono(
+                    size: 11, weight: FontWeight.w700, color: Palette.ink600)),
+            const SizedBox(width: 14),
             BrutalBadge(
                 label: posting.status.toUpperCase(),
                 color: posting.status == 'open'
                     ? Palette.lime
                     : Palette.ink200),
-            if (posting.accessTier != null)
-              BrutalBadge(
-                  label: kAccessTierLabels[posting.accessTier!] ??
-                      posting.accessTier!,
-                  color: Palette.paper),
           ],
         ),
         const SizedBox(height: 16),
         Text(posting.roleDesc,
             style: AppType.body(size: 15, height: 1.4)),
         const SizedBox(height: 16),
-        BrutalCard(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('POSTED BY',
-                  style: AppType.mono(
-                      size: 10,
-                      color: Palette.ink400,
-                      weight: FontWeight.w700)),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Text('@${posting.owner.githubLogin}',
-                      style: AppType.display(size: 18)),
-                  const Spacer(),
-                  BrutalBadge(
-                      label: posting.owner.primaryRole,
-                      color: Palette.teal,
-                      textColor: Palette.paper),
-                ],
-              ),
-            ],
-          ),
+        // Identity as a plain row, not a bordered box -- the person isn't
+        // the point of this screen, the role is.
+        Row(
+          children: [
+            _OwnerAvatar(url: posting.owner.avatarUrl),
+            const SizedBox(width: 10),
+            Text('@${posting.owner.githubLogin}',
+                style: AppType.display(size: 17)),
+            const SizedBox(width: 8),
+            Text(posting.owner.primaryRole,
+                style: AppType.mono(size: 11, color: Palette.ink400)),
+          ],
         ),
-        if (posting.stage != null ||
-            posting.techStack != null ||
-            posting.commitment != null) ...[
+        if (meta.isNotEmpty) ...[
           const SizedBox(height: 14),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              if (posting.stage != null)
-                BrutalBadge(
-                    label: 'stage: ${posting.stage!}',
-                    color: Palette.paper),
-              if (posting.techStack != null)
-                BrutalBadge(
-                    label: posting.techStack!, color: Palette.paper),
-              if (posting.commitment != null)
-                BrutalBadge(
-                    label: posting.commitment!, color: Palette.paper),
-            ],
-          ),
+          Text(meta,
+              style: AppType.mono(size: 12, color: Palette.ink600)),
         ],
         if (posting.skills.isNotEmpty) ...[
-          const SizedBox(height: 14),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final skill in posting.skills)
-                BrutalBadge(
-                    label: skill,
-                    color: Palette.cream100,
-                    textColor: Palette.ink),
-            ],
-          ),
+          const SizedBox(height: 10),
+          Text(posting.skills.join(', '),
+              style: AppType.body(size: 13, color: Palette.ink600)),
         ],
         if (posting.repos.isNotEmpty) ...[
           const SizedBox(height: 20),
@@ -224,6 +189,32 @@ class _PostingDetailScreenState extends State<PostingDetailScreen> {
             ),
           ),
       ],
+    );
+  }
+}
+
+class _OwnerAvatar extends StatelessWidget {
+  const _OwnerAvatar({this.url});
+
+  final String? url;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 32,
+      height: 32,
+      decoration: BoxDecoration(
+        color: Palette.cream100,
+        border: Border.all(color: Palette.ink, width: 2),
+        borderRadius: BorderRadius.circular(7),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: url == null || url!.isEmpty
+          ? Icon(Icons.person, size: 16, color: Palette.ink400)
+          : Image.network(url!,
+              fit: BoxFit.cover,
+              errorBuilder: (_, _, _) =>
+                  Icon(Icons.person, size: 16, color: Palette.ink400)),
     );
   }
 }

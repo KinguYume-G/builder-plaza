@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/github_summary.dart';
+import '../../models/project_card.dart';
 import '../../models/user.dart';
 import '../../state/auth_provider.dart';
 import '../../state/projects_provider.dart';
@@ -12,8 +13,8 @@ import '../../theme/typography.dart';
 import '../../widgets/brutal_badge.dart';
 import '../../widgets/brutal_button.dart';
 import '../../widgets/brutal_card.dart';
+import '../../widgets/brutal_dropdown.dart';
 import '../../widgets/brutal_scaffold.dart';
-import '../../widgets/project_list_card.dart';
 import '../login_screen.dart' show kRoleColors;
 import '../matches/matches_screen.dart';
 import '../projects/discovery_screen.dart';
@@ -185,50 +186,39 @@ class _HomeTab extends StatelessWidget {
       child: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          // Intent card.
-          BrutalCard(
-            accent: Palette.copper,
+          // My Intent / My Projects, each allocated half the page height
+          // (top/bottom, divider between -- same treatment as the Logout
+          // divider in Profile), independently scrollable within their half
+          // so a long project list doesn't push Intent off-screen. Styled
+          // like GitHub Activity / Top Languages: a mono caption heading and
+          // plain content, no card border around the whole section.
+          SizedBox(
+            height: MediaQuery.of(context).size.height * 0.5,
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Text('MY INTENT',
-                        style: AppType.mono(
-                            size: 11,
-                            color: Palette.ink400,
-                            weight: FontWeight.w700)),
-                    const Spacer(),
-                    GestureDetector(
-                      onTap: () => context.push('/intent'),
-                      child: Text(intent == null ? 'set →' : 'edit →',
-                          style: AppType.mono(
-                              size: 12,
-                              color: Palette.copper,
-                              weight: FontWeight.w700)),
-                    ),
-                  ],
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: _IntentSection(intent: intent),
+                  ),
                 ),
-                const SizedBox(height: 12),
-                if (intent == null)
-                  Text('Let others know what you\'re open to.',
-                      style: AppType.body(size: 14, color: Palette.ink600))
-                else ...[
-                  BrutalBadge(
-                      label: intent.label,
-                      color: Palette.copper,
-                      textColor: Palette.paper),
-                  if (intent.note != null && intent.note!.isNotEmpty) ...[
-                    const SizedBox(height: 10),
-                    Text(intent.note!,
-                        style:
-                            AppType.body(size: 14, color: Palette.ink600)),
-                  ],
-                ],
+                const SizedBox(height: 14),
+                const Divider(color: Palette.ink200, height: 1),
+                const SizedBox(height: 14),
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: _ProjectsSection(projects: projects),
+                  ),
+                ),
               ],
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
+          BrutalButton(
+            label: '＋ New project',
+            color: Palette.teal,
+            onPressed: () => context.push('/projects/new'),
+          ),
+          const SizedBox(height: 12),
           // F7: requests inbox + conversations.
           BrutalButton(
             label: 'Requests & messages',
@@ -244,47 +234,117 @@ class _HomeTab extends StatelessWidget {
             outline: true,
             onPressed: () => context.push('/market'),
           ),
-          const SizedBox(height: 24),
-          Row(
-            children: [
-              Text('MY PROJECTS',
-                  style: AppType.display(size: 20)),
-              const Spacer(),
-              Text('${projects.mine.length}',
-                  style: AppType.display(size: 20, color: Palette.ink400)),
-            ],
-          ),
-          const SizedBox(height: 12),
-          BrutalButton(
-            label: '＋ New project',
-            color: Palette.teal,
-            onPressed: () => context.push('/projects/new'),
-          ),
-          const SizedBox(height: 16),
-          if (projects.loadingMine && projects.mine.isEmpty)
-            const Padding(
-              padding: EdgeInsets.only(top: 24),
-              child: Center(
-                  child: CircularProgressIndicator(color: Palette.ink)),
-            )
-          else if (projects.mine.isEmpty)
-            BrutalCard(
-              background: Palette.cream100,
-              child: Text(
-                'No projects yet. Post your first one so founders and '
-                'collaborators can find you.',
-                style: AppType.body(size: 14, color: Palette.ink600),
-              ),
-            )
-          else
-            for (final project in projects.mine) ...[
-              ProjectListCard(
-                project: project,
-                showOwner: false,
-                onTap: () => context.push('/projects/${project.id}'),
-              ),
-              const SizedBox(height: 14),
-            ],
+        ],
+      ),
+    );
+  }
+}
+
+class _IntentSection extends StatelessWidget {
+  const _IntentSection({required this.intent});
+
+  final IntentBadge? intent;
+
+  @override
+  Widget build(BuildContext context) {
+    final current = intent;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text('MY INTENT',
+                style: AppType.mono(
+                    size: 11, color: Palette.ink400, weight: FontWeight.w700)),
+            const Spacer(),
+            GestureDetector(
+              onTap: () => context.push('/intent'),
+              child: Text(current == null ? 'set →' : 'edit →',
+                  style: AppType.mono(
+                      size: 11, color: Palette.copper, weight: FontWeight.w700)),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        if (current == null)
+          Text('Let others know what you\'re open to.',
+              style: AppType.body(size: 13, color: Palette.ink600, height: 1.3))
+        else ...[
+          Text(current.label,
+              style: AppType.body(
+                  size: 14, weight: FontWeight.w700, color: Palette.copper)),
+          if (current.note != null && current.note!.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(current.note!,
+                style: AppType.body(
+                    size: 13, color: Palette.ink600, height: 1.3)),
+          ],
+        ],
+      ],
+    );
+  }
+}
+
+class _ProjectsSection extends StatelessWidget {
+  const _ProjectsSection({required this.projects});
+
+  final ProjectsProvider projects;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('MY PROJECTS (${projects.mine.length})',
+            style: AppType.mono(
+                size: 11, color: Palette.ink400, weight: FontWeight.w700)),
+        const SizedBox(height: 10),
+        if (projects.loadingMine && projects.mine.isEmpty)
+          const Padding(
+            padding: EdgeInsets.only(top: 4),
+            child: SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                    strokeWidth: 2, color: Palette.ink)),
+          )
+        else if (projects.mine.isEmpty)
+          Text(
+            'No projects yet — post your first so people can find you.',
+            style: AppType.body(size: 13, color: Palette.ink600, height: 1.3),
+          )
+        else
+          for (var i = 0; i < projects.mine.length; i++) ...[
+            if (i > 0) const Divider(color: Palette.ink200, height: 18),
+            _ProjectRow(project: projects.mine[i]),
+          ],
+      ],
+    );
+  }
+}
+
+class _ProjectRow extends StatelessWidget {
+  const _ProjectRow({required this.project});
+
+  final ProjectCard project;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => context.push('/projects/${project.id}'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(project.title,
+              style: AppType.body(size: 13, weight: FontWeight.w700),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis),
+          const SizedBox(height: 2),
+          Text(
+              project.isArchived
+                  ? '${stageLabel(project.stage)} · archived'
+                  : stageLabel(project.stage),
+              style: AppType.mono(size: 10, color: Palette.ink400)),
         ],
       ),
     );
@@ -403,6 +463,19 @@ class _ProfileTab extends StatelessWidget {
                       ],
                     ),
                   ),
+                  const SizedBox(width: 8),
+                  // Role switch, right beside the identity it belongs to,
+                  // instead of a separate section further down the page.
+                  BrutalDropdown<String>(
+                    value: user.primaryRole,
+                    borderColor: roleColor,
+                    items: const [
+                      ('builder', 'Builder'),
+                      ('collaborator', 'Collaborator'),
+                      ('founder', 'Founder'),
+                    ],
+                    onChanged: (role) => _switchRole(context, role),
+                  ),
                 ],
               ),
               if (user.linkedinHeadline != null &&
@@ -455,41 +528,21 @@ class _ProfileTab extends StatelessWidget {
           onPressed: () => context.push('/mocked'),
         ),
         const SizedBox(height: 24),
-        Text('SWITCH ROLE',
-            style: AppType.mono(
-                size: 11, color: Palette.ink400, weight: FontWeight.w700)),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (final entry in kRoleColors.entries)
-              BrutalBadge(
-                label: entry.key,
-                color: entry.value,
-                selected: user.primaryRole == entry.key,
-                onTap: user.primaryRole == entry.key
-                    ? null
-                    : () => _switchRole(context, entry.key),
-              ),
-          ],
+        const Divider(color: Palette.ink200, height: 1),
+        const SizedBox(height: 20),
+        BrutalButton(
+          label: 'Logout',
+          color: Palette.tomato,
+          outline: true,
+          onPressed: () => _logout(context),
         ),
-        const SizedBox(height: 24),
-        Row(
-          children: [
-            GestureDetector(
-              onTap: () => _logout(context),
-              child: Text('Logout',
-                  style: AppType.mono(
-                      size: 13, color: Palette.tomato, weight: FontWeight.w700)),
-            ),
-            const Spacer(),
-            GestureDetector(
-              onTap: () => context.push('/dev'),
-              child: Text('dev · system check',
-                  style: AppType.mono(size: 11, color: Palette.ink400)),
-            ),
-          ],
+        const SizedBox(height: 10),
+        Center(
+          child: GestureDetector(
+            onTap: () => context.push('/dev'),
+            child: Text('dev · system check',
+                style: AppType.mono(size: 11, color: Palette.ink400)),
+          ),
         ),
       ],
     );

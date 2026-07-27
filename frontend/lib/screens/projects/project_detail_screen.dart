@@ -232,8 +232,6 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
   }
 
   Widget _body(ProjectCard card, bool isOwner) {
-    final roleColor = kRoleColors[card.owner.primaryRole] ?? Palette.teal;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -259,33 +257,20 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
                   textColor: Palette.paper),
           ],
         ),
-        const SizedBox(height: 20),
-        // Owner.
-        BrutalCard(
-          accent: roleColor,
-          child: Row(
-            children: [
-              _Avatar(url: card.owner.avatarUrl),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('@${card.owner.githubLogin}',
-                        style: AppType.display(size: 18, height: 1.05),
-                        overflow: TextOverflow.ellipsis),
-                    const SizedBox(height: 6),
-                    BrutalBadge(
-                      label: card.owner.primaryRole,
-                      color: roleColor,
-                      textColor:
-                          roleColor == Palette.teal ? Palette.paper : Palette.ink,
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+        const SizedBox(height: 18),
+        // Owner -- a plain identity row, not a bordered card; the project is
+        // the point of this screen, not the owner.
+        Row(
+          children: [
+            _Avatar(url: card.owner.avatarUrl),
+            const SizedBox(width: 10),
+            Text('@${card.owner.githubLogin}',
+                style: AppType.display(size: 17, height: 1.05),
+                overflow: TextOverflow.ellipsis),
+            const SizedBox(width: 8),
+            Text(card.owner.primaryRole,
+                style: AppType.mono(size: 11, color: Palette.ink400)),
+          ],
         ),
         if (card.intent?.note != null && card.intent!.note!.isNotEmpty) ...[
           const SizedBox(height: 16),
@@ -468,17 +453,19 @@ class _RepoActivityList extends StatelessWidget {
     final loading = activity == null;
     return Column(
       children: [
-        for (final repo in repos) ...[
-          _RepoCard(repo: repo, activity: _forRepo(repo), loading: loading),
-          const SizedBox(height: 10),
+        for (var i = 0; i < repos.length; i++) ...[
+          if (i > 0) const Divider(color: Palette.ink200, height: 20),
+          _RepoRow(repo: repos[i], activity: _forRepo(repos[i]), loading: loading),
         ],
       ],
     );
   }
 }
 
-class _RepoCard extends StatelessWidget {
-  const _RepoCard({
+/// A linked repo's live activity, borderless -- a plain row per repo instead
+/// of another bordered card, same reasoning as the Trust Score components.
+class _RepoRow extends StatelessWidget {
+  const _RepoRow({
     required this.repo,
     required this.activity,
     required this.loading,
@@ -492,54 +479,37 @@ class _RepoCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final a = activity;
     final unavailable = !loading && (a == null || a.hasError);
+    final meta = a == null
+        ? ''
+        : [
+            if (a.language != null && a.language!.isNotEmpty) a.language!,
+            if (a.stars != null) '★ ${a.stars}',
+            if (a.openIssues != null) '${a.openIssues} issues',
+            if (a.pushedAt != null) 'pushed ${_ago(a.pushedAt!)}',
+          ].join('  ·  ');
 
-    return BrutalCard(
-      flat: true,
-      accent: unavailable ? Palette.ink400 : Palette.teal,
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(repo, style: AppType.mono(size: 13, weight: FontWeight.w700)),
-          const SizedBox(height: 8),
-          if (loading)
-            Text('Loading activity…',
-                style: AppType.mono(size: 12, color: Palette.ink400))
-          else if (unavailable)
-            Text('Activity unavailable',
-                style: AppType.mono(size: 12, color: Palette.ink400))
-          else ...[
-            if (a!.description != null && a.description!.isNotEmpty) ...[
-              Text(a.description!,
-                  style:
-                      AppType.body(size: 13, color: Palette.ink600, height: 1.3)),
-              const SizedBox(height: 10),
-            ],
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                if (a.stars != null)
-                  BrutalBadge(
-                      label: '★ ${a.stars}', color: Palette.mustard),
-                if (a.language != null && a.language!.isNotEmpty)
-                  BrutalBadge(
-                      label: a.language!,
-                      color: Palette.paper,
-                      textColor: Palette.ink),
-                if (a.openIssues != null)
-                  BrutalBadge(
-                      label: '${a.openIssues} issues', color: Palette.lime),
-                if (a.pushedAt != null)
-                  BrutalBadge(
-                      label: 'pushed ${_ago(a.pushedAt!)}',
-                      color: Palette.paper,
-                      textColor: Palette.ink),
-              ],
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(repo, style: AppType.mono(size: 13, weight: FontWeight.w700)),
+        const SizedBox(height: 6),
+        if (loading)
+          Text('Loading activity…',
+              style: AppType.mono(size: 12, color: Palette.ink400))
+        else if (unavailable)
+          Text('Activity unavailable',
+              style: AppType.mono(size: 12, color: Palette.ink400))
+        else ...[
+          if (a!.description != null && a.description!.isNotEmpty) ...[
+            Text(a.description!,
+                style:
+                    AppType.body(size: 13, color: Palette.ink600, height: 1.3)),
+            const SizedBox(height: 6),
           ],
+          if (meta.isNotEmpty)
+            Text(meta, style: AppType.mono(size: 11, color: Palette.ink600)),
         ],
-      ),
+      ],
     );
   }
 

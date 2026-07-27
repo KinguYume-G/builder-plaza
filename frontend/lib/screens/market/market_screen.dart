@@ -12,7 +12,6 @@ import '../../widgets/brutal_button.dart';
 import '../../widgets/brutal_card.dart';
 import '../../widgets/brutal_scaffold.dart';
 import '../../widgets/request_form_sheet.dart';
-import '../login_screen.dart' show kRoleColors;
 
 /// F8: the unified Request Market — maintainer postings and team-role
 /// recruitments in one feed, filterable by type and skill. Applying reuses
@@ -157,9 +156,16 @@ class _PostingCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final typeColor =
         posting.isMaintainer ? Palette.lime : Palette.mustard;
-    final roleColor =
-        kRoleColors[posting.owner.primaryRole] ?? Palette.teal;
     final isMine = posting.owner.id == myId;
+    // One scannable line instead of up to five separate badges.
+    final meta = [
+      if (posting.projectTitle != null) posting.projectTitle!,
+      if (posting.accessTier != null)
+        kAccessTierLabels[posting.accessTier!] ?? posting.accessTier!,
+      if (posting.stage != null) posting.stage!,
+      if (posting.techStack != null) posting.techStack!,
+      if (posting.commitment != null) posting.commitment!,
+    ].join('  ·  ');
 
     return BrutalCard(
       flat: true,
@@ -169,11 +175,14 @@ class _PostingCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              BrutalBadge(
-                  label: posting.isMaintainer
-                      ? 'MAINTAINER'
-                      : 'TEAM ROLE',
-                  color: typeColor),
+              Icon(posting.isMaintainer ? Icons.build : Icons.groups,
+                  size: 14, color: Palette.ink600),
+              const SizedBox(width: 6),
+              Text(posting.isMaintainer ? 'Maintainer' : 'Team role',
+                  style: AppType.mono(
+                      size: 11,
+                      weight: FontWeight.w700,
+                      color: Palette.ink600)),
               const Spacer(),
               Text('@${posting.owner.githubLogin}',
                   style: AppType.mono(
@@ -187,44 +196,20 @@ class _PostingCard extends StatelessWidget {
               style: AppType.body(size: 14, height: 1.35),
               maxLines: 3,
               overflow: TextOverflow.ellipsis),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              if (posting.projectTitle != null)
-                BrutalBadge(
-                    label: posting.projectTitle!,
-                    color: Palette.teal,
-                    textColor: Palette.paper),
-              if (posting.accessTier != null)
-                BrutalBadge(
-                    label: kAccessTierLabels[posting.accessTier!] ??
-                        posting.accessTier!,
-                    color: Palette.lime),
-              if (posting.stage != null)
-                BrutalBadge(label: posting.stage!, color: Palette.paper),
-              if (posting.techStack != null)
-                BrutalBadge(
-                    label: posting.techStack!, color: Palette.paper),
-              if (posting.commitment != null)
-                BrutalBadge(
-                    label: posting.commitment!, color: Palette.paper),
-              for (final skill in posting.skills.take(4))
-                BrutalBadge(
-                    label: skill,
-                    color: Palette.cream100,
-                    textColor: Palette.ink),
-              BrutalBadge(
-                label: posting.owner.primaryRole,
-                color: roleColor,
-                textColor: roleColor == Palette.teal ||
-                        roleColor == Palette.copper
-                    ? Palette.paper
-                    : Palette.ink,
-              ),
-            ],
-          ),
+          if (meta.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(meta,
+                style: AppType.mono(size: 11, color: Palette.ink400),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis),
+          ],
+          if (posting.skills.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(posting.skills.join(', '),
+                style: AppType.body(size: 12, color: Palette.ink600),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis),
+          ],
           const SizedBox(height: 12),
           Row(
             children: [

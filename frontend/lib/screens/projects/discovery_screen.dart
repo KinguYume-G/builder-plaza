@@ -8,7 +8,7 @@ import '../../state/projects_provider.dart';
 import '../../theme/palette.dart';
 import '../../theme/typography.dart';
 import '../../widgets/brutal_badge.dart';
-import '../../widgets/brutal_card.dart';
+import '../../widgets/brutal_dropdown.dart';
 import '../../widgets/brutal_scaffold.dart';
 import '../../widgets/growth_post_card.dart';
 import '../../widgets/project_list_card.dart';
@@ -71,16 +71,6 @@ class _PlazaBodyState extends State<PlazaBody> {
         );
   }
 
-  void _toggleStage(String stage) {
-    setState(() => _stageFilter = _stageFilter == stage ? null : stage);
-    _refresh();
-  }
-
-  void _toggleRole(String role) {
-    setState(() => _roleFilter = _roleFilter == role ? null : role);
-    _refresh();
-  }
-
   void _setMode(bool growth) {
     if (_growthMode == growth) return;
     setState(() => _growthMode = growth);
@@ -104,22 +94,76 @@ class _PlazaBodyState extends State<PlazaBody> {
             style: AppType.body(size: 13, color: Palette.ink600),
           ),
           const SizedBox(height: 16),
-          // Projects ↔ Growth feed toggle.
+          // Mode + the mode-specific secondary filter, one line: dropdowns
+          // instead of badge rows so this doesn't eat vertical space, and a
+          // search field (project mode only) fills whatever's left.
           Row(
             children: [
-              BrutalBadge(
-                label: 'PROJECTS',
-                color: Palette.lime,
-                selected: !_growthMode,
-                onTap: () => _setMode(false),
+              BrutalDropdown<bool>(
+                value: _growthMode,
+                items: const [(false, 'Projects'), (true, 'Growth')],
+                onChanged: _setMode,
               ),
               const SizedBox(width: 8),
-              BrutalBadge(
-                label: 'GROWTH',
-                color: Palette.mustard,
-                selected: _growthMode,
-                onTap: () => _setMode(true),
-              ),
+              if (_growthMode)
+                Expanded(
+                  child: BrutalDropdown<String?>(
+                    expanded: true,
+                    value: _roleFilter,
+                    items: const [
+                      (null, 'All roles'),
+                      ('builder', 'Builder'),
+                      ('collaborator', 'Collaborator'),
+                      ('founder', 'Founder'),
+                    ],
+                    onChanged: (role) {
+                      setState(() => _roleFilter = role);
+                      _refresh();
+                    },
+                  ),
+                )
+              else ...[
+                BrutalDropdown<String?>(
+                  value: _stageFilter,
+                  items: [
+                    (null, 'All stages'),
+                    for (final stage in kStages) (stage, stageLabel(stage)),
+                  ],
+                  onChanged: (stage) {
+                    setState(() => _stageFilter = stage);
+                    _refresh();
+                  },
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    controller: _searchController,
+                    style: AppType.body(size: 13, weight: FontWeight.w500),
+                    cursorColor: Palette.teal,
+                    textInputAction: TextInputAction.search,
+                    onSubmitted: (_) => _refresh(),
+                    decoration: InputDecoration(
+                      hintText: 'Search…',
+                      hintStyle: AppType.body(size: 13, color: Palette.ink400),
+                      isDense: true,
+                      filled: true,
+                      fillColor: Palette.paper,
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 9),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(6),
+                        borderSide:
+                            const BorderSide(color: Palette.ink, width: 2),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(6),
+                        borderSide:
+                            const BorderSide(color: Palette.teal, width: 2.5),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
           const SizedBox(height: 14),
@@ -131,28 +175,6 @@ class _PlazaBodyState extends State<PlazaBody> {
             const SizedBox(height: 12),
           ],
           if (_growthMode) ...[
-            // Role filter for the growth feed.
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  for (final role in const [
-                    'builder',
-                    'collaborator',
-                    'founder'
-                  ]) ...[
-                    BrutalBadge(
-                      label: role,
-                      color: Palette.mustard,
-                      selected: _roleFilter == role,
-                      onTap: () => _toggleRole(role),
-                    ),
-                    const SizedBox(width: 8),
-                  ],
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
             if (growth.loadingFeed && growth.feed.isEmpty)
               const Padding(
                 padding: EdgeInsets.only(top: 40),
@@ -176,50 +198,6 @@ class _PlazaBodyState extends State<PlazaBody> {
                 const SizedBox(height: 14),
               ],
           ] else ...[
-          // Search.
-          TextField(
-            controller: _searchController,
-            style: AppType.body(size: 15, weight: FontWeight.w500),
-            cursorColor: Palette.teal,
-            textInputAction: TextInputAction.search,
-            onSubmitted: (_) => _refresh(),
-            decoration: InputDecoration(
-              hintText: 'Search projects…',
-              hintStyle: AppType.body(size: 15, color: Palette.ink400),
-              prefixIcon: Icon(Icons.search, color: Palette.ink400),
-              filled: true,
-              fillColor: Palette.paper,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(6),
-                borderSide: const BorderSide(color: Palette.ink, width: 2),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(6),
-                borderSide: const BorderSide(color: Palette.teal, width: 2.5),
-              ),
-            ),
-          ),
-          const SizedBox(height: 14),
-          // Stage filter row.
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                for (final stage in kStages) ...[
-                  BrutalBadge(
-                    label: stageLabel(stage),
-                    color: Palette.lime,
-                    selected: _stageFilter == stage,
-                    onTap: () => _toggleStage(stage),
-                  ),
-                  const SizedBox(width: 8),
-                ],
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
           if (provider.loadingDiscovery && provider.discovery.isEmpty)
             const Padding(
               padding: EdgeInsets.only(top: 40),
@@ -243,6 +221,8 @@ class _PlazaBodyState extends State<PlazaBody> {
   }
 }
 
+/// A plain placeholder line -- not a card, just background text -- since
+/// "nothing matched" doesn't need its own bordered block to say so.
 class _EmptyState extends StatelessWidget {
   const _EmptyState({this.error});
 
@@ -251,22 +231,13 @@ class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(top: 40),
-      child: BrutalCard(
-        background: Palette.cream100,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('NOTHING HERE YET',
-                style: AppType.display(size: 20)),
-            const SizedBox(height: 8),
-            Text(
-              error ??
-                  'No projects match your filters. Try clearing the stage or '
-                      'search.',
-              style: AppType.body(size: 14, color: Palette.ink600),
-            ),
-          ],
+      padding: const EdgeInsets.only(top: 48),
+      child: Center(
+        child: Text(
+          error ??
+              'Nothing matches your filters yet. Try clearing the stage or search.',
+          textAlign: TextAlign.center,
+          style: AppType.body(size: 14, color: Palette.ink400, height: 1.4),
         ),
       ),
     );
