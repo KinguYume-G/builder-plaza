@@ -13,3 +13,6 @@ rootkey.csv
 *rootkey*.csv
 credentials.csv
 .aws/
+
+# Local binaries for the demo recording (scrcpy) — not part of the build
+.tools/
