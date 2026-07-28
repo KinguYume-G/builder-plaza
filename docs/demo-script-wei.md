@@ -105,7 +105,7 @@ Decided in advance so you are never composing text on camera. Copy them exactly
 | 4:10 | B | Tap **Refresh growth** | "And this is my favourite part of what I built. I never write my own progress updates. This polls the repo for new events and asks a model on AWS Bedrock to summarise them neutrally. Which means the feed can't be gamed by self-promotion — it only moves when the code moves." |
 | 4:30 | B | Point at `growth_posts` → Plaza → **GROWTH** | "One new row, and the same text is already public in the Plaza feed. I didn't publish that — my commits did." |
 | 4:45 | B | Profile → **Verified activity & evidence** | "And here are the receipts. Twelve weeks of contribution continuity, the roles I actually hold on my own repositories, and a typed timeline of what I've been doing." |
-| 4:55 | B | Stay on Profile — nothing to click, just talk | "There's one more piece of mine that isn't on this screen — the matching engine behind the Match tab, so let me claim it while I'm here. Your skills become a sentence embedding, Postgres does a cosine-distance recall over those vectors to shortlist twenty candidates, and a Gaussian Process scores each pair on skill overlap and intent compatibility. One slot is held back by an epsilon-greedy rule for exploration — otherwise you'd see the same five people forever." |
+| 4:55 | B | **Match tab** — let the cards load, point at a WHY line and the mustard **EXPLORE** badge | "And now that I have a profile, the system can place me. This is the Match tab — Gao Xing will demo it properly as a user, but the engine underneath is mine, so let me tell you what just happened. My skills became a sentence embedding, Postgres did a cosine-distance recall over those vectors to shortlist twenty candidates, and a Gaussian Process scored each pair on skill overlap and intent compatibility. Each card explains itself — that's the WHY line. And this mustard badge is an exploration slot, held back by an epsilon-greedy rule, because a model that only exploits its own ranking would show me the same five people forever." |
 | 5:10 | **→ A** | GitHub profile → contribution graph, beside the app's chart | "Which brings us back to where we started. Same public events, same shape. And that's the whole argument: this profile isn't something I wrote about myself — it's derived from what I actually did." |
 | 5:25 | A | To camera | "So that's the builder's side — verified work, a live project card, and progress that reports itself. The card is in the Plaza now, and Gao Xing takes it from there — including the matching engine, from a user's point of view." |
 
@@ -136,6 +136,11 @@ Everything else is navigation. These are the design arguments:
 - **"Cannot reach backend"** — Tailscale is running. Quit it.
 - **Screenshot rejected** — you picked a GIF or HEIC. Use a JPG or PNG.
 - **Dashboard blank** — you opened `https`. It is `http`.
+- **The Match tab is empty or slow at 4:55** — a brand-new account has to embed
+  and score from scratch, and the first round takes a few seconds. Pull to
+  refresh once. If it is still empty, keep talking over the empty state: the
+  pipeline description stands on its own, and Gao Xing demos populated matches
+  in the next segment. Do not restart the app mid-take for this.
 - **The app doesn't advance after you consented** — it re-reads `/me` when it
   comes back to the foreground, so give it a second. If it still sits there, the
   bind is already done server-side: force-close and reopen, and startup's `/me`
