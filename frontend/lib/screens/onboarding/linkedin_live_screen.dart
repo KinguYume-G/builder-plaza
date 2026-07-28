@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -30,12 +32,53 @@ class LinkedInLiveScreen extends StatefulWidget {
   State<LinkedInLiveScreen> createState() => _LinkedInLiveScreenState();
 }
 
-class _LinkedInLiveScreenState extends State<LinkedInLiveScreen> {
+class _LinkedInLiveScreenState extends State<LinkedInLiveScreen>
+    with WidgetsBindingObserver {
   bool _redirecting = false;
   String? _launchError;
 
   bool get _hasReturnError =>
       widget.result == 'error' || widget.result == 'conflict';
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  /// On mobile the callback cannot return to the app: it redirects the *browser*
+  /// to the web frontend, so consent finishes with the user staring at a page in
+  /// Chrome while this screen is still spinning. The bind has already happened
+  /// server-side — the signed state carries the user id — so when the user comes
+  /// back, re-read `/me`. If LinkedIn is now bound, the router's gating advances
+  /// to role selection on its own; if it isn't, the button becomes usable again
+  /// instead of spinning forever.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed || !_redirecting) return;
+    unawaited(_recheckBinding());
+  }
+
+  Future<void> _recheckBinding() async {
+    final auth = context.read<AuthProvider>();
+    await auth.loadMe();
+    if (!mounted) return;
+    setState(() {
+      _redirecting = false;
+      // Still unbound after coming back means the user dismissed LinkedIn or
+      // consent failed. Say so, rather than leaving a screen that looks like it
+      // simply did nothing.
+      if (auth.currentUser?.linkedinConnected != true) {
+        _launchError = 'LinkedIn sign-in was not completed. Tap to try again.';
+      }
+    });
+  }
 
   Future<void> _signIn() async {
     setState(() {

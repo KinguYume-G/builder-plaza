@@ -144,8 +144,15 @@ class AuthProvider extends ChangeNotifier {
     _error = null;
     _setLoading(true);
     try {
-      final res =
-          await _api.dio.get<Map<String, dynamic>>('/auth/linkedin/login');
+      // `client` tells the backend how the journey has to end. On web the
+      // callback redirects back into the SPA; on mobile there is nothing to
+      // redirect into, so it renders a "you can close this tab" page instead of
+      // bouncing the browser to the web frontend, which has no session and
+      // greeted a successful bind with a 401.
+      final res = await _api.dio.get<Map<String, dynamic>>(
+        '/auth/linkedin/login',
+        queryParameters: {'client': kIsWeb ? 'web' : 'mobile'},
+      );
       return res.data?['authorize_url'] as String?;
     } catch (e) {
       _error = ApiClient.describeError(e);

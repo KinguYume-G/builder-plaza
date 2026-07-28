@@ -2,7 +2,7 @@ import uuid
 from urllib.parse import urlencode
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from fastapi.responses import RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -149,12 +149,51 @@ def linkedin_mode() -> dict:
 
 
 @router.get("/linkedin/login")
-def linkedin_login(current_user: User = Depends(get_current_user)) -> dict:
+def linkedin_login(
+    client: str = Query(default="web"),
+    current_user: User = Depends(get_current_user),
+) -> dict:
     """Kick off the real LinkedIn OIDC flow: return the authorize URL the client
     should send the browser to. The signed state carries the current user's id so
-    the callback knows who to bind."""
-    state = linkedin_oauth.create_state_token(current_user.id)
+    the callback knows who to bind, and — for ``client=mobile`` — that the
+    journey has to end in the browser rather than by redirecting into the SPA."""
+    state = linkedin_oauth.create_state_token(
+        current_user.id, mobile=client == "mobile"
+    )
     return {"authorize_url": linkedin_oauth.build_authorize_url(state)}
+
+
+def _mobile_done_page(title: str, message: str, ok: bool) -> HTMLResponse:
+    """Terminal page for the mobile OIDC journey.
+
+    The app is a separate process, so there is nothing to redirect back into;
+    sending the browser to the web frontend instead renders a 401, because that
+    page has no session — which is what the user saw immediately after a
+    *successful* bind. This closes the loop where the user actually is.
+    """
+    accent = "#1c7c54" if ok else "#b4543a"
+    mark = "&#10003;" if ok else "&#33;"
+    return HTMLResponse(f"""<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{title}</title>
+<style>
+  body {{ margin:0; min-height:100vh; display:flex; align-items:center;
+         justify-content:center; background:#faf6ee; color:#1a1714;
+         font:16px/1.5 -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; }}
+  .card {{ max-width:22rem; margin:24px; padding:28px 24px; background:#fff;
+          border:2px solid #1a1714; border-radius:14px; box-shadow:6px 6px 0 #1a1714; }}
+  .mark {{ width:52px; height:52px; border-radius:50%; background:{accent};
+          color:#fff; font-size:27px; display:flex; align-items:center;
+          justify-content:center; margin-bottom:16px; }}
+  h1 {{ margin:0 0 8px; font-size:20px; }}
+  p {{ margin:0; color:#5c5346; }}
+</style></head>
+<body><div class="card">
+  <div class="mark">{mark}</div>
+  <h1>{title}</h1>
+  <p>{message}</p>
+</div></body></html>""")
 
 
 @router.get("/linkedin/callback")
@@ -171,8 +210,18 @@ async def linkedin_callback(
     All failure paths 302 back to the frontend with a ``linkedin=<status>`` flag
     rather than surfacing an error page, so an interrupted flow can be retried
     without leaving a half-baked account (F1)."""
-    error_redirect = RedirectResponse(
-        f"{settings.frontend_url}/#/onboarding/linkedin?linkedin=error", status_code=302
+    is_mobile = bool(state) and linkedin_oauth.state_is_mobile(state)
+
+    def failed(message: str):
+        if is_mobile:
+            return _mobile_done_page("Sign-in didn't finish", message, ok=False)
+        return RedirectResponse(
+            f"{settings.frontend_url}/#/onboarding/linkedin?linkedin=error",
+            status_code=302,
+        )
+
+    error_redirect = failed(
+        "LinkedIn didn't complete the sign-in. Return to Builder Plaza and try again."
     )
 
     if error or not code or not state:
@@ -200,6 +249,13 @@ async def linkedin_callback(
     sub = claims["sub"]
     existing = db.query(User).filter(User.linkedin_sub == sub, User.id != user.id).first()
     if existing is not None:
+        if is_mobile:
+            return _mobile_done_page(
+                "Already linked",
+                "That LinkedIn account is already connected to another Builder "
+                "Plaza user. Return to the app and try a different one.",
+                ok=False,
+            )
         return RedirectResponse(
             f"{settings.frontend_url}/#/onboarding/linkedin?linkedin=conflict",
             status_code=302,
@@ -210,6 +266,13 @@ async def linkedin_callback(
     completeness.compute(user)
     db.commit()
 
+    if is_mobile:
+        return _mobile_done_page(
+            "LinkedIn connected",
+            "You can close this tab and return to Builder Plaza — it will pick "
+            "this up automatically.",
+            ok=True,
+        )
     return RedirectResponse(
         f"{settings.frontend_url}/#/onboarding/role?linkedin=ok", status_code=302
     )

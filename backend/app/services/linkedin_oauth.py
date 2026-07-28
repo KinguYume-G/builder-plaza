@@ -49,10 +49,31 @@ def build_authorize_url(state: str) -> str:
     return f"{LINKEDIN_AUTHORIZE_URL}?{urlencode(params)}"
 
 
-def create_state_token(user_id: str) -> str:
+def create_state_token(user_id: str, *, mobile: bool = False) -> str:
+    """Sign the OIDC state.
+
+    ``mobile`` records that the flow began in the Android app. LinkedIn returns
+    the state untouched, so the callback can tell the two clients apart and end
+    the journey appropriately: the web build needs the redirect that carries it
+    back into the SPA, whereas on mobile there is nothing to redirect *to* — the
+    app is a separate process — and sending the browser to the web frontend just
+    shows a 401, because that page has no session.
+    """
     now = datetime.now(timezone.utc)
     payload = {"mark": _STATE_MARKER, "sub": str(user_id), "exp": now + _STATE_TTL}
+    if mobile:
+        payload["mob"] = True
     return jwt.encode(payload, settings.jwt_secret, algorithm=ALGORITHM)
+
+
+def state_is_mobile(state: str) -> bool:
+    """True if this state was minted for the mobile app. Safe on junk input --
+    the caller has already verified the signature by this point."""
+    try:
+        payload = jwt.decode(state, settings.jwt_secret, algorithms=[ALGORITHM])
+    except jwt.InvalidTokenError:
+        return False
+    return bool(payload.get("mob"))
 
 
 def verify_state_token(state: str) -> str | None:
