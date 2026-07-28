@@ -58,11 +58,35 @@ your real username and the profile starts genuinely empty. **Do not run
 
 ---
 
+## Values to type
+
+Decided in advance so you are never composing text on camera. Copy them exactly
+— the narration below refers to them.
+
+| Field | Value |
+|---|---|
+| GitHub username | `SunflowersLwtech` |
+| Intent | **Seeking co-founder** |
+| Intent note | `Looking for a Flutter partner on Builder Plaza` |
+| Project title | `Builder Plaza mobile app` |
+| Stage | **BUILDING** |
+| Needs | `A Flutter developer to pair on the matching engine` |
+| Team division | `I own backend and mobile. Looking to split frontend` |
+| Linked repo | `SunflowersLwtech/sunkit` |
+
+> The repo **must be public** — `sunkit` is. A private one shows
+> *Activity unavailable* and Refresh growth posts nothing, because the app only
+> reads public GitHub events. That is correct behaviour, but it is not what you
+> want to demo.
+
+---
+
 ## Script
 
 | Time | Scene | Do | Say |
 |---|---|---|---|
-| 0:00 | B | To camera | "Hi, I'm Liu Wei, TP085412. I built the Builder side of Builder Plaza, so I'll demo the journey of someone who has a project and needs collaborators. On the right is a live view of our production database — refreshing every five seconds, so you can watch it change as I go." |
+| 0:00 | B | To camera | "Hi, I'm Liu Wei, TP085412. I built the Builder side of Builder Plaza, so I'll demo the journey of someone who has a project and needs collaborators." |
+| 0:12 | B | Point at the dashboard, top row then the tables | "Before I start — the panel on the right is our **production database**, not a mock. The top row is a live row count for each of the eleven tables, and underneath are the actual newest rows: project cards, collaboration requests, messages, AI summaries. It refreshes every five seconds, so when I tap something on the phone you'll see the row appear here, on the other side of the network, in AWS." |
 | 0:20 | **→ A** | GitHub profile in the browser, scroll the repo list | "Before I touch the app: this is my actual GitHub account. These are my repositories, these are the languages, this is the activity. Remember what you're seeing." |
 | 0:40 | A | Phone: type your username → **Connect GitHub** | "Now step one of the Trust Gateway. I type that same username, and the app calls GitHub's API directly." |
 | 1:00 | A | Point between the app summary and the browser | "Same repositories. Same languages. Same counts. I never typed any of this into the app — it fetched it. That's the whole premise: your credibility comes from your work, not from what you claim about yourself." |
@@ -72,8 +96,8 @@ your real username and the profile starts genuinely empty. **Do not run
 | 2:10 | B | Step 3 → **Builder** | "Step three picks my lens. Builder. Same app for every role — the role decides what you lead with." |
 | 2:20 | B | Profile tab → completeness bar | "Profile completeness, and notice it's starting from empty — this account is brand new. Forty and seventy are gates: at forty I can be contacted, at seventy I enter matching. You can't lurk with an empty profile and still get access to people." |
 | 2:40 | B | Tap avatar → pick a photo | "Avatar upload. The image goes straight to S3 object storage — it never sits in the database — and the row stores only the key." |
-| 2:55 | B | Home → **edit** intent → save | "And this is the piece no other tool has. GitHub shows what I built, LinkedIn shows who I am — neither says whether I'm open to collaborate *right now*. Watch `intents` on the right." |
-| 3:10 | B | ＋ **New project** — title, stage, needs, team division, link a real repo | "My first project card. Title, stage, what I need, how the work splits, and I link a real repository. This card is what a collaborator will actually judge me on." |
+| 2:55 | B | Home → **edit** → *Seeking co-founder* + note `Looking for a Flutter partner on Builder Plaza` → **Save intent** | "And this is the piece no other tool has. GitHub shows what I built, LinkedIn shows who I am — neither says whether I'm open to collaborate *right now*. Watch `intents` on the right." |
+| 3:10 | B | ＋ **New project** — title `Builder Plaza mobile app`, stage **BUILDING**, needs `A Flutter developer to pair on the matching engine`, team division `I own backend and mobile. Looking to split frontend`, repo `SunflowersLwtech/sunkit` → **+ ADD** | "My first project card. Title, stage, what I need, how the work splits, and I link a real repository. This card is what a collaborator will actually judge me on." |
 | 3:30 | B | **Create project**; point at `project_cards` | "`project_cards` just went up by one, and there's the row — my title, my repo." |
 | 3:40 | B | **＋ Add screenshot** → pick an image | "Screenshots go to S3 the same way, through a pre-signed upload. Watch the shots column — binary image data landing against this project." |
 | 3:55 | B | View project → repo activity | "On the project page: live commits and issues from the repository I linked." |
