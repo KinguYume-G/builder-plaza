@@ -172,14 +172,20 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
     final provider = context.read<ProjectsProvider>();
     setState(() => _saving = true);
 
+    // Optional fields left blank must go up as null, not "". The update path
+    // used to send the empty string, which the demo_url validator rejected —
+    // so saving a card with an untouched Demo URL failed with "must be a valid
+    // http(s) URL" about a field the user had never filled in.
+    String? orNull(String value) => value.trim().isEmpty ? null : value.trim();
+
     ProjectCard? result;
     if (_isEdit) {
       result = await provider.updateProject(_card!.id, {
         'title': _titleController.text.trim(),
         'stage': _stage,
-        'needs': _needsController.text.trim(),
-        'demo_url': _demoController.text.trim(),
-        'team_division': _divisionController.text.trim(),
+        'needs': orNull(_needsController.text),
+        'demo_url': orNull(_demoController.text),
+        'team_division': orNull(_divisionController.text),
         'repo_full_names': _repos,
       });
     } else {

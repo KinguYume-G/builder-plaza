@@ -44,6 +44,13 @@ def test_demo_url_rejects_invalid(url):
         ProjectCreateIn(title="X", stage="idea", demo_url=url)
 
 
+@pytest.mark.parametrize("blank", ["", "   ", "\n"])
+def test_demo_url_blank_is_treated_as_absent(blank):
+    """An optional field cleared in the UI arrives as "" rather than null.
+    Rejecting it told the user their empty Demo URL was an invalid URL."""
+    assert ProjectCreateIn(title="X", stage="idea", demo_url=blank).demo_url is None
+
+
 # --- repo_full_names validation -------------------------------------------
 
 def test_repos_accept_valid():

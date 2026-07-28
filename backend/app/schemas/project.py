@@ -29,7 +29,10 @@ def _validate_stage(value: str) -> str:
 
 
 def _validate_demo_url(value: str | None) -> str | None:
-    if value is None:
+    # An optional field cleared in the UI arrives as "" rather than null, and
+    # rejecting that told the user their *empty* Demo URL was an invalid URL.
+    # Treat blank as "not provided" and store null.
+    if value is None or not value.strip():
         return None
     parsed = urlparse(value)
     if parsed.scheme not in ("http", "https") or not parsed.netloc:
