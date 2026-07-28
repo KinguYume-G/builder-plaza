@@ -334,22 +334,66 @@ class _ProjectRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Same data as the Plaza feed, which has always shown the first screenshot
+    // (see ProjectListCard) — Home rendered title and stage only, so a card you
+    // had just added a screenshot to looked identical to one without.
+    final shot =
+        project.screenshots.isNotEmpty ? project.screenshots.first.url : null;
+
     return GestureDetector(
       onTap: () => context.push('/projects/${project.id}'),
-      child: Column(
+      behavior: HitTestBehavior.opaque,
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(project.title,
-              style: AppType.body(size: 13, weight: FontWeight.w700),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis),
-          const SizedBox(height: 2),
-          Text(
-              project.isArchived
-                  ? '${stageLabel(project.stage)} · archived'
-                  : stageLabel(project.stage),
-              style: AppType.mono(size: 10, color: Palette.ink400)),
+          if (shot != null) ...[
+            _Thumb(url: shot),
+            const SizedBox(width: 10),
+          ],
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(project.title,
+                    style: AppType.body(size: 13, weight: FontWeight.w700),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis),
+                const SizedBox(height: 2),
+                Text(
+                    project.isArchived
+                        ? '${stageLabel(project.stage)} · archived'
+                        : stageLabel(project.stage),
+                    style: AppType.mono(size: 10, color: Palette.ink400)),
+              ],
+            ),
+          ),
         ],
+      ),
+    );
+  }
+}
+
+class _Thumb extends StatelessWidget {
+  const _Thumb({required this.url});
+
+  final String url;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        color: Palette.cream100,
+        border: Border.all(color: Palette.ink, width: 2),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Image.network(
+        url,
+        fit: BoxFit.cover,
+        errorBuilder: (_, _, _) =>
+            Icon(Icons.image_not_supported, color: Palette.ink400, size: 16),
       ),
     );
   }

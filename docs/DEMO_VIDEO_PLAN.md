@@ -93,7 +93,7 @@ Close: "That card is live in the Plaza now."
 | 2 | Plaza → PROJECTS, filter by stage, search. **Say it's the card Wei just made** | the card itself |
 | 3 | Open it — screenshot gallery, repo activity | — |
 | 4 | Plaza → GROWTH, filter by owner role | Wei's `growth_posts` row |
-| 5 | Match tab — WHY reasons, EXPLORE badge, pull to refresh | `matches` |
+| 5 | Match tab — WHY reasons, EXPLORE badge, pull to refresh (a new exploration pick each round) | `matches` |
 | 6 | Credibility → plain-language summary | — |
 | 7 | Trust score — components, weights, the labelled simulated badge | — |
 | 8 | Request collaboration — pitch under 20 chars first, then send a real one | `collab_requests` +1, `pending` |
@@ -102,9 +102,13 @@ Close: "That card is live in the Plaza now."
 
 **Say these three things:**
 
-- *"Matching isn't keyword search. Skills are embedded as vectors and ranked by
-  a model that also reserves a slot for exploration — that's the EXPLORE badge,
-  so you don't only ever see the same top five people."* (step 5)
+- *"This isn't keyword search. Your skills are turned into a sentence embedding,
+  and Postgres does a cosine-distance recall over those vectors to shortlist
+  twenty candidates. A Gaussian Process then scores each pair on features like
+  skill overlap and intent compatibility — and because a model that only ever
+  exploits its own ranking shows you the same five people forever, one slot is
+  reserved by an epsilon-greedy rule for exploration. That's the mustard EXPLORE
+  badge."* (step 5)
 - *"Every match explains itself. I can see why this person was suggested, and as
   someone who isn't deeply technical, the credibility summary translates the
   GitHub signals for me."* (steps 5–6)
