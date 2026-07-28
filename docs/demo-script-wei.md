@@ -1,6 +1,6 @@
 # Segment 1 — Liu Wei · Builder — final script
 
-~5½ minutes — the real LinkedIn round-trip costs about a minute of it. Read the **Say** column close to verbatim. The **Do** column is what
+~5½ minutes — the real LinkedIn round-trip costs about a minute of it, and the matching-engine claim at 4:55 another fifteen seconds. Read the **Say** column close to verbatim. The **Do** column is what
 your hands are doing while you say it.
 
 The spine of this segment: **the app claims your profile is not self-reported —
@@ -104,9 +104,10 @@ Decided in advance so you are never composing text on camera. Copy them exactly
 | 3:55 | B | **View project** → scroll to repo activity | "Here's the card as a collaborator sees it. Everything I typed — and one thing I didn't: this is live activity from the repository I linked, fetched from GitHub as the page loads." |
 | 4:10 | B | Tap **Refresh growth** | "And this is my favourite part of what I built. I never write my own progress updates. This polls the repo for new events and asks a model on AWS Bedrock to summarise them neutrally. Which means the feed can't be gamed by self-promotion — it only moves when the code moves." |
 | 4:30 | B | Point at `growth_posts` → Plaza → **GROWTH** | "One new row, and the same text is already public in the Plaza feed. I didn't publish that — my commits did." |
-| 4:45 | B | Profile → **Verified activity & evidence** | "Last piece: the receipts. Twelve weeks of contribution continuity, the roles I actually hold on my own repositories, and a typed timeline of what I've been doing." |
-| 4:55 | **→ A** | GitHub profile → contribution graph, beside the app's chart | "Which brings us back to where we started. Same public events, same shape. And that's the whole argument: this profile isn't something I wrote about myself — it's derived from what I actually did." |
-| 5:10 | A | To camera | "So that's the builder's side — verified work, a live project card, and progress that reports itself. The card is in the Plaza now, and Gao Xing takes it from there." |
+| 4:45 | B | Profile → **Verified activity & evidence** | "And here are the receipts. Twelve weeks of contribution continuity, the roles I actually hold on my own repositories, and a typed timeline of what I've been doing." |
+| 4:55 | B | Stay on Profile — nothing to click, just talk | "There's one more piece of mine that isn't on this screen — the matching engine behind the Match tab, so let me claim it while I'm here. Your skills become a sentence embedding, Postgres does a cosine-distance recall over those vectors to shortlist twenty candidates, and a Gaussian Process scores each pair on skill overlap and intent compatibility. One slot is held back by an epsilon-greedy rule for exploration — otherwise you'd see the same five people forever." |
+| 5:10 | **→ A** | GitHub profile → contribution graph, beside the app's chart | "Which brings us back to where we started. Same public events, same shape. And that's the whole argument: this profile isn't something I wrote about myself — it's derived from what I actually did." |
+| 5:25 | A | To camera | "So that's the builder's side — verified work, a live project card, and progress that reports itself. The card is in the Plaza now, and Gao Xing takes it from there — including the matching engine, from a user's point of view." |
 
 ---
 
@@ -118,7 +119,10 @@ Everything else is navigation. These are the design arguments:
    of this into the app."
 2. **2:20** — "Forty and seventy are gates. You can't lurk with an empty profile
    and still get access to people."
-3. **4:10** — "I don't write my own progress updates… the feed can't be gamed by
+3. **4:55** — "The matching engine behind the Match tab is mine" — claim it out
+   loud. You wrote it, Gao Xing demos it, and the brief treats not being able to
+   explain your own work as academic dishonesty.
+4. **4:10** — "I don't write my own progress updates… the feed can't be gamed by
    self-promotion, it only moves when the code moves."
 
 ## If something breaks
