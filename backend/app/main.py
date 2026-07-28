@@ -9,6 +9,7 @@ from app.core.config import settings
 
 from app.routers import (
     auth,
+    demo,
     growth,
     health,
     intent,
@@ -44,6 +45,7 @@ app.include_router(matches.router)
 app.include_router(requests.router)
 app.include_router(role_postings.router)
 app.include_router(mocked.router)
+app.include_router(demo.router)
 
 
 # --- F4 scheduled growth refresh ------------------------------------------

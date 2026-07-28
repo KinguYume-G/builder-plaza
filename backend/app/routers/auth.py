@@ -33,11 +33,14 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.post("/dev-login", response_model=TokenOut)
 def dev_login(payload: DevLoginIn, db: Session = Depends(get_db)) -> TokenOut:
-    # Local-only shortcut: mints a token without the real GitHub OAuth flow.
-    if settings.environment != "local":
+    # Shortcut that mints a token without the real GitHub OAuth flow. Always on
+    # locally; elsewhere it needs ALLOW_DEV_LOGIN, which the demo deployment
+    # sets because the OAuth callback targets a web frontend and so cannot
+    # complete on Android. See Settings.allow_dev_login.
+    if settings.environment != "local" and not settings.allow_dev_login:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="dev-login is only available in the local environment",
+            detail="dev-login is disabled on this deployment",
         )
 
     # Onboard the demo user outright so dev-login lands straight on home.

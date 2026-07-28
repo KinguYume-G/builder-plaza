@@ -1,0 +1,32 @@
+# Grafana dashboard for the recorded app demo.
+#
+# Shows the RDS database updating live while you drive the app: stat tiles for
+# row counts plus tables of the actual rows, auto-refreshing every 5 seconds so
+# nobody has to click Refresh on camera.
+#
+#   cd docs/demo-dashboard && docker compose up -d
+#   open http://localhost:3000        (anonymous, lands straight on the dashboard)
+#
+# Credentials are read from the repo-root .env — nothing is hardcoded here.
+services:
+  grafana:
+    image: grafana/grafana:11.6.0
+    ports:
+      - "3000:3000"
+    env_file:
+      # Written by setup.sh from the repo-root .env. Only the four PG* values
+      # the datasource needs — the root .env also holds AWS keys and JWT secrets
+      # that have no business inside this container.
+      - .env.local
+    environment:
+      # No login wall: this is a read-only view on a demo database and a login
+      # screen mid-recording is friction we do not need.
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+      GF_USERS_DEFAULT_THEME: dark
+      # Allow a refresh interval fast enough to feel live on video.
+      GF_DASHBOARDS_MIN_REFRESH_INTERVAL: "2s"
+    volumes:
+      - ./provisioning:/etc/grafana/provisioning
+      - ./dashboards:/var/lib/grafana/dashboards

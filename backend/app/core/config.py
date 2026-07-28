@@ -26,6 +26,15 @@ class Settings(BaseSettings):
     # Post-login target: the callback 302s the browser here with the JWT.
     frontend_url: str = "http://localhost:3000"
 
+    # Opens /auth/dev-login outside the local environment. Off by default and
+    # deliberately separate from `environment`, so switching it on is an
+    # explicit, visible act rather than a side effect of how the app is
+    # deployed. It exists because the OAuth callback redirects to a *web*
+    # frontend, so the Android build has no way to complete a real sign-in --
+    # without this, a user who has finished onboarding cannot log in at all
+    # against the deployed backend. Turn it off once the demo is over.
+    allow_dev_login: bool = False
+
     linkedin_client_id: str = ""
     linkedin_client_secret: str = ""
     linkedin_redirect_uri: str = "http://localhost:8000/auth/linkedin/callback"

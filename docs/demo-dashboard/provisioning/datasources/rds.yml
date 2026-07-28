@@ -1,0 +1,21 @@
+apiVersion: 1
+
+datasources:
+  - name: BuilderPlazaRDS
+    uid: bp-rds
+    type: postgres
+    access: proxy
+    url: ${PGHOST}
+    database: ${PGDATABASE}
+    user: ${PGUSER}
+    isDefault: true
+    editable: false
+    jsonData:
+      # RDS terminates TLS but presents the AWS CA, which Grafana does not carry
+      # by default. `require` encrypts without verifying the chain — fine for a
+      # read-only demo view, and still better than disabling TLS.
+      sslmode: require
+      postgresVersion: 1600
+      timescaledb: false
+    secureJsonData:
+      password: ${PGPASSWORD}
