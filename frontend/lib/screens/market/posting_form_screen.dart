@@ -82,8 +82,11 @@ class _PostingFormScreenState extends State<PostingFormScreen> {
     if (!mounted) return;
     setState(() => _saving = false);
     if (posting != null) {
+      // Resolve the messenger BEFORE popping: afterwards this State's context
+      // is deactivated and ScaffoldMessenger.of(context) can throw.
+      final messenger = ScaffoldMessenger.of(context);
       context.pop();
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         const SnackBar(content: Text('Posting published.')),
       );
     } else {

@@ -81,8 +81,11 @@ class _RequestFormState extends State<_RequestForm> {
     if (!mounted) return;
     setState(() => _sending = false);
     if (request != null) {
+      // Resolve the messenger BEFORE popping: afterwards this sheet's context
+      // is deactivated and ScaffoldMessenger.of(context) can throw.
+      final messenger = ScaffoldMessenger.of(context);
       Navigator.of(context).pop();
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         SnackBar(
             content:
                 Text('Request sent to @${widget.toUserLogin}.')),

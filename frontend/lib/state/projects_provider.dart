@@ -6,6 +6,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../api/api_client.dart';
+import '../api/connection_tuning_web.dart'
+    if (dart.library.io) '../api/connection_tuning_io.dart';
 import '../models/project_card.dart';
 import '../models/repo_activity.dart';
 
@@ -17,7 +19,9 @@ import '../models/repo_activity.dart';
 /// token). The one exception is the screenshot PUT to object storage, which
 /// deliberately uses a *bare* Dio with no interceptors — see [uploadScreenshot].
 class ProjectsProvider extends ChangeNotifier {
-  ProjectsProvider({ApiClient? api}) : _api = api ?? ApiClient.instance;
+  ProjectsProvider({ApiClient? api}) : _api = api ?? ApiClient.instance {
+    tuneConnectionReuse(_storageDio);
+  }
 
   final ApiClient _api;
 
@@ -222,8 +226,13 @@ class ProjectsProvider extends ChangeNotifier {
     _uploading = true;
     notifyListeners();
     try {
-      final bytes = await file.readAsBytes();
       final contentType = _contentTypeFor(file);
+      if (contentType == null) {
+        _error = "That image type isn't supported. Pick a JPG, PNG, or WebP.";
+        notifyListeners();
+        return null;
+      }
+      final bytes = await file.readAsBytes();
 
       // Step 1 — ask our API for a presigned upload URL.
       final signRes = await _api.dio.post<Map<String, dynamic>>(
@@ -367,14 +376,36 @@ class ProjectsProvider extends ChangeNotifier {
 
   /// Best-effort MIME type for a picked file. image_picker often leaves
   /// [XFile.mimeType] null on some platforms, so fall back to the extension.
-  String _contentTypeFor(XFile file) {
-    final declared = file.mimeType;
-    if (declared != null && declared.isNotEmpty) return declared;
-    final name = file.name.toLowerCase();
+  /// The content types the backend's `ImageContentType` will accept. Anything
+  /// outside this set is a guaranteed 422, so we never put it on the wire.
+  static const _supportedContentTypes = {
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+  };
+
+  /// Resolves the content type to sign the upload with, or null if the file
+  /// isn't something the backend accepts.
+  ///
+  /// Previously this returned whatever the picker declared — including
+  /// `image/gif` and `image/heic` — which the backend rejects with a 422 whose
+  /// raw Pydantic body ended up rendered in the UI. Now unsupported types are
+  /// caught here and reported in plain language instead.
+  String? _contentTypeFor(XFile file) {
+    final declared = file.mimeType?.toLowerCase();
+    final resolved = (declared != null && declared.isNotEmpty)
+        ? declared
+        : _contentTypeFromExtension(file.name.toLowerCase());
+    // Some pickers report the non-standard `image/jpg` for ordinary JPEGs.
+    final normalised = resolved == 'image/jpg' ? 'image/jpeg' : resolved;
+    return _supportedContentTypes.contains(normalised) ? normalised : null;
+  }
+
+  String _contentTypeFromExtension(String name) {
     if (name.endsWith('.png')) return 'image/png';
     if (name.endsWith('.webp')) return 'image/webp';
     if (name.endsWith('.gif')) return 'image/gif';
-    if (name.endsWith('.heic')) return 'image/heic';
+    if (name.endsWith('.heic') || name.endsWith('.heif')) return 'image/heic';
     return 'image/jpeg';
   }
 }

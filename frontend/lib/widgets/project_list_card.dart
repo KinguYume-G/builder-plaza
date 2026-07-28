@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../models/project_card.dart';
-import '../screens/login_screen.dart' show kRoleColors;
 import '../theme/palette.dart';
 import '../theme/typography.dart';
 import 'brutal_badge.dart';

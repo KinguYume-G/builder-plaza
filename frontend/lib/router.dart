@@ -117,7 +117,9 @@ GoRouter createRouter(AuthProvider auth) {
       ),
       GoRoute(
         path: '/login',
-        builder: (context, state) => const LoginScreen(),
+        builder: (context, state) => LoginScreen(
+          initialLogin: state.uri.queryParameters['login'],
+        ),
       ),
       GoRoute(
         path: '/onboarding/github',

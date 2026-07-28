@@ -98,3 +98,12 @@ abstract final class Palette {
     );
   }
 }
+
+/// Accent color per primary role. Lives here rather than in the dev-only
+/// login screen, which four widgets/screens previously had to import purely to
+/// reach this map.
+const Map<String, Color> kRoleColors = {
+  'builder': Palette.teal,
+  'collaborator': Palette.rose,
+  'founder': Palette.tangerine,
+};

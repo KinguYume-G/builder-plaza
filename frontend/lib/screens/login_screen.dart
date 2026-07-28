@@ -9,23 +9,29 @@ import '../widgets/brutal_badge.dart';
 import '../widgets/brutal_button.dart';
 import '../widgets/brutal_card.dart';
 
-/// Role options and their accent colors (shared with the home screen).
-const Map<String, Color> kRoleColors = {
-  'builder': Palette.teal,
-  'collaborator': Palette.rose,
-  'founder': Palette.tangerine,
-};
-
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  const LoginScreen({super.key, this.initialLogin});
+
+  /// Pre-fills the login field. Set when we send someone here from the GitHub
+  /// connect screen after a 409, so they don't have to retype the username they
+  /// just entered (and don't see the unrelated `demo-builder` demo default).
+  final String? initialLogin;
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _controller = TextEditingController(text: 'demo-builder');
+  late final TextEditingController _controller;
   String _role = 'builder';
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(
+      text: widget.initialLogin ?? 'demo-builder',
+    );
+  }
 
   @override
   void dispose() {

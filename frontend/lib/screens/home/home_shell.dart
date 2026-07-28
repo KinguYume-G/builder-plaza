@@ -15,7 +15,6 @@ import '../../widgets/brutal_button.dart';
 import '../../widgets/brutal_card.dart';
 import '../../widgets/brutal_dropdown.dart';
 import '../../widgets/brutal_scaffold.dart';
-import '../login_screen.dart' show kRoleColors;
 import '../matches/matches_screen.dart';
 import '../projects/discovery_screen.dart';
 
@@ -89,9 +88,12 @@ class _HomeShellState extends State<HomeShell> {
         ? Palette.copper
         : (kRoleColors[user.primaryRole] ?? Palette.copper);
 
-    // Resolve the default tab once the user (and role) is known.
-    final index = _index ??=
-        (user != null && user.primaryRole == 'builder') ? 0 : 1;
+    // Default tab depends on the role, which arrives asynchronously. Derive it
+    // read-only here — assigning to _index during build() mutates state in the
+    // middle of a frame, which is exactly what Flutter tells you not to do.
+    // _index is only ever written from the tab-tap handler.
+    final index =
+        _index ?? ((user != null && user.primaryRole == 'builder') ? 0 : 1);
 
     if (user == null) {
       return const BrutalScaffold(

@@ -225,8 +225,16 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
   Future<void> _pickScreenshot() async {
     final card = _card;
     if (card == null) return;
-    final XFile? file =
-        await ImagePicker().pickImage(source: ImageSource.gallery);
+    // maxWidth/maxHeight make image_picker re-encode the pick as JPEG, which is
+    // what turns an iPhone's HEIC library shot into something the backend
+    // accepts. Without them the raw HEIC came through and the upload 422'd.
+    // Matches how the avatar picker in home_shell.dart already works.
+    final XFile? file = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1920,
+      maxHeight: 1920,
+      imageQuality: 85,
+    );
     if (file == null || !mounted) return;
     final updated =
         await context.read<ProjectsProvider>().uploadScreenshot(card.id, file);

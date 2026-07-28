@@ -16,7 +16,6 @@ import '../../widgets/brutal_button.dart';
 import '../../widgets/brutal_card.dart';
 import '../../widgets/brutal_scaffold.dart';
 import '../../widgets/growth_post_card.dart';
-import '../login_screen.dart' show kRoleColors;
 
 /// Full project detail: hero, owner, intent, needs, demo link, team division,
 /// screenshot gallery, and live repo activity. Owners get edit/archive controls.

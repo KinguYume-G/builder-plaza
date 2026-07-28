@@ -29,6 +29,18 @@ class _GithubConnectScreenState extends State<GithubConnectScreen> {
     super.dispose();
   }
 
+  /// Hands the user off to sign-in, carrying the username they already typed.
+  /// Clears the connect error first — otherwise the sign-in screen opens
+  /// displaying the very 409 the user just acted on.
+  void _goToSignIn() {
+    final login = _controller.text.trim();
+    context.read<AuthProvider>().clearError();
+    context.go(Uri(
+      path: '/login',
+      queryParameters: login.isEmpty ? null : {'login': login},
+    ).toString());
+  }
+
   Future<void> _connect() async {
     final login = _controller.text.trim();
     if (login.isEmpty) return;
@@ -120,6 +132,14 @@ class _GithubConnectScreenState extends State<GithubConnectScreen> {
                         style: AppType.body(size: 14, color: Palette.tomato),
                       ),
                     ),
+                    if (_isExistingAccount(auth.error!)) ...[
+                      const SizedBox(height: 12),
+                      BrutalButton(
+                        label: 'Sign in instead →',
+                        color: Palette.teal,
+                        onPressed: () => _goToSignIn(),
+                      ),
+                    ],
                   ],
                   if (summary != null) ...[
                     const SizedBox(height: 20),
@@ -148,11 +168,21 @@ class _GithubConnectScreenState extends State<GithubConnectScreen> {
       return "We couldn't find that GitHub user. Check the spelling and try "
           'again.';
     }
+    if (raw.contains('409')) {
+      return 'That account is already set up on Builder Plaza. Sign in to it '
+          'instead of connecting it again.';
+    }
     if (raw.contains('502')) {
       return 'GitHub is temporarily unreachable. Please try again in a moment.';
     }
     return raw;
   }
+
+  /// A 409 means the account exists — the only thing the user can do about it
+  /// is sign in, so offer that rather than leaving them on a dead end. The old
+  /// copy told them to "sign in with GitHub OAuth instead", which the app has
+  /// no entry point for at all.
+  bool _isExistingAccount(String raw) => raw.contains('409');
 }
 
 /// The result card shown after a successful connect: avatar, name, handle, and

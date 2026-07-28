@@ -6,6 +6,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../api/api_client.dart';
+import '../api/connection_tuning_web.dart'
+    if (dart.library.io) '../api/connection_tuning_io.dart';
 import '../models/github_summary.dart';
 import '../models/linkedin_profile.dart';
 import '../models/user.dart';
@@ -13,9 +15,17 @@ import '../models/user.dart';
 /// Holds the authenticated user and drives the auth + Trust Gateway onboarding
 /// flows (github-connect / linkedin-bind / role / load-me / logout).
 class AuthProvider extends ChangeNotifier {
-  AuthProvider({ApiClient? api}) : _api = api ?? ApiClient.instance;
+  AuthProvider({ApiClient? api}) : _api = api ?? ApiClient.instance {
+    tuneConnectionReuse(_storageDio);
+  }
 
   final ApiClient _api;
+
+  /// A single bare Dio (no auth interceptor) for the presigned avatar PUT.
+  /// Mirrors ProjectsProvider's `_storageDio`. This used to be a `Dio()`
+  /// constructed per upload and never closed, which leaked a connection pool on
+  /// every avatar change.
+  final Dio _storageDio = Dio();
 
   User? _currentUser;
   GithubSummary? _githubSummary;
@@ -32,6 +42,15 @@ class AuthProvider extends ChangeNotifier {
 
   void _setLoading(bool value) {
     _loading = value;
+    notifyListeners();
+  }
+
+  /// Drops the current error. Call this when navigating away from the screen
+  /// that produced it, so the next screen doesn't open showing a stale failure
+  /// the user has already moved past.
+  void clearError() {
+    if (_error == null) return;
+    _error = null;
     notifyListeners();
   }
 
@@ -254,7 +273,7 @@ class AuthProvider extends ChangeNotifier {
 
       // Bare Dio: the presigned URL is the credential; our Bearer token must
       // NOT be sent to object storage.
-      await Dio().put<void>(
+      await _storageDio.put<void>(
         uploadUrl,
         data: Stream.fromIterable([bytes]),
         options: Options(

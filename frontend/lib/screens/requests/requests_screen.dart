@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../../models/collab.dart';
-import '../../state/auth_provider.dart';
 import '../../state/collab_provider.dart';
 import '../../theme/palette.dart';
 import '../../theme/typography.dart';
@@ -145,7 +144,6 @@ class _RequestsScreenState extends State<RequestsScreen> {
   }
 
   List<Widget> _requestTiles(CollabProvider provider) {
-    final myId = context.read<AuthProvider>().currentUser?.id;
     final requests = _tab == 0 ? provider.inbox : provider.sent;
     if (requests.isEmpty) {
       return [
@@ -162,7 +160,7 @@ class _RequestsScreenState extends State<RequestsScreen> {
     }
     return [
       for (final request in requests) ...[
-        _RequestCard(request: request, isInbox: _tab == 0, myId: myId),
+        _RequestCard(request: request, isInbox: _tab == 0),
         const SizedBox(height: 12),
       ],
     ];
@@ -173,12 +171,10 @@ class _RequestCard extends StatelessWidget {
   const _RequestCard({
     required this.request,
     required this.isInbox,
-    required this.myId,
   });
 
   final CollabRequestItem request;
   final bool isInbox;
-  final String? myId;
 
   Color get _stateColor => switch (request.state) {
         'pending' => Palette.mustard,

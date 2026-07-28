@@ -10,7 +10,6 @@ import '../../widgets/brutal_badge.dart';
 import '../../widgets/brutal_button.dart';
 import '../../widgets/brutal_card.dart';
 import '../../widgets/request_form_sheet.dart';
-import '../login_screen.dart' show kRoleColors;
 
 /// F5: the match round. Every card carries the Match Reason; exploratory
 /// picks are labelled EXPLORE; pull-to-refresh re-runs the engine so the

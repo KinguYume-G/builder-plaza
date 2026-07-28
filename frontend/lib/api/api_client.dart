@@ -2,6 +2,8 @@ import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../config.dart';
+import 'connection_tuning_web.dart'
+    if (dart.library.io) 'connection_tuning_io.dart';
 
 /// Thin Dio wrapper (singleton) for talking to the Builder Plaza backend.
 ///
@@ -15,10 +17,16 @@ class ApiClient {
         baseUrl: apiBaseUrl,
         connectTimeout: const Duration(seconds: 10),
         receiveTimeout: const Duration(seconds: 10),
-        // Don't throw on 4xx so callers can read structured error bodies.
+        // Dio's default validateStatus is left in place, so any non-2xx throws
+        // a DioException. Callers rely on that: they catch and hand the error
+        // to [describeError], which reads the structured body off
+        // `error.response`. Do not add a permissive validateStatus here — it
+        // would turn every 4xx into an apparent success at the call sites.
         headers: {'Accept': 'application/json'},
       ),
     );
+
+    tuneConnectionReuse(_dio);
 
     _dio.interceptors.add(
       InterceptorsWrapper(
@@ -73,14 +81,30 @@ class ApiClient {
     if (error is DioException) {
       final status = error.response?.statusCode;
       final data = error.response?.data;
-      if (data is Map && data['detail'] != null) {
-        return status != null
-            ? 'HTTP $status: ${data['detail']}'
-            : '${data['detail']}';
+      final detail = data is Map ? data['detail'] : null;
+      // FastAPI returns `detail` as a plain string for our own HTTPExceptions,
+      // but as a LIST of per-field records for Pydantic validation failures
+      // (422). Interpolating that list dumps `[{type: literal_error, loc: ...`
+      // straight into the UI, so unpack it into the field messages instead.
+      if (detail is List) {
+        final messages = detail
+            .whereType<Map>()
+            .map((e) => e['msg'])
+            .whereType<String>()
+            .toList();
+        if (messages.isNotEmpty) return messages.join('; ');
+      } else if (detail != null) {
+        return status != null ? 'HTTP $status: $detail' : '$detail';
       }
       if (error.type == DioExceptionType.connectionTimeout ||
           error.type == DioExceptionType.connectionError) {
         return 'Cannot reach backend at $apiBaseUrl';
+      }
+      // Dio's own message for these is a paragraph of English telling the user
+      // to raise RequestOptions.receiveTimeout — useless to them, so replace it.
+      if (error.type == DioExceptionType.receiveTimeout ||
+          error.type == DioExceptionType.sendTimeout) {
+        return 'The server took too long to respond. Please try again.';
       }
       if (status != null) return 'HTTP $status';
       return error.message ?? 'Network error';

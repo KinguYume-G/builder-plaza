@@ -90,7 +90,9 @@ void main() {
     }
 
     await _pumpUntilFound(tester, find.text('BUILDER HOME'));
-    expect(find.text('MY PROJECTS'), findsOneWidget);
+    // The heading renders as "MY PROJECTS (n)" — match the prefix, not the
+    // exact string, or this assertion can never pass.
+    expect(find.textContaining('MY PROJECTS'), findsOneWidget);
 
     // ---------- E2E-2 · post a project card ----------
     await _tapVisible(tester, find.text('＋ NEW PROJECT'));
