@@ -67,8 +67,8 @@ your real username and the profile starts genuinely empty. **Do not run
 | 0:40 | A | Phone: type your username → **Connect GitHub** | "Now step one of the Trust Gateway. I type that same username, and the app calls GitHub's API directly." |
 | 1:00 | A | Point between the app summary and the browser | "Same repositories. Same languages. Same counts. I never typed any of this into the app — it fetched it. That's the whole premise: your credibility comes from your work, not from what you claim about yourself." |
 | 1:20 | **→ B** | Step 2 → tap **Sign in with LinkedIn**; the browser opens on `linkedin.com` | "Step two, professional identity — and this is the **real** LinkedIn OpenID Connect flow, not a mock. That's the genuine LinkedIn consent screen, requesting `openid`, `profile` and `email`." |
-| 1:40 | B | Consent on LinkedIn; you land on our callback page | "LinkedIn redirects to our callback, which verifies a signed state token, exchanges the code and binds the identity server-side — so an interrupted sign-in can't leave a half-bound account." |
-| 2:00 | B | **Force-close the app and reopen it** | "Back in the app — and it picks up the binding it just received." |
+| 1:40 | B | Consent on LinkedIn; the browser lands on our **LinkedIn connected** page | "LinkedIn redirects to our callback, which verifies a signed state token, exchanges the code and binds the identity server-side — so an interrupted sign-in can't leave a half-bound account." |
+| 2:00 | B | Close the browser tab; the app **advances to step 3 on its own** | "Close the tab, come back, and the app has already picked it up." |
 | 2:10 | B | Step 3 → **Builder** | "Step three picks my lens. Builder. Same app for every role — the role decides what you lead with." |
 | 2:20 | B | Profile tab → completeness bar | "Profile completeness, and notice it's starting from empty — this account is brand new. Forty and seventy are gates: at forty I can be contacted, at seventy I enter matching. You can't lurk with an empty profile and still get access to people." |
 | 2:40 | B | Tap avatar → pick a photo | "Avatar upload. The image goes straight to S3 object storage — it never sits in the database — and the row stores only the key." |
@@ -107,11 +107,10 @@ Everything else is navigation. These are the design arguments:
 - **"Cannot reach backend"** — Tailscale is running. Quit it.
 - **Screenshot rejected** — you picked a GIF or HEIC. Use a JPG or PNG.
 - **Dashboard blank** — you opened `https`. It is `http`.
-- **The app still shows "Sign in with LinkedIn" after you consented** — expected.
-  Nothing on that screen polls, and there is no lifecycle refresh; the binding
-  already happened server-side. Force-close the app and reopen it: startup calls
-  `/me`, sees the LinkedIn identity and moves you to step three. Narrate it as
-  "coming back into the app" rather than as a retry.
+- **The app doesn't advance after you consented** — it re-reads `/me` when it
+  comes back to the foreground, so give it a second. If it still sits there, the
+  bind is already done server-side: force-close and reopen, and startup's `/me`
+  call moves you to step three.
 - **LinkedIn asks for credentials you don't want on camera** — sign in to
   LinkedIn in that browser *before* you start recording, so the consent screen
   is all that appears.

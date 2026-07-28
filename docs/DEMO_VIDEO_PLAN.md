@@ -60,7 +60,7 @@ accounts that have onboarded.
 | # | Do | Database |
 |---|---|---|
 | 1 | Connect GitHub with an unused username — live repos, languages, stars | `users` +1 |
-| 2 | LinkedIn — the **real** OIDC flow (production runs `LINKEDIN_MODE=live`). Consent in the browser, then force-close and reopen the app to pick up the binding | `linkedin_sub` fills |
+| 2 | LinkedIn — the **real** OIDC flow (production runs `LINKEDIN_MODE=live`). Consent in the browser, close the tab, and the app picks the binding up by itself | `linkedin_sub` fills |
 | 3 | Pick Builder | — |
 | 4 | Profile → completeness bar, point at the 40/70 gates | — |
 | 5 | Tap avatar → upload a photo | `avatar_s3_key` fills |
