@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../theme/palette.dart';
 import '../theme/typography.dart';
@@ -15,6 +16,7 @@ class BrutalScaffold extends StatelessWidget {
     this.actions,
     this.background = Palette.cream50,
     this.titleBarColor = Palette.cream100,
+    this.isRootTab = false,
   });
 
   final String title;
@@ -26,6 +28,11 @@ class BrutalScaffold extends StatelessWidget {
   /// tints it by the user's primary role.
   final Color titleBarColor;
 
+  /// True for the Home shell's own tabs, which are legitimately the bottom of
+  /// the stack. Everywhere else, an empty stack means the user was stranded by
+  /// a route replacement and the title bar offers a way Home instead.
+  final bool isRootTab;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -34,7 +41,12 @@ class BrutalScaffold extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _TitleBar(title: title, actions: actions, color: titleBarColor),
+            _TitleBar(
+              title: title,
+              actions: actions,
+              color: titleBarColor,
+              isRootTab: isRootTab,
+            ),
             Expanded(child: body),
           ],
         ),
@@ -44,11 +56,17 @@ class BrutalScaffold extends StatelessWidget {
 }
 
 class _TitleBar extends StatelessWidget {
-  const _TitleBar({required this.title, this.actions, required this.color});
+  const _TitleBar({
+    required this.title,
+    this.actions,
+    required this.color,
+    required this.isRootTab,
+  });
 
   final String title;
   final List<Widget>? actions;
   final Color color;
+  final bool isRootTab;
 
   @override
   Widget build(BuildContext context) {
@@ -75,13 +93,25 @@ class _TitleBar extends StatelessWidget {
               child: const Icon(Icons.arrow_back, color: Palette.ink, size: 22),
             ),
             const SizedBox(width: 14),
-          ] else ...[
+          ] else if (isRootTab) ...[
+            // A tab of the home shell: nothing to go back to, so the dot is
+            // pure section identity.
             Container(
               width: 8,
               height: 8,
               margin: const EdgeInsets.only(right: 12),
               decoration: BoxDecoration(color: color, shape: BoxShape.circle),
             ),
+          ] else ...[
+            // Not a root tab and nothing on the stack: the user got here
+            // through a route replacement and has no way out but killing the
+            // app. Offer Home rather than an inert decoration.
+            GestureDetector(
+              onTap: () => context.go('/home'),
+              behavior: HitTestBehavior.opaque,
+              child: const Icon(Icons.home_filled, color: Palette.ink, size: 22),
+            ),
+            const SizedBox(width: 14),
           ],
           Expanded(
             child: Text(

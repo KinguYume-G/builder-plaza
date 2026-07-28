@@ -212,10 +212,16 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
   }
 
   void _goToDetail(String id) {
+    // `go` REPLACES the stack, so navigating straight to the detail route left
+    // it as the only entry: no back arrow (the title bar draws one only when
+    // Navigator.canPop is true) and a system back that quit the app outright.
+    // Re-root at Home and push the detail on top, so both the arrow and the
+    // system gesture land somewhere sensible.
     if (context.canPop()) {
       context.pop();
     }
-    context.go('/projects/$id');
+    context.go('/home');
+    context.push('/projects/$id');
   }
 
   // ---------------------------------------------------------------------------

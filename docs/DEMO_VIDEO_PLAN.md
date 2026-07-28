@@ -117,6 +117,36 @@ at all: `Connect GitHub` returns 409 for any account that has finished
 onboarding, and the real OAuth callback redirects to a *web* frontend, so it
 cannot complete on Android. Turn the flag off after the assessment.
 
+### How each of you signs in — read this before recording
+
+The landing screen offers only **Connect GitHub**, and that call returns 409 for
+any account that has already completed onboarding. Every one of our accounts is
+in that state, so *do not start by tapping Connect GitHub.* The app has not been
+redesigned for the assessment; we work around it instead.
+
+**Wei (segment 1) — do the full onboarding, on purpose.** Use a real GitHub
+username that is **not yet in the database**. Connect then succeeds and you get
+the Trust Gateway pulling live repos, languages and stars on camera, which is the
+single most persuasive thing in the app. Check the username is unused first:
+
+```bash
+curl -s "http://builder-plaza-alb-270417897.ap-southeast-1.elb.amazonaws.com/users?q=<login>"
+```
+
+**Gao Xing and Ti Huai (segments 2 and 3) — sign in, don't connect.** Your
+accounts already exist, so:
+
+> tap the small **`dev · system check`** link at the bottom of the landing screen
+> → **CONTINUE → LOGIN** → replace `demo-builder` with your own GitHub login →
+> pick your role → **DEV LOGIN**
+
+Practise that tap sequence once. The footer link is small and easy to miss, and
+fumbling for it on camera is the kind of thing a marker notices.
+
+If someone taps Connect GitHub by mistake and gets the 409, the error card now
+carries a **Sign in instead →** button that takes them to the same screen with
+the username already filled in — recover with that rather than restarting.
+
 **Rehearse the two slow calls.** In testing today, `/auth/github/connect` hit a
 10-second timeout because the GitHub API was slow, and `Refresh growth` posts
 nothing when the linked repo has no new events. Run both once before recording
@@ -132,7 +162,7 @@ not from self-description.*
 
 | # | Show | Say | Database proof |
 |---|---|---|---|
-| 1 | Fresh app → Step 1, enter a real GitHub username → Connect | "Nothing here is self-reported — these repos, languages and stars are pulled live from GitHub." | `users` +1 — show the new row's `github_login` and `created_at` |
+| 1 | Fresh app → Step 1, enter a real GitHub username **that is not already in the database** (see the sign-in note above) → Connect | "Nothing here is self-reported — these repos, languages and stars are pulled live from GitHub." | `users` +1 — show the new row's `github_login` and `created_at` |
 | 2 | Step 2, LinkedIn | Point at the **SIMULATED FOR DEMO** watermark: "labelled because it's a class project; the real OIDC path exists behind the same interface." | — (say it, don't dwell) |
 | 3 | Step 3 → Builder → Builder Home | "The role picks the lens, not a separate app." | — |
 | 4 | ＋ New project → title, stage, needs, link a real `owner/repo` | "This card is the thing collaborators will actually judge me on." | `project_cards` +1 — show `title` and `repo_full_names` |

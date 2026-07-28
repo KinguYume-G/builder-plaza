@@ -98,6 +98,7 @@ class _HomeShellState extends State<HomeShell> {
     if (user == null) {
       return const BrutalScaffold(
         title: 'Home',
+        isRootTab: true,
         titleBarColor: Palette.copper,
         body: Center(child: CircularProgressIndicator(color: Palette.ink)),
       );
@@ -113,6 +114,7 @@ class _HomeShellState extends State<HomeShell> {
 
     return BrutalScaffold(
       title: titles[index],
+      isRootTab: true,
       titleBarColor: barColors[index],
       body: LayoutBuilder(
         builder: (context, constraints) {
