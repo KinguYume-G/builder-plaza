@@ -6,7 +6,7 @@ known initial state), backend reachable (local or the ALB URL).
 | # | Beat | Where | Say / show |
 |---|---|---|---|
 | 1 | Trust Gateway | fresh app | Enter a real GitHub username → live repos/languages/stars appear. "Nothing here is self-reported." |
-| 2 | Simulated LinkedIn | Step 2 | Point at the SIMULATED FOR DEMO watermark — academic-integrity labelling; mention the real OIDC Live mode exists behind the same interface (ADR-0003). |
+| 2 | LinkedIn OIDC | Step 2 | The deployment runs `LINKEDIN_MODE=live`, so this is the real OpenID Connect flow (`openid profile email`), not the watermarked simulated screen — say so. Simulated mode still exists behind the same interface for the test suite (ADR-0003). |
 | 3 | Role lens | Step 3 | Pick Builder → Builder Home. |
 | 4 | Profile + gates | Profile tab | Completeness bar with 40/70 gate ticks; tap avatar → upload (S3 presigned, image binary requirement). |
 | 5 | Project card | Home → ＋ New project | Create with a real repo; show live repo activity on the detail page. |

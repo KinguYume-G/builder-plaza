@@ -1,0 +1,1114 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Viva 应战手册 · Liu Wei · Builder</title>
+<style>
+:root{
+  --paper:#FFFEF8; --cream50:#FAF6EC; --cream100:#F4ECD8;
+  --ink:#0A0A0A; --ink600:#3D3D3D; --ink400:#857C70; --ink200:#CFC8BD;
+  --teal:#1F7A6C; --tomato:#B8503A; --mustard:#B08A2E; --lime:#3F8259; --copper:#8B5E3C;
+  --rose:#C43D6E; --tangerine:#E07830;
+  --mono:"JetBrains Mono","SFMono-Regular",ui-monospace,Menlo,Consolas,monospace;
+  --sans:"Inter Tight",-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:20px}
+body{
+  background:var(--cream50); color:var(--ink); font-family:var(--sans);
+  font-size:16px; line-height:1.65; -webkit-font-smoothing:antialiased;
+}
+#bar{position:fixed;top:0;left:0;height:4px;background:var(--teal);width:0;z-index:99;transition:width .1s linear}
+
+.wrap{display:grid;grid-template-columns:236px minmax(0,1fr);gap:40px;max-width:1240px;margin:0 auto;padding:0 28px}
+
+/* ---------- TOC ---------- */
+nav{position:sticky;top:0;height:100vh;overflow-y:auto;padding:32px 0;font-family:var(--mono);font-size:11.5px}
+nav .brand{font-weight:800;font-size:13px;letter-spacing:.5px;line-height:1.3;margin-bottom:4px}
+nav .brandsub{color:var(--ink400);font-size:10.5px;margin-bottom:22px}
+nav a{display:block;color:var(--ink400);text-decoration:none;padding:5px 10px;border-left:2px solid var(--ink200);line-height:1.35}
+nav a:hover{color:var(--ink);background:var(--cream100)}
+nav a.on{color:var(--ink);border-left-color:var(--teal);background:var(--cream100);font-weight:700}
+nav .meta{margin-top:26px;padding:12px 10px;border:2px solid var(--ink);border-radius:6px;background:var(--paper);color:var(--ink600);font-size:10.5px;line-height:1.7}
+nav .meta b{color:var(--ink)}
+
+main{padding:34px 0 120px;min-width:0}
+
+/* ---------- hero ---------- */
+.hero{border:3px solid var(--ink);border-radius:12px;background:var(--paper);padding:30px 32px;box-shadow:8px 8px 0 var(--ink);margin-bottom:14px}
+.hero h1{font-size:38px;line-height:1.05;letter-spacing:-1px;font-weight:900;margin-bottom:6px}
+.hero .sub{font-family:var(--mono);font-size:12px;color:var(--ink400);letter-spacing:.4px;margin-bottom:20px}
+.slot{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px}
+.slot div{border:2px solid var(--ink);border-radius:6px;padding:8px 13px;font-family:var(--mono);font-size:11.5px;font-weight:700;background:var(--cream100)}
+.slot div b{display:block;font-size:16px;letter-spacing:-.3px;margin-top:2px}
+.slot .hot{background:var(--tomato);color:var(--paper);border-color:var(--ink)}
+
+/* ---------- generic ---------- */
+section{margin-top:52px;scroll-margin-top:20px}
+h2{font-size:12px;font-family:var(--mono);letter-spacing:1.6px;color:var(--ink400);font-weight:700;margin-bottom:6px}
+h2 .n{color:var(--teal)}
+h3{font-size:27px;font-weight:900;letter-spacing:-.6px;line-height:1.15;margin-bottom:16px}
+h4{font-size:17px;font-weight:800;margin:26px 0 10px;letter-spacing:-.2px}
+p{margin-bottom:12px}
+p.lead{color:var(--ink600);font-size:15px}
+strong{font-weight:700}
+code{font-family:var(--mono);font-size:.88em;background:var(--cream100);border:1px solid var(--ink200);border-radius:3px;padding:1px 5px;white-space:nowrap}
+a.src{font-family:var(--mono);font-size:11px;color:var(--teal);text-decoration:none;border-bottom:1px dotted var(--teal);white-space:nowrap}
+a.src:hover{background:var(--cream100)}
+ul,ol{margin:0 0 14px 20px}
+li{margin-bottom:6px}
+hr{border:0;border-top:2px solid var(--ink200);margin:30px 0}
+
+.card{border:2px solid var(--ink);border-radius:9px;background:var(--paper);padding:20px 22px;margin-bottom:16px;box-shadow:0 6px 16px -4px #0a0a0a1f}
+.card.stamp{box-shadow:5px 5px 0 var(--ink)}
+.card > :last-child{margin-bottom:0}
+.kicker{font-family:var(--mono);font-size:10.5px;letter-spacing:1.2px;font-weight:700;color:var(--ink400);margin-bottom:9px;text-transform:uppercase}
+
+.quote{border-left:5px solid var(--mustard);background:#FCF6E7;padding:13px 18px;margin:14px 0;border-radius:0 7px 7px 0;font-size:14.5px;line-height:1.6}
+.quote .who{display:block;font-family:var(--mono);font-size:10.5px;color:var(--ink400);margin-top:7px;letter-spacing:.3px}
+.quote em{font-style:normal;background:#F6E4A8;padding:0 3px;border-radius:2px}
+
+.warn{border-left:5px solid var(--tomato);background:#FDF1EE;padding:13px 18px;margin:14px 0;border-radius:0 7px 7px 0;font-size:14.5px}
+.good{border-left:5px solid var(--lime);background:#EFF6F1;padding:13px 18px;margin:14px 0;border-radius:0 7px 7px 0;font-size:14.5px}
+
+pre{background:#0F1512;color:#E6EDE9;border-radius:8px;padding:15px 17px;overflow-x:auto;font-family:var(--mono);font-size:12.4px;line-height:1.62;margin:12px 0;border:2px solid var(--ink)}
+pre .k{color:#7FD8C0}pre .s{color:#E4C07A}pre .c{color:#6E8079;font-style:italic}
+pre .n{color:#D9A0C0}pre .t{color:#8FC7EE}pre .add{color:#8BD98B}pre .del{color:#E08585}
+
+table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.6px}
+th{background:var(--ink);color:var(--paper);font-family:var(--mono);font-size:10.5px;letter-spacing:.9px;text-align:left;padding:9px 11px;font-weight:700}
+td{border-bottom:1px solid var(--ink200);padding:9px 11px;vertical-align:top}
+tr:last-child td{border-bottom:0}
+td code{white-space:normal}
+
+.tag{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.6px;padding:2px 7px;border-radius:4px;border:1.5px solid;vertical-align:middle}
+.t-hi{color:var(--tomato);border-color:var(--tomato);background:#FDF1EE}
+.t-md{color:var(--mustard);border-color:var(--mustard);background:#FCF6E7}
+.t-ok{color:var(--lime);border-color:var(--lime);background:#EFF6F1}
+.t-me{color:var(--teal);border-color:var(--teal);background:#EAF3F1}
+
+details{border:2px solid var(--ink200);border-radius:8px;background:var(--paper);margin-bottom:9px;overflow:hidden}
+details[open]{border-color:var(--ink)}
+summary{cursor:pointer;padding:12px 16px;font-weight:700;font-size:14.5px;list-style:none;display:flex;gap:11px;align-items:flex-start}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"▸";color:var(--teal);font-weight:900;flex-shrink:0}
+details[open] summary::before{content:"▾"}
+details[open] summary{background:var(--cream100);border-bottom:2px solid var(--ink)}
+.dbody{padding:15px 17px;font-size:14.5px}
+.dbody > :last-child{margin-bottom:0}
+
+.beat{display:grid;grid-template-columns:26px 1fr;gap:11px;margin-bottom:11px;align-items:start}
+.beat .num{width:26px;height:26px;border-radius:50%;background:var(--ink);color:var(--paper);font-family:var(--mono);font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.beat.b4 .num{background:var(--mustard)}
+
+.script{background:var(--cream100);border:2px dashed var(--ink400);border-radius:8px;padding:15px 18px;margin:12px 0;font-size:14.6px;line-height:1.72}
+.script:before{content:"口述稿";display:block;font-family:var(--mono);font-size:10px;letter-spacing:1.2px;color:var(--ink400);font-weight:700;margin-bottom:8px}
+
+.chain{font-family:var(--mono);font-size:12.4px;line-height:1.95;background:var(--paper);border:2px solid var(--ink);border-radius:8px;padding:14px 16px;margin:12px 0;overflow-x:auto}
+.chain b{color:var(--teal)}
+.chain i{font-style:normal;color:var(--ink400)}
+
+.chk{border:2px solid var(--ink);border-radius:9px;background:var(--paper);padding:6px 4px}
+.chk label{display:flex;gap:11px;padding:9px 14px;cursor:pointer;font-size:14.3px;align-items:flex-start;border-radius:5px}
+.chk label:hover{background:var(--cream100)}
+.chk input{margin-top:5px;width:16px;height:16px;accent-color:var(--teal);flex-shrink:0}
+.chk input:checked + span{color:var(--ink400);text-decoration:line-through}
+#score{font-family:var(--mono);font-size:12px;font-weight:700;padding:12px 14px;border-top:2px solid var(--ink200);margin-top:5px;color:var(--teal)}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:1000px){
+  .wrap{grid-template-columns:1fr;gap:0;padding:0 18px}
+  nav{position:static;height:auto;padding:22px 0 0;border-bottom:2px solid var(--ink200)}
+  nav a{display:inline-block;border-left:0;border-bottom:2px solid var(--ink200);margin:0 4px 4px 0}
+  nav a.on{border-left:0;border-bottom-color:var(--teal)}
+  .hero h1{font-size:29px}.grid2{grid-template-columns:1fr}
+}
+@media print{
+  nav,#bar{display:none}.wrap{grid-template-columns:1fr;max-width:none;padding:0}
+  body{background:#fff;font-size:11pt}
+  .hero,.card,details{box-shadow:none;break-inside:avoid}
+  details{border-color:#999}details .dbody{display:block!important}
+  section{break-inside:auto}h3{break-after:avoid}
+  pre{background:#f4f4f4;color:#111;border-color:#999}
+  pre .k,pre .s,pre .c,pre .n,pre .t,pre .add,pre .del{color:#111}
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#16191C; --cream50:#101315; --cream100:#1F2429;
+    --ink:#EDE9E0; --ink600:#BDB7AB; --ink400:#8C8578; --ink200:#39403F;
+    --teal:#4FBFA8; --tomato:#E0806A; --mustard:#D6AC55; --lime:#6FBB8A; --copper:#C08D63;
+  }
+  :root:not([data-theme="light"]) .hero{box-shadow:8px 8px 0 #000}
+  :root:not([data-theme="light"]) .card.stamp{box-shadow:5px 5px 0 #000}
+  :root:not([data-theme="light"]) .quote{background:#231F14}
+  :root:not([data-theme="light"]) .warn{background:#2A1A16}
+  :root:not([data-theme="light"]) .good{background:#16241C}
+  :root:not([data-theme="light"]) .slot .hot{color:#16191C}
+  :root:not([data-theme="light"]) th{background:#39403F;color:#EDE9E0}
+}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<div class="wrap">
+
+<nav>
+  <div class="brand">VIVA 应战手册</div>
+  <div class="brandsub">Liu Wei · Builder · Group 19</div>
+  <a href="#s0">00 · 规则与赌注</a>
+  <a href="#s1">01 · 我的代码地图</a>
+  <a href="#s2">02 · 12 条选型辩护</a>
+  <a href="#s3">03 · F1 Trust Gateway</a>
+  <a href="#s4">04 · F2 门控与头像</a>
+  <a href="#s5">05 · F3 Project CRUD</a>
+  <a href="#s6">06 · F3 三步上传</a>
+  <a href="#s7">07 · F4 Growth 与离线</a>
+  <a href="#s8">08 · 组件与主题层</a>
+  <a href="#s9">09 · 语法急救包</a>
+  <a href="#s10">10 · 现场改代码演练</a>
+  <a href="#s11">11 · 我代码里的雷</a>
+  <a href="#s12">12 · 快问快答 ×26</a>
+  <a href="#s13">13 · 临场清单</a>
+  <div class="meta">
+    <b>7 月 30 日 16:45</b><br>20 分钟 · 三人轮流<br>
+    考官 1 人 · 只问代码<br><br>
+    <b>我的文件</b><br>router · auth_provider<br>projects_provider · growth_provider<br>project_form · project_detail<br>intent_editor · api_client<br><br>
+    <b>栈</b><br>Flutter 3 / Dart 3<br>provider 6.1 · go_router 17.3<br>dio 5.10 · shared_preferences 2.5
+  </div>
+</nav>
+
+<main>
+
+<div class="hero">
+  <h1>只问代码。<br>不问功能。</h1>
+  <div class="sub">CT124-3-2 MAE · GROUP 19 · VERTICAL SOCIAL APP · LIU WEI (TP085412) · BUILDER</div>
+  <div class="slot">
+    <div>日期 <b>7月30日 周四</b></div>
+    <div>时段 <b>16:45–17:05</b></div>
+    <div>时长 <b>20 分钟 / 3 人</b></div>
+    <div class="hot">缺席 <b>上限锁死 25 分</b></div>
+  </div>
+  <div class="quote" style="margin-bottom:0">
+    "my questions in the viva will be focused on your code. <em>I will only ask questions about your code. I will not ask questions about your features.</em> It was a feature demonstration you have already given in the record data."
+    <span class="who">General · 2026-05-21 · [01:22:32]</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════ 00 ══════════════════════════════ -->
+<section id="s0">
+  <h2><span class="n">00</span> · 规则与赌注</h2>
+  <h3>他要什么，怎么算 Fail</h3>
+  <p class="lead">全部来自 <code>MAE Group Assignment.docx</code> 的 PERFORMANCE CRITERIA 与课堂录音原文。这四条决定你 20 分钟里说什么。</p>
+
+  <div class="card stamp">
+    <div class="kicker">赌注 · 原文</div>
+    <table>
+      <tr><th style="width:32%">条款</th><th>原文 / 后果</th></tr>
+      <tr><td><b>缺席</b></td><td>"Fails to attend the presentation" → <b>Zero marks will be allocated to app demo, app solution and problem solving and design.</b> A maximum of 25 marks…<br><span class="tag t-hi">8+37+15 归零</span></td></tr>
+      <tr><td><b>答不出</b></td><td>"The students should be capable of <b>tracing and showing an in-depth understanding</b> of the app (execution and source code)… <b>Otherwise, it will be viewed as a plausible academic dishonesty case.</b>"</td></tr>
+      <tr><td><b>Fail 判据</b></td><td>"Not able to articulate and explain basic functionality… <b>Poor syntax knowledge regarding cross-platform app development</b>"<br><span class="tag t-md">他会考纯 Dart/Flutter 语法 → 见 §09</span></td></tr>
+      <tr><td><b>Credit 判据</b></td><td>"Able to clearly answer questions… <b>Your examples cover the majority of the functionality of the system, and are well chosen to do so.</b>"<br><span class="tag t-ok">要主动挑覆盖面广的例子，别被动等问</span></td></tr>
+    </table>
+  </div>
+
+  <h4>他会问的两类问题（讲师亲口给的例题）</h4>
+  <div class="quote">
+    ① "It may be a question I will ask you. Okay, <em>can you explain this feature — which code is used to provide this feature?</em>"<br><br>
+    ② "I can also ask you something like this. Okay, <em>can you do minor change in the code to change this display to this?</em>"<br>
+    "…<b>Minor change, obviously, not major change</b>, because it won't be creating a new feature altogether… <b>minor change, one place.</b>"
+    <span class="who">General · 2026-05-21 · [01:23:25] / [01:23:35] / [01:23:50]</span>
+  </div>
+  <div class="quote">
+    "So, if you are clear about your code which you have submitted — <b>even if you use some AI to help to draft it</b>, but if you understand it, you should be able to change it."
+    <span class="who">General · 2026-05-21 · [01:23:52]</span>
+  </div>
+  <p>这句话就是评分逻辑本身：<b>他不禁止 AI，他禁止的是"改不动"。</b>所以 §10 的演练不是背，是真手敲。</p>
+
+  <h4>他明说会顺带检查的代码质量五项</h4>
+  <div class="card">
+    <div class="kicker">General · 2026-05-21 · [01:15:02]–[01:16:39]</div>
+    <ol>
+      <li>"The goal is to ensure <b>separation of concerns</b>. Your UI code is away from the other code."</li>
+      <li>"Is there any <b>reusability</b> of some code you can use in future projects? Is it easy to <b>extend</b> this application?"</li>
+      <li>"Are we having any <b>widgets that we are reusing in multiple screens</b>?"</li>
+      <li>"We created our <b>own custom theme that is applied to all the screens</b>."</li>
+      <li>"<b>Don't put every code in the UI code</b>… make sure your <b>business logic is not mixed up with your screen logic</b>."</li>
+    </ol>
+    <div class="good" style="margin-bottom:0"><b>好消息：这五条你全中。</b> ① <code>screens/ → state/ → api/ → models/</code> 四层；② 六个 provider 全部构造函数注入 <code>ApiClient? api</code>；③ 12 个 <code>brutal_*</code> 复用组件；④ <code>theme/palette.dart</code> 单一颜色来源，widget 里零 hex；⑤ 屏幕里没有一行 HTTP。<b>开场 30 秒就把这五条讲掉</b>（见 §01）。</div>
+  </div>
+
+  <h4>他还说：库用得多是加分</h4>
+  <div class="quote">
+    "What is your framework utilization? Are you only using internal libraries… or you are also importing add-on libraries? <em>if you use more libraries, it means you are able to enhance your features.</em>"
+    <span class="who">General · 2026-05-21 · [01:16:48] / [01:17:18]</span>
+  </div>
+  <p>官方 Distinction 判据同样写着 "<b>third party frameworks / SDKs</b>"。<b>所以你用 dio / go_router / provider / shared_preferences / image_picker / fl_chart / google_fonts / url_launcher 是加分项，不是把柄</b>——前提是每一个都答得出"为什么"。这正是 §02 的全部内容。</p>
+</section>
+
+<!-- ══════════════════════════════ 01 ══════════════════════════════ -->
+<section id="s1">
+  <h2><span class="n">01</span> · 我的代码地图</h2>
+  <h3>哪些文件是我的，30 秒怎么开场</h3>
+  <p class="lead">依据 <code>PRD.md:467</code> 的 Workload Matrix：<b>Liu Wei · Builder</b> — 注册流、Project Card、Intent、Growth Plaza 发布侧、Request Market 维护职位侧；后端 F1/F2/F3/F4；测试 E2E-1 与 F1–F4 widget test。</p>
+
+  <table>
+    <tr><th>功能</th><th>文件</th><th>行数</th><th>掌握度要求</th></tr>
+    <tr><td><b>F1</b> Trust Gateway 路由守卫</td><td><code>lib/router.dart</code></td><td>219</td><td><span class="tag t-hi">逐行</span></td></tr>
+    <tr><td><b>F1</b> 登录态 / token / onboarding</td><td><code>lib/state/auth_provider.dart</code></td><td>316</td><td><span class="tag t-hi">逐行</span></td></tr>
+    <tr><td><b>F3</b> 项目 CRUD + 截图 + Intent</td><td><code>lib/state/projects_provider.dart</code></td><td>411</td><td><span class="tag t-hi">逐行</span></td></tr>
+    <tr><td>网络底座 · 拦截器 · 错误翻译</td><td><code>lib/api/api_client.dart</code></td><td>114</td><td><span class="tag t-hi">逐行</span></td></tr>
+    <tr><td><b>F3</b> 项目表单（建 / 改）</td><td><code>screens/projects/project_form_screen.dart</code></td><td>645</td><td><span class="tag t-hi">逐行</span></td></tr>
+    <tr><td><b>F3</b> 项目详情</td><td><code>screens/projects/project_detail_screen.dart</code></td><td>550</td><td><span class="tag t-md">结构+要点</span></td></tr>
+    <tr><td><b>F3</b> Intent 编辑器</td><td><code>screens/projects/intent_editor_screen.dart</code></td><td>173</td><td><span class="tag t-md">结构+要点</span></td></tr>
+    <tr><td><b>F4</b> Growth Plaza 服务</td><td><code>lib/state/growth_provider.dart</code></td><td>106</td><td><span class="tag t-md">结构+要点</span></td></tr>
+    <tr><td><b>F2</b> Profile 门控（完成度卡）</td><td><code>screens/home/home_shell.dart:701-794</code></td><td>953*</td><td><span class="tag t-md">只认自己那段</span></td></tr>
+    <tr><td>模型 · 防御式解析</td><td><code>lib/models/project_card.dart</code></td><td>183</td><td><span class="tag t-md">结构+要点</span></td></tr>
+    <tr><td>跨平台连接调优</td><td><code>lib/api/connection_tuning_io.dart</code> / <code>_web</code></td><td>23</td><td><span class="tag t-hi">必答</span></td></tr>
+    <tr><td>E2E-1 + 自适应 widget test</td><td><code>integration_test/e2e_test.dart</code> · <code>test/responsive_test.dart</code></td><td>—</td><td><span class="tag t-md">能跑能讲</span></td></tr>
+  </table>
+  <div class="warn"><b>* <code>home_shell.dart</code> 953 行是三人共用的壳。</b> 进场前跟 Gao Xing / Ti Huai 对一遍边界：<b>Home tab（<code>_HomeTab</code> :174-243、<code>_IntentSection</code> :245、<code>_ProjectsSection</code> :290、<code>_ProjectRow</code> :328）+ Profile 完成度卡（:701-794）是我的</b>；Plaza tab 是 Gao Xing，Match tab 是 Ti Huai。他随手点开这个文件时，你要能一句话划清。</div>
+
+  <h4>开场 30 秒（不用等他问，主动说）</h4>
+  <div class="script">
+    我负责 Builder 这条线：注册流、Project Card、Intent 和 Growth Plaza 的发布侧。<br><br>
+    前端我分了四层，<b>依赖方向永远是单向往下的</b>：<code>screens</code> 只认 <code>state</code>，<code>state</code> 只认 <code>api</code>，<code>api</code> 只认 <code>models</code>。<b>屏幕里没有任何一行 HTTP 调用</b>——所有网络都收在 <code>ApiClient</code> 这个单例里，token 由一个拦截器统一挂上，屏幕根本不知道 token 存在。<br><br>
+    UI 这边我抽了一套 <code>brutal_*</code> 组件——按钮、卡片、输入框、下拉、徽章——<b>跨屏复用</b>；颜色全部只从 <code>Palette</code> 取，widget 里一个 hex 都没有硬编码。<br><br>
+    这样分层的收益是可测性：六个 provider 都从构造函数注入 <code>ApiClient</code>，<b>widget test 里可以塞一个假的进去，不碰真网络</b>。<br><br>
+    要不我从最完整的一条链讲起：<b>Builder 建一个 Project Card，包括截图上传那三步。</b>
+  </div>
+  <p>最后一句是关键：<b>把话题引到你最有把握、覆盖面最广的那条链</b>（正好命中 Credit 判据的 "examples… well chosen"）。</p>
+</section>
+
+<!-- ══════════════════════════════ 02 ══════════════════════════════ -->
+<section id="s2">
+  <h2><span class="n">02</span> · 12 条选型辩护</h2>
+  <h3>为什么我没用课上教的那个写法</h3>
+  <div class="warn">
+    <b>这一节是整份手册最重要的部分。</b> 交叉课件 + Lab 参考代码后的结论：<b>你的技术栈和课上实际教的有相当大的偏离</b>。而讲师明说 "When I will look into your code, <b>I will know immediately</b> this is not your code"，并且会在 viva 现场判断 AI 使用程度。<br>
+    <b>偏离本身不扣分</b>（Distinction 判据反而奖励第三方框架），<b>答不出"为什么"才扣分</b>。以下每条背一句话就够。
+  </div>
+
+  <details open><summary><span class="tag t-hi">高危</span> ① 为什么用 go_router，不用 <code>Navigator.push</code> / 命名路由？</summary>
+  <div class="dbody">
+    <p><b>课上教的：</b> Lab 6 深教 <code>Navigator.of(context).push&lt;GroceryItem&gt;(MaterialPageRoute(...))</code>；Lab 8/9/11 用 <code>routes:{}</code> + <code>pushNamed</code>。go_router <b>零覆盖</b>。</p>
+    <div class="script">因为我需要<b>集中式的登录门禁</b>。我们的 Trust Gateway 要求 GitHub → LinkedIn → 选角色三步走完才能进主页。如果用 <code>Navigator</code>，我得在<b>每一个屏幕的 initState 里各写一遍"没登录就踢回去"</b>，19 个路由就是 19 份重复逻辑，而且漏一个就是个洞。<br><br>
+    go_router 给我一个<b>顶层 <code>redirect</code> 回调</b>——所有导航都要先过它，守卫只写一份（<code>router.dart:53-108</code>）。配合 <code>refreshListenable: auth</code>，<code>AuthProvider</code> 一 <code>notifyListeners()</code> 守卫就自动重跑，<b>登录状态变了页面自己会跳</b>，不用我手动 push。<br><br>
+    另外我们要跑 Web，go_router 原生支持 URL 深链和浏览器前进后退；<code>Navigator</code> 的栈式导航在 Web 上地址栏不会变。</div>
+    <p><b>追问"那 Navigator 你会用吗"</b> → 会，<code>router.dart:154-158</code> 的 <code>/projects/:id</code> 就是路径参数，等价于 <code>MaterialPageRoute</code> 传构造参数；<code>context.push</code> 对应 <code>Navigator.push</code>（压栈、能返回），<code>context.go</code> 对应 <code>pushReplacement</code>（替换栈）。</p>
+  </div></details>
+
+  <details><summary><span class="tag t-hi">高危</span> ② 为什么用 dio，不用课上教的 <code>http</code> 包？</summary>
+  <div class="dbody">
+    <p><b>课上教的：</b> Lab 6 深教 <code>http.get(Uri.https(...))</code> + <code>json.decode</code> 手写解析。</p>
+    <div class="script">核心原因是<b>拦截器</b>。我们所有接口都要带 <code>Authorization: Bearer</code>。用 <code>http</code> 包的话，每一次调用都得手写 <code>headers: {'Authorization': ...}</code>——我有 30 多个接口调用，就是 30 处重复，而且新加一个接口忘了写就是 401。<br><br>
+    dio 的 <code>InterceptorsWrapper</code> 让我<b>只在一个地方挂 token</b>（<code>api_client.dart:31-41</code>），provider 里写 <code>_api.dio.get('/projects/mine')</code> 就行，完全不用管鉴权。<br><br>
+    另外 dio 直接给我 <code>baseUrl</code>、<code>connectTimeout</code>/<code>receiveTimeout</code>，还有类型化的 <code>DioException</code>——我靠 <code>error.type</code> 区分"连不上后端"和"后端太慢"，给用户两句不同的话（<code>api_client.dart:99-108</code>）。<code>http</code> 包只会抛一个笼统的 <code>SocketException</code>。</div>
+    <p><b>加分补一句：</b> "而且我没有关掉 dio 的默认 <code>validateStatus</code>——4xx 照样抛异常，因为我的调用方全是 <code>try/catch</code> 加 <code>describeError</code>，靠抛异常来分流。<code>api_client.dart:20-24</code> 我特意留了注释说明<b>不要</b>加宽松的 validateStatus。"</p>
+  </div></details>
+
+  <details><summary><span class="tag t-hi">高危</span> ③ <code>import 'a.dart' if (dart.library.io) 'b.dart'</code> 这是什么？</summary>
+  <div class="dbody">
+    <p>这叫<b>条件导入（conditional import）</b>，是 Dart 的<b>编译期</b>平台分支——不是运行时 if。见 <code>api_client.dart:5-6</code>、<code>auth_provider.dart:9-10</code>、<code>projects_provider.dart:9-10</code>。</p>
+<pre><span class="k">import</span> <span class="s">'connection_tuning_web.dart'</span>
+    <span class="k">if</span> (dart.library.io) <span class="s">'connection_tuning_io.dart'</span>;</pre>
+    <div class="script">编译到 Web 时 <code>dart.library.io</code> 不存在，走 <code>_web.dart</code>（空实现，浏览器自己管连接池）；编译到 Android/iOS 时走 <code>_io.dart</code>。<b>两个文件必须导出同名函数 <code>tuneConnectionReuse(Dio)</code></b>，调用方只写一次。<br><br>
+    为什么必须这么做：<code>_io.dart</code> 里 <code>import 'dart:io'</code>，而 <code>dart:io</code> 在 Web 上根本不存在，直接 import 会<b>编译失败</b>。运行时 <code>if (kIsWeb)</code> 救不了——那时代码已经编译进去了。</div>
+    <p><b>然后他一定会问"那你调了什么"</b> → 见 §02 第 ④ 条，这是你最强的一张牌。</p>
+  </div></details>
+
+  <details><summary><span class="tag t-ok">强项</span> ④ <code>idleTimeout = 3s</code> 是干嘛的？（把这个讲出来）</summary>
+  <div class="dbody">
+    <p><code>connection_tuning_io.dart</code> 全文 23 行，但这是你整个代码库里<b>最能证明"这是我写的"</b>的一段——因为它记录的是一个只有亲自 debug 过才知道的事故。</p>
+<pre><span class="k">void</span> <span class="t">tuneConnectionReuse</span>(Dio dio) {
+  dio.httpClientAdapter = <span class="t">IOHttpClientAdapter</span>(
+    createHttpClient: () =>
+        <span class="t">HttpClient</span>()..idleTimeout = <span class="k">const</span> <span class="t">Duration</span>(seconds: <span class="n">3</span>),
+  );
+}</pre>
+    <div class="script">Dart 的 <code>HttpClient</code> 会把空闲的 keep-alive 连接<b>在池子里留 15 秒</b>。但我们后端跑的是 Uvicorn，它<b>5 秒</b>就把空闲连接关掉了。<br><br>
+    中间这 10 秒是个死亡窗口：客户端以为连接还活着，把请求写进一个服务端已经关掉的 socket，然后<b>永远等不到回复</b>，最后报 <code>receiveTimeout</code>——而<b>服务器日志里一行都没有</b>，因为请求根本没到。<br><br>
+    我是在截图上传时踩到的：相册选择器开了一分钟，回来第一次上传就静默卡 10 秒。<b>把客户端的 idle timeout 压到 3 秒，压到服务端的 5 秒以下，这个窗口就不存在了。</b></div>
+    <div class="good"><b>战术建议：</b>如果他问"你遇到过什么难的 bug"，讲这个，不要讲别的。它同时证明了：你懂 HTTP keep-alive、你真的调过、你知道为什么要条件导入。</div>
+  </div></details>
+
+  <details><summary><span class="tag t-hi">高危</span> ⑤ 为什么表单不用 <code>Form</code> + <code>TextFormField</code> + <code>validator</code>？</summary>
+  <div class="dbody">
+    <p><b>这是最可能被问的一条</b>，因为 <code>Form</code> / <code>GlobalKey&lt;FormState&gt;</code> / <code>validator</code> / <code>onSaved</code> 是 Lab 6 <b>深教</b>的主线内容，而你全项目 <b>0 处</b>使用。</p>
+    <div class="script">我要的交互是"<b>先别红，提交后才红</b>"。用户刚点进表单，标题还没填，不该立刻满屏错误——那很吓人。<br><br>
+    所以我用一个 <code>bool _submitted</code> 标志位（<code>project_form_screen.dart:47</code>）：第一次点 SAVE 时置 true（:169），之后 <code>onChanged</code> 才开始实时重新校验（:282-284）。校验结果写进 <code>_titleError</code> / <code>_stageError</code> / <code>_demoError</code> 三个字段（:124-128），由我自己的 <code>BrutalField</code> 渲染成红边加红字。<br><br>
+    另外我的 STAGE 是一排徽章不是输入框（<code>_StagePicker</code>，:371），<code>Form</code> 管不到它——<code>FormState.validate()</code> 只会遍历 <code>FormField</code> 的子孙。我要让"没选 stage"和"标题空了"用同一套错误呈现，所以干脆统一自己管。</div>
+    <div class="warn"><b>然后主动补这一句（这是拿分的地方）：</b><br>"不过说实话，用 <code>Form</code> + <code>autovalidateMode: AutovalidateMode.onUserInteraction</code> 也能做到同样的效果，而且能少写一半代码。如果重构我会换过去——把 <code>BrutalField</code> 内部从 <code>TextField</code> 换成 <code>TextFormField</code>，外面包一个 <code>Form(key: _formKey)</code>，<code>_validate()</code> 换成 <code>_formKey.currentState!.validate()</code>。stage 那个徽章选择器可以用 <code>FormField&lt;String&gt;</code> 包一层接进同一套校验。"<br><br>
+    <b>为什么这句必须说：</b>它同时证明你懂课上教的写法、懂你自己的写法、还懂两者的取舍。这正是 Credit → Distinction 的分水岭。</div>
+  </div></details>
+
+  <details><summary><span class="tag t-hi">高危</span> ⑥ 为什么列表用 <code>ListView(children:)</code> 而不是 <code>ListView.builder</code>？</summary>
+  <div class="dbody">
+    <p><b>Lab 6 深教 <code>ListView.builder</code></b>，而你的 <code>_ProjectsSection</code>（<code>home_shell.dart:319-322</code>）用的是 <code>for</code> 循环一次性展开全部 children。<b>这是真弱点，别硬辩。</b></p>
+    <div class="script">这里是"我的项目"列表，实际数据量是个位数——一个用户不会发 500 个项目，所以我优先选了代码可读性。<br><br>
+    但你说得对，<b><code>ListView(children:)</code> 会一次性把所有子 widget 构建出来，<code>ListView.builder</code> 是懒构建——只造屏幕上可见的那几个，滚出去的会被回收</b>。数据量一大，前者的首帧时间和内存是线性增长的。<br><br>
+    Plaza 那条公开发现流的量级不可控，那里更应该用 builder。我现在就可以改。</div>
+    <p><b>然后当场改</b> —— 见 §10 演练三，30 秒的事，改完你从"知道问题"变成"能修问题"。</p>
+  </div></details>
+
+  <details><summary><span class="tag t-md">中</span> ⑦ 为什么用 <code>context.watch/read</code> 而不是 <code>Provider.of</code> / <code>Consumer</code>？</summary>
+  <div class="dbody">
+    <p><b>课上教的：</b> <code>Provider.of&lt;T&gt;(context)</code> / <code>Provider.of&lt;T&gt;(context, listen: false)</code> / <code>Consumer&lt;T&gt;(builder:)</code>。</p>
+    <div class="script">它们是<b>同一个东西</b>——<code>context.watch&lt;T&gt;()</code> 就是 <code>Provider.of&lt;T&gt;(context, listen: true)</code> 的扩展方法语法糖，<code>context.read&lt;T&gt;()</code> 就是 <code>listen: false</code>。provider 6 之后官方推荐前者，因为<b>名字直接说清了会不会订阅</b>，不像 <code>listen</code> 那个布尔参数容易写错。<br><br>
+    我的规矩是：<b><code>build()</code> 里用 <code>watch</code>，回调和 <code>initState</code> 里用 <code>read</code></b>。反过来会出两种事故——在 <code>build</code> 里 <code>read</code>，数据变了 UI 不刷新；在按钮回调里 <code>watch</code>，会在错误的生命周期建立订阅。<br><br>
+    <code>Consumer</code> 我没用，因为它的价值是<b>缩小重建范围</b>——只重建 builder 里那一小块。我的屏幕本身就已经拆成很多小 widget 了（<code>_IntentSection</code>、<code>_ProjectsSection</code>、<code>_ProjectRow</code>），每个自己 <code>watch</code>，粒度已经够细，再包一层 <code>Consumer</code> 只是多一层嵌套。</div>
+  </div></details>
+
+  <details><summary><span class="tag t-md">中</span> ⑧ <code>abstract final class Palette</code> —— 这两个修饰符是什么？</summary>
+  <div class="dbody">
+    <p>Dart 3 的类修饰符。<code>abstract</code> = <b>不能被实例化</b>（没有 <code>Palette()</code>），<code>final</code> = <b>不能被继承或实现</b>。合起来表达"这是一个纯静态常量容器，不是一个类型"。</p>
+    <div class="script">写成普通 class 的话，别人可以 <code>Palette()</code> 造一个毫无意义的实例，或者 <code>extends Palette</code> 搞出第二套颜色——那我"单一颜色来源"这个约定就破了。<b>用类型系统把误用挡在编译期</b>，比写注释靠谱。<code>AppTheme</code>、<code>AppType</code>、<code>AppMotion</code> 都是同样处理。</div>
+    <p><b>如果他说"没见过这个语法"</b> → "是 Dart 3 引入的 class modifiers，之前只能靠私有构造函数 <code>Palette._()</code> 来模拟。"</p>
+  </div></details>
+
+  <details><summary><span class="tag t-md">中</span> ⑨ <code>(Icons.home_filled, 'Home')</code> 和 <code>switch (role) { 'builder' =&gt; ... }</code>？</summary>
+  <div class="dbody">
+    <p>两个 Dart 3 特性，都在 <code>home_shell.dart</code>：</p>
+    <ul>
+      <li><b>Record（记录 / 元组）</b> <code>:36-41</code> — <code>const _kNavItems = [(Icons.home_filled, 'Home'), ...]</code>。取值用 <code>.$1</code> / <code>.$2</code>。<b>为什么：</b>图标和文字必须成对，我不想为四个导航项专门定义一个 class；Record 是<b>轻量的匿名值组合</b>，还是 <code>const</code> 的。</li>
+      <li><b>switch expression</b> <code>:162-167</code> — <code>String _roleTitle(String role) =&gt; switch (role) { 'builder' =&gt; 'Builder Home', ... _ =&gt; 'Home' };</code>。<b>和 switch 语句的区别：</b>它是<b>表达式</b>，直接求值出一个 String，不需要 <code>case ... return ...  break</code>；<code>_</code> 是默认分支；<b>编译器会检查穷尽性</b>。</li>
+    </ul>
+  </div></details>
+
+  <details><summary><span class="tag t-md">中</span> ⑩ 为什么 <code>fromJson</code> 全手写，不用 json_serializable / freezed？</summary>
+  <div class="dbody">
+    <div class="script">因为我要<b>防御式解析</b>。后端是我们三个人并行开发的，字段随时可能缺、类型可能对不上。codegen 生成的 <code>fromJson</code> 遇到缺字段直接抛异常——<b>一条脏数据就能让整个列表白屏</b>。<br><br>
+    我手写的每一个字段都有兜底（<code>project_card.dart:157-176</code>）：<code>json['title'] as String? ?? ''</code>，日期用 <code>DateTime.tryParse</code>（不会抛），嵌套对象用 <code>is Map&lt;String,dynamic&gt; ? OwnerLite.fromJson(...) : 占位对象</code>，列表用 <code>.whereType&lt;Map&lt;String,dynamic&gt;&gt;()</code> <b>静默过滤掉脏元素</b>而不是整个炸掉。<br><br>
+    第二个原因是 codegen 要引 build_runner，每改一次模型就得跑一次 <code>flutter pub run build_runner build</code>，在三人并行改接口的节奏下反而更慢。</div>
+    <p><b>追问"那 <code>whereType</code> 具体做什么"</b> → 它是 <code>Iterable&lt;T&gt;</code> 的方法，把 <code>List&lt;dynamic&gt;</code> 里<b>不是</b> <code>Map&lt;String,dynamic&gt;</code> 的元素直接丢掉，同时把静态类型收窄到 <code>Iterable&lt;Map&lt;String,dynamic&gt;&gt;</code>，所以后面能直接 <code>.map(ProjectCard.fromJson)</code> ——这里用的是<b>构造函数撕裂（tear-off）</b>，等价于 <code>.map((j) =&gt; ProjectCard.fromJson(j))</code>。</p>
+  </div></details>
+
+  <details><summary><span class="tag t-ok">安全</span> ⑪ 为什么用 Provider 而不是 Riverpod / BLoC？</summary>
+  <div class="dbody">
+    <div class="good"><b>这条你是对的，可以硬气回答。</b> 课程讲义（Lecture 7）深教 Provider，Lab 8/11 参考代码里 <code>Provider.of</code> 用了 49 次；Riverpod 在 PPT 上只有一页 <code>flutter pub add flutter_riverpod</code>，<b>没有任何代码或 Lab</b>；BLoC 完全没提。</div>
+    <div class="script">Provider 是这门课教的方案，也是官方推荐的入门方案。我们的状态很直白——六块领域数据，每块一个 <code>ChangeNotifier</code>，没有复杂的事件流，用不上 BLoC 那套 Event/State 建模。Riverpod 的优势是编译期安全和不依赖 BuildContext，但代价是一整套新概念，对三人两个月的项目不划算。</div>
+    <p><b>追问"<code>ChangeNotifier</code> 怎么工作"</b> → 它维护一个监听者列表；<code>notifyListeners()</code> 逐个调用它们。<code>ChangeNotifierProvider</code> 在 widget 树上放一个 <code>InheritedWidget</code>，<code>context.watch&lt;T&gt;()</code> 向上找到它并注册当前 element 为监听者 → 通知时该 element 被标脏 → 下一帧重建。</p>
+  </div></details>
+
+  <details><summary><span class="tag t-md">中</span> ⑫ <code>String.fromEnvironment</code>？shared_preferences？<code>?</code> 这个符号？</summary>
+  <div class="dbody">
+    <p><b>a) <code>config.dart</code> 的编译期常量：</b></p>
+<pre><span class="k">const</span> <span class="t">String</span> apiBaseUrl = <span class="t">String</span>.fromEnvironment(
+  <span class="s">'API_BASE_URL'</span>, defaultValue: <span class="s">'http://builder-plaza-alb-...'</span>);</pre>
+    <div class="script"><code>String.fromEnvironment</code> 在<b>编译时</b>读取 <code>--dart-define</code> 传进来的值，所以它能是 <code>const</code>——跑起来之后改不了。本地开发用 <code>flutter run --dart-define=API_BASE_URL=http://localhost:8000</code> 就切到本机后端。默认值指向部署好的 ECS 后端，这样评分时 <code>flutter run</code> 零配置就能跑。<br><br>
+    <b>我知道这里有两个问题：</b>生产地址写死在源码里，而且是明文 HTTP 不是 HTTPS。正式产品应该走 CI 注入 + TLS，这里是为了 demo 便利做的取舍。</div>
+    <p><b>b) shared_preferences：</b> 课程大纲有 "Shared Preference" 词条但<b>没有任何 Lab</b>。你用它做两件事：存 JWT（<code>api_client.dart:44,62-72</code>）和离线缓存（见 §07）。一句话：<b>它是键值对的本地持久化，底层在 Android 是 SharedPreferences、iOS 是 NSUserDefaults、Web 是 localStorage，只能存基本类型，所以我把对象 <code>jsonEncode</code> 成字符串再存。</b></p>
+    <p><b>c) <code>'context_ref': ?contextRef</code> 里的 <code>?</code>：</b> 这叫 <b>null-aware element</b>（Dart 3.9+）——值为 null 时<b>整个键值对不出现</b>在 map 里。<span class="tag t-ok">注意</span> 这个语法在 <b>Gao Xing 的 <code>collab_provider.dart</code> / <code>market_provider.dart</code></b> 里；<b>你自己的 <code>projects_provider.dart:151-154</code> 用的是老写法 collection-if</b>：<code>if (needs != null &amp;&amp; needs.isNotEmpty) 'needs': needs</code>。如果他指着别人的文件问你，就照实说"那是 Gao Xing 写的，语义等价于我这边的 collection-if"。</p>
+  </div></details>
+</section>
+
+<!-- ══════════════════════════════ 03 ══════════════════════════════ -->
+<section id="s3">
+  <h2><span class="n">03</span> · F1 Trust Gateway</h2>
+  <h3>"注册流这个功能，是哪段代码实现的？"</h3>
+  <p class="lead">按<b>四拍模板</b>回答：① 入口 → ② 数据流 → ③ 为什么 → ④ 主动说代价。第 ④ 拍是拿 Credit 的地方。</p>
+
+  <div class="beat"><div class="num">1</div><div><b>入口</b> —— 不在任何一个屏幕里，在路由层。<code>main.dart</code> 的 <code>initState</code> 先造 <code>AuthProvider</code>，再把它传给 <code>createRouter(auth)</code>，然后 <code>_auth.bootstrap()</code>。</div></div>
+  <div class="beat"><div class="num">2</div><div><b>数据流</b> —— 见下面这条链。</div></div>
+  <div class="beat"><div class="num">3</div><div><b>为什么</b> —— 集中式守卫，只写一份。</div></div>
+  <div class="beat b4"><div class="num">4</div><div><b>代价</b> —— <code>linkedinResync</code> 那个闭包标志位。</div></div>
+
+  <div class="chain">
+App 启动 <i>→</i> <b>main.dart:29-34</b> initState: <i>_auth = AuthProvider(); _router = createRouter(_auth); _auth.bootstrap();</i>
+  <i>↓</i>
+<b>auth_provider.dart:59-66</b> bootstrap() <i>→ 有 token 就 loadMe() → _bootstrapped = true → notifyListeners()</i>
+  <i>↓ refreshListenable 触发</i>
+<b>router.dart:53</b> redirect 重跑
+  <i>├</i> :55  <i>!auth.bootstrapped → return null</i>  <b>（还没恢复完，先不 gate，避免闪一下登录页）</b>
+  <i>├</i> :88  <i>onboardingComplete → '/home'</i>
+  <i>├</i> :94  <i>user == null → '/onboarding/github'</i>   <b>STEP 1</b>
+  <i>├</i> :99  <i>!linkedinConnected → '/onboarding/linkedin'</i>  <b>STEP 2</b>
+  <i>└</i> :107 <i>→ '/onboarding/role'</i>                <b>STEP 3</b>
+  </div>
+
+  <h4>③ 为什么这样写（口述）</h4>
+  <div class="script">
+    Trust Gateway 的规则是<b>三步必须按顺序走完</b>才能看到产品。这种"每次导航都要检查"的逻辑，如果分散到每个屏幕的 <code>initState</code> 里，19 个路由就是 19 份重复代码，而且<b>漏一个就是一个绕过门禁的洞</b>。<br><br>
+    go_router 的顶层 <code>redirect</code> 让我把它<b>收成一份</b>：任何一次导航——包括直接输 URL——都要先过这 55 行。<br><br>
+    第 55 行那个 <code>if (!auth.bootstrapped) return null</code> 是关键：App 冷启动时 token 还在磁盘上没读出来，<code>currentUser</code> 是 null。<b>如果这时候就 gate，用户会先看到一闪而过的登录页再被弹回主页</b>。所以我用 <code>_bootstrapped</code> 这个"我试过了"的标志位（注意<b>不是</b>"我登录成功了"），在恢复完成前<b>什么都不做</b>。<br><br>
+    <code>refreshListenable: auth</code> 把这两件事缝起来：<code>AuthProvider</code> 是个 <code>ChangeNotifier</code>，<b>每次 <code>notifyListeners()</code> 都会让 <code>redirect</code> 重跑一遍</b>。所以 <code>bootstrap()</code> 一结束、或者用户刚绑完 LinkedIn，页面自己就跳到下一步了，我不需要在任何地方手写 <code>Navigator.push</code>。
+  </div>
+
+  <h4>④ 主动说代价：<code>linkedinResync</code></h4>
+  <p>这是全项目最"非教科书"的一处（<code>router.dart:45-48, 59-76</code>），<b>他一定会指着问</b>，先发制人讲掉。</p>
+<pre><span class="c">// createRouter 函数体内、GoRouter 之外的一个普通局部变量</span>
+<span class="k">var</span> linkedinResync = <span class="k">false</span>;
+
+<span class="k">return</span> <span class="t">GoRouter</span>(
+  redirect: (context, state) {
+    <span class="k">final</span> linkedinResult = state.uri.queryParameters[<span class="s">'linkedin'</span>];
+    <span class="k">if</span> (linkedinResult != <span class="k">null</span>) {
+      <span class="k">if</span> (!linkedinResync) {
+        linkedinResync = <span class="k">true</span>;
+        auth.<span class="t">loadMe</span>();   <span class="c">// 只重拉一次</span>
+        <span class="k">return</span> <span class="k">null</span>;
+      }
+      ...</pre>
+  <div class="script">
+    走真实 LinkedIn OIDC 时，浏览器会<b>整页跳走再跳回来</b>，回来时地址带 <code>?linkedin=ok</code>。这时候我内存里的 <code>currentUser</code> 还是<b>绑定之前</b>的快照，<code>linkedinConnected</code> 仍然是 false——所以守卫会把用户<b>又踢回 LinkedIn 那一步</b>，明明已经绑好了。<br><br>
+    所以我需要重新拉一次 <code>/me</code>。但 <code>loadMe()</code> 会 <code>notifyListeners()</code>，而这会让 <code>redirect</code> <b>再跑一遍</b>，又看到 <code>?linkedin=ok</code>，又去 <code>loadMe()</code>——<b>无限循环</b>。<br><br>
+    <code>linkedinResync</code> 就是把它掐成一次。它<b>故意是闭包里的局部变量，不是 provider 的字段</b>：OIDC 回跳是整页 reload，<code>createRouter</code> 会重新执行，标志位自然回到 false——<b>"每次页面加载只重试一次"这个语义，正好由闭包生命周期免费给我</b>。<br><br>
+    <b>代价我也知道：</b>这是隐藏在路由里的可变状态，不好测，也不好读。更干净的做法是把"需要重新同步"做成 <code>AuthProvider</code> 的一个显式状态字段，或者在 LinkedIn 那个屏幕里处理回跳而不是在全局守卫里。
+  </div>
+
+  <h4>token 是怎么存和用的（追问必答）</h4>
+  <div class="chain">
+<b>登录成功</b> <i>→ auth_provider.dart:86</i>  <i>_api.setToken(data['access_token'])</i>
+  <i>↓</i>
+<b>api_client.dart:62-66</b> <i>setToken: 写内存 _cachedToken + 写 SharedPreferences('bp_access_token')</i>
+  <i>↓ 之后每一次请求</i>
+<b>api_client.dart:31-41</b> <i>InterceptorsWrapper.onRequest → _readToken() → options.headers['Authorization'] = 'Bearer $token' → handler.next(options)</i>
+  <i>↓</i>
+<b>api_client.dart:55-60</b> <i>_readToken: 内存里有就直接返回，否则读一次磁盘再缓存</i>
+  </div>
+  <ul>
+    <li><b>为什么要 <code>_cachedToken</code>：</b> <code>SharedPreferences.getInstance()</code> 是异步的磁盘读。不缓存的话<b>每个请求都要读一次盘</b>，白白增加延迟。</li>
+    <li><b>为什么是单例：</b> <code>ApiClient._internal()</code> 私有构造 + <code>static final instance</code>（:14,46）。整个 App 共用一个 Dio，<b>连接池、拦截器、token 缓存都只有一份</b>；每个 provider 各造一个 Dio 会各自开连接池。</li>
+    <li><b><code>handler.next(options)</code> 是什么：</b> 拦截器链的"放行"。不调它请求就卡住不发。也可以 <code>handler.reject()</code> 直接失败、<code>handler.resolve()</code> 直接返回假响应。</li>
+    <li><b>登出：</b> <code>logout()</code>（:309-315）清 token + 清 user + <code>notifyListeners()</code> → 守卫重跑 → 弹回 <code>/onboarding/github</code>。<span class="tag t-md">已知代价</span> <b>其他 provider 的数据没有跟着清</b>，换账号时上一个用户的项目列表还在内存里，直到 <code>fetchMine()</code> 覆盖它。</li>
+  </ul>
+</section>
+
+<!-- ══════════════════════════════ 04 ══════════════════════════════ -->
+<section id="s4">
+  <h2><span class="n">04</span> · F2 门控与头像</h2>
+  <h3>Profile 完成度是怎么算和画的</h3>
+
+  <div class="card">
+    <div class="kicker">home_shell.dart:701-794</div>
+    <p><b>① 入口：</b> Profile tab → <code>_CompletenessCard(user:, accent:)</code>。<br>
+    <b>② 数据：</b> 百分比是<b>后端算的</b>（<code>user.completenessPct</code>，GitHub 40 + LinkedIn 40 + Role 20），前端只负责 <code>.clamp(0, 100)</code> 后渲染。<br>
+    <b>③ 怎么画的进度条</b>（这是个纯 widget 题，他很可能挑）：</p>
+<pre><span class="t">Container</span>(                       <span class="c">// 外壳：14px 高，2px 黑边，圆角</span>
+  height: <span class="n">14</span>, clipBehavior: Clip.antiAlias,   <span class="c">// ← 关键：裁掉超出圆角的填充</span>
+  child: <span class="t">Align</span>(
+    alignment: Alignment.centerLeft,               <span class="c">// ← 从左边长出来</span>
+    child: <span class="t">FractionallySizedBox</span>(
+      widthFactor: clamped / <span class="n">100</span>,                <span class="c">// ← 按比例占父宽</span>
+      child: <span class="t">Container</span>(color: accent),
+    ),
+  ),
+)</pre>
+    <div class="script">我没用 <code>LinearProgressIndicator</code>，因为 Material 那个自带圆头和固定高度，跟我们这套硬边设计不搭。<br><br>
+    自己画的话核心是三个 widget 配合：<code>FractionallySizedBox</code> 的 <code>widthFactor</code> 让子 widget 按<b>父容器宽度的比例</b>取宽，不用我去算像素；<code>Align(centerLeft)</code> 保证它从左往右长；<code>clipBehavior: Clip.antiAlias</code> 把方角的填充<b>裁进外壳的圆角里</b>，不然填充会从圆角处溢出来。<br><br>
+    <code>.clamp(0,100)</code> 是防御：万一后端因为 bug 返回 120，<code>widthFactor</code> 会变成 1.2，<code>FractionallySizedBox</code> 会给出一个比父容器宽的子节点，直接 overflow 报错。</div>
+  </div>
+
+  <h4>头像上传（F2）—— 和截图上传共用同一套模式</h4>
+  <p><code>auth_provider.dart:255-298</code>。三步预签名，详见 §06；这里只讲两个差异点：</p>
+  <ul>
+    <li><b><code>_storageDio</code> 复用</b>（:28）：注释里明确记录了这里<b>原来是每次上传 <code>Dio()</code> 新建一个且从不关闭，每换一次头像泄漏一个连接池</b>——现在改成和 <code>ProjectsProvider</code> 一样持有一个、构造时 <code>tuneConnectionReuse</code>。<span class="tag t-ok">主动讲这个，是"我审过自己代码"的证据</span></li>
+    <li><b>MIME 推断</b>（:259-265）：这里是三元链兜底，<b>没有</b>像 <code>ProjectsProvider._contentTypeFor</code> 那样的白名单。<span class="tag t-md">已知不一致</span> 如果他问 → "截图那条我后来加了白名单，因为踩到 HEIC 的 422；头像这条应该同样收紧，是我没对齐。"</li>
+  </ul>
+</section>
+
+<!-- ══════════════════════════════ 05 ══════════════════════════════ -->
+<section id="s5">
+  <h2><span class="n">05</span> · F3 Project CRUD</h2>
+  <h3>最该主动讲的一条链</h3>
+  <p class="lead">覆盖：StatefulWidget 生命周期 → 表单校验 → Provider 异步三态 → 不可变列表更新 → UI 自动重建。<b>一条链把课程一半考点讲完了。</b></p>
+
+  <div class="chain">
+<b>home_shell.dart:218-222</b> <i>BrutalButton('＋ New project') → context.push('/projects/new')</i>
+  <i>↓</i>
+<b>router.dart:150-153</b> <i>GoRoute('/projects/new') → const ProjectFormScreen()</i>
+  <i>↓</i>
+<b>project_form_screen.dart:32-36</b> <i>5 个 TextEditingController</i>  <i>:66-73</i> <i>dispose 里全部释放</i>
+  <i>↓ 点 CREATE</i>
+<b>:168-170</b> <i>_save(): setState(_submitted = true) → if (!_validate()) return</i>
+  <i>↓</i>
+<b>:186-193</b> <i>context.read&lt;ProjectsProvider&gt;().createProject(...)</i>
+  <i>↓</i>
+<b>projects_provider.dart:144-166</b> <i>POST /projects → ProjectCard.fromJson → _upsertMine(card) → notifyListeners()</i>
+  <i>↓</i>
+<b>home_shell.dart:182</b> <i>_HomeTab 里的 context.watch&lt;ProjectsProvider&gt;() 收到通知 → 重建 → 新项目出现在列表</i>
+  <i>↓</i>
+<b>:196-211</b> <i>_adopt(result) 把表单切成编辑态 → 截图区解锁</i>
+  </div>
+
+  <h4>必须讲清的五个点</h4>
+
+  <details open><summary>1 · 为什么这个屏是 StatefulWidget，而项目列表却在 Provider 里？</summary>
+  <div class="dbody"><div class="script">
+    我的分界线是<b>"这个状态有没有第二个屏幕关心"</b>。<br><br>
+    表单里的输入内容、四个错误文案、<code>_submitted</code>、<code>_saving</code>——<b>只有这一个屏幕关心，离开就该销毁</b>。这种叫 ephemeral state，用 <code>setState</code> 就够了；放进 Provider 反而要手动清理，还会让全局状态越来越脏。<br><br>
+    但"我的项目列表"<b>首页要显示、详情页要更新、归档后 Plaza 要移除</b>——三个屏幕共享，这就是 app state，必须放 Provider。<br><br>
+    这正好是课程讲的 <b>ephemeral state vs app state</b> 那条线。
+  </div></div></details>
+
+  <details><summary>2 · <code>TextEditingController</code> 为什么必须 dispose？不 dispose 会怎样？</summary>
+  <div class="dbody">
+    <p><code>TextEditingController</code> 本身是个 <code>ChangeNotifier</code>，<code>TextField</code> 会订阅它。屏幕销毁后如果不 <code>dispose()</code>，<b>控制器和它的监听者列表不会被 GC 回收 → 内存泄漏</b>；如果还有异步回调在往里写，还会触发"在已销毁的 widget 上 setState"。</p>
+<pre><span class="k">@override</span>
+<span class="k">void</span> <span class="t">dispose</span>() {
+  _titleController.<span class="t">dispose</span>();
+  ... <span class="c">// 5 个全部释放</span>
+  <span class="k">super</span>.<span class="t">dispose</span>();   <span class="c">// ← 必须最后调</span>
+}</pre>
+    <p><b>规则一句话：</b>凡是在 <code>initState</code> / 字段初始化里<b>创建</b>的、带订阅的东西（Controller、Timer、StreamSubscription、AnimationController、FocusNode），都必须在 <code>dispose</code> 里释放，且 <code>super.dispose()</code> 放最后。</p>
+  </div></details>
+
+  <details><summary>3 · <code>addPostFrameCallback</code> 是干什么的？为什么不直接在 initState 里调？</summary>
+  <div class="dbody">
+    <p><code>project_form_screen.dart:60-62</code>、<code>intent_editor_screen.dart:33</code>、<code>home_shell.dart:73-80</code> 都是这个模式。<b>他很可能问，因为它出现了七八次。</b></p>
+<pre><span class="k">void</span> <span class="t">initState</span>() {
+  <span class="k">super</span>.<span class="t">initState</span>();
+  WidgetsBinding.instance.<span class="t">addPostFrameCallback</span>((_) => <span class="t">_loadExisting</span>());
+}</pre>
+    <div class="script">如果直接在 <code>initState</code> 里调，链条是：<code>initState</code> → provider 方法 → <code>notifyListeners()</code> → 让正在监听的 widget <code>setState</code>。<b>但此刻这一帧的 build 还没跑完</b>，Flutter 会抛 "setState() or markNeedsBuild() called during build"。<br><br>
+    <code>addPostFrameCallback</code> 把回调推迟到<b>当前这一帧渲染完之后</b>再执行，那时候 build 阶段已经结束，通知就安全了。<br><br>
+    次要好处是：<code>initState</code> 里还不能安全地用 <code>context</code> 去查 <code>InheritedWidget</code>（<code>context.read</code> 底层就是这个），推迟一帧之后 context 已经完全挂上树了。</div>
+  </div></details>
+
+  <details><summary>4 · Provider 里的异步三态模板（六个 provider 全一样）</summary>
+  <div class="dbody">
+<pre><span class="k">Future</span>&lt;<span class="k">void</span>&gt; <span class="t">fetchMine</span>() <span class="k">async</span> {
+  _loadingMine = <span class="k">true</span>; _error = <span class="k">null</span>; <span class="t">notifyListeners</span>();   <span class="c">// ① 进 loading，UI 立刻转圈</span>
+  <span class="k">try</span> {
+    <span class="k">final</span> res = <span class="k">await</span> _api.dio.get&lt;<span class="t">List</span>&lt;<span class="k">dynamic</span>&gt;&gt;(<span class="s">'/projects/mine'</span>);
+    _mine = <span class="t">_parseList</span>(res.data);                            <span class="c">// ② 成功</span>
+  } <span class="k">catch</span> (e) {
+    _error = ApiClient.<span class="t">describeError</span>(e);                      <span class="c">// ③ 失败→人话</span>
+  } <span class="k">finally</span> {
+    _loadingMine = <span class="k">false</span>; <span class="t">notifyListeners</span>();               <span class="c">// ④ 无论成败都退 loading</span>
+  }
+}</pre>
+    <p><b><code>finally</code> 为什么必须有：</b>如果把 <code>_loadingMine = false</code> 写在 try 末尾，一旦抛异常就<b>永远卡在转圈</b>。<code>finally</code> 保证无论走哪条路都执行。</p>
+    <p><b>三种错误约定，能自圆其说：</b></p>
+    <table>
+      <tr><th>场景</th><th>约定</th><th>例</th></tr>
+      <tr><td>列表读取</td><td>吞异常，写 <code>_error</code>，UI 读 <code>provider.error</code></td><td><code>fetchMine</code> :70</td></tr>
+      <tr><td>单条读取</td><td><b>抛出</b>，调用方自己 try/catch 显示局部错误</td><td><code>fetchOne</code> :115</td></tr>
+      <tr><td>写操作</td><td>返回 <code>T?</code>，<code>null</code> = 失败</td><td><code>createProject</code> :136</td></tr>
+    </table>
+    <div class="script">为什么不统一：<b>列表是屏幕的主体</b>，失败了整屏都没内容，所以错误必须挂在 provider 上让整屏渲染；<b>单条是详情页的一小块</b>，我希望它自己 try/catch 只让那一块显示错误而不影响其余部分；<b>写操作调用方一定要知道成没成</b>才能决定跳不跳转，返回 nullable 比让调用方去读 <code>provider.error</code> 更直接。<br><br>
+    <b>代价我承认：</b>三套约定对新人是负担，我在每个方法的文档注释里都写了它属于哪一种。如果重构，我会统一成返回一个 sealed class 的 <code>Result&lt;T&gt;</code>。</div>
+  </div></details>
+
+  <details><summary>5 · <code>_upsertMine</code> —— 为什么造新 List 而不是原地改？</summary>
+  <div class="dbody">
+<pre><span class="k">void</span> <span class="t">_upsertMine</span>(ProjectCard card) {
+  <span class="k">final</span> idx = _mine.<span class="t">indexWhere</span>((p) => p.id == card.id);
+  <span class="k">if</span> (idx == -<span class="n">1</span>) {
+    _mine = [card, ..._mine];        <span class="c">// 新建 → 插到最前，用展开运算符造新表</span>
+  } <span class="k">else</span> {
+    <span class="k">final</span> next = [..._mine];         <span class="c">// 更新 → 先复制</span>
+    next[idx] = card;
+    _mine = next;
+  }
+}</pre>
+    <div class="script">两个原因。<br><br>
+    <b>一是不可变性更安全</b>：<code>_mine</code> 的 getter 是直接暴露出去的，如果 UI 拿到的是同一个 List 实例，任何地方一个 <code>.add()</code> 就能绕过 provider 偷改状态，而且不会触发 <code>notifyListeners()</code>——变了但界面不刷新，非常难查。每次换一个新 List 实例，外面拿到的永远是快照。<br><br>
+    <b>二是"新建插到最前、更新留在原位"这个语义</b>：用户改一个项目，它不该突然跳到列表顶部。<br><br>
+    <code>[card, ..._mine]</code> 里的 <code>...</code> 是<b>展开运算符（spread）</b>，把旧列表的元素铺进新列表。
+  </div></details>
+
+  <h4>一个他很可能挑的不一致（先想好答案）</h4>
+  <div class="card">
+    <p><code>createProject</code>（:151-154）用 collection-if <b>省略空字段</b>：</p>
+<pre><span class="k">if</span> (needs != <span class="k">null</span> &amp;&amp; needs.isNotEmpty) <span class="s">'needs'</span>: needs,</pre>
+    <p>但 <code>_save()</code> 的编辑分支（<code>project_form_screen.dart:180-182</code>）<b>无条件发送</b>，空串也发：</p>
+<pre><span class="s">'needs'</span>: _needsController.text.<span class="t">trim</span>(),   <span class="c">// 可能是 ''</span></pre>
+    <div class="good"><b>这不是 bug，是对的，要理直气壮地讲：</b><br>
+    POST 是<b>创建</b>——没填的字段就是不存在，省略掉让后端用默认值。<br>
+    PATCH 是<b>部分更新</b>——如果我也省略空串，那用户<b>把 needs 清空的操作就永远保存不了</b>：后端收不到这个 key，会理解成"这个字段不用动"。所以<b>清空必须显式发一个空串</b>。<br>
+    <b>这正是 PATCH 语义的核心：省略 = 不改，显式 null/空 = 改成空。</b></div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════ 06 ══════════════════════════════ -->
+<section id="s6">
+  <h2><span class="n">06</span> · F3 三步预签名上传</h2>
+  <h3>整个项目最"工程化"的一段</h3>
+  <p class="lead"><code>projects_provider.dart:214-276</code>。<b>如果他问"你觉得自己写得最好的一段是什么"，答这个。</b></p>
+
+  <div class="chain">
+<b>①</b> <i>POST /projects/{id}/screenshots-upload-url  {content_type}</i>   <b>← 走 _api.dio（带 Bearer）</b>
+   <i>← { upload_url, key }</i>
+<b>②</b> <i>PUT 原始字节 → upload_url</i>                          <b>← 走 _storageDio（裸 Dio，无拦截器）</b>
+<b>③</b> <i>POST /projects/{id}/screenshots  {key}</i>              <b>← 走 _api.dio（带 Bearer）</b>
+   <i>← 更新后的 ProjectCard</i>
+  </div>
+
+  <h4>为什么要两个 Dio？（这是核心考点）</h4>
+  <div class="script">
+    因为<b>第二步是发给对象存储（S3），不是发给我们自己的后端</b>。<br><br>
+    预签名 URL <b>本身就是凭证</b>——签名已经写在 query string 里了。如果我把我们的 <code>Authorization: Bearer</code> 也带过去，S3 会看到一个它不认识的认证头，<b>和签名冲突，直接拒</b>。<br><br>
+    而我的 <code>ApiClient</code> 的拦截器是<b>无差别</b>给每个请求挂 token 的。所以我需要一个<b>干净的、没有拦截器的 Dio</b> 专门做这一步——就是 <code>_storageDio</code>（:32，注释在 :28-31）。<br><br>
+    顺带一提，这也是为什么它是 <code>final</code> 字段而不是每次上传 <code>Dio()</code> 新建：<b>复用连接池</b>，而且构造时就调了 <code>tuneConnectionReuse</code>（:23）。
+  </div>
+
+  <h4>三个细节，每个都是踩出来的</h4>
+  <details><summary>a · <code>contentType</code> 为什么要在 options 里写两遍？</summary>
+  <div class="dbody">
+<pre>options: <span class="t">Options</span>(
+  headers: {
+    <span class="s">'Content-Type'</span>: contentType,
+    Headers.contentLengthHeader: bytes.length,
+  },
+  contentType: contentType,   <span class="c">// ← 防止 Dio 覆盖掉上面那个</span>
+),</pre>
+    <p>Dio 会根据 <code>data</code> 的类型自作主张设 Content-Type（传 Stream 时它可能设成 <code>application/octet-stream</code>）。<b>而预签名是按我们申请时声明的 content type 签的——两边必须一模一样，差一个字符签名就不匹配，S3 返回 403。</b> 显式给 <code>Options.contentType</code> 才能压住 Dio 的推断。</p>
+  </div></details>
+
+  <details><summary>b · MIME 白名单 <code>_contentTypeFor</code>（:381-402）</summary>
+  <div class="dbody">
+<pre><span class="k">static const</span> _supportedContentTypes = {<span class="s">'image/jpeg'</span>, <span class="s">'image/png'</span>, <span class="s">'image/webp'</span>};
+
+<span class="t">String</span>? <span class="t">_contentTypeFor</span>(XFile file) {
+  <span class="k">final</span> declared = file.mimeType?.<span class="t">toLowerCase</span>();
+  <span class="k">final</span> resolved = (declared != <span class="k">null</span> &amp;&amp; declared.isNotEmpty)
+      ? declared : <span class="t">_contentTypeFromExtension</span>(file.name.<span class="t">toLowerCase</span>());
+  <span class="k">final</span> normalised = resolved == <span class="s">'image/jpg'</span> ? <span class="s">'image/jpeg'</span> : resolved;  <span class="c">// 有的选择器报非标准的 image/jpg</span>
+  <span class="k">return</span> _supportedContentTypes.<span class="t">contains</span>(normalised) ? normalised : <span class="k">null</span>;
+}</pre>
+    <div class="script">原来我是把选择器报什么就发什么。结果 iPhone 相册给的是 <code>image/heic</code>，后端不收，返回一个 422，而 FastAPI 的 422 body 里 <code>detail</code> 是一个<b>列表</b>——<b>原始的 Pydantic 错误结构直接被渲染到界面上</b>，用户看到 <code>[{type: literal_error, loc: ...</code>。<br><br>
+    我做了两件事：一是<b>在客户端就拦住</b>不支持的类型，给一句人话；二是在 <code>ApiClient.describeError</code> 里<b>专门处理 detail 是 List 的情况</b>，把每条的 <code>msg</code> 抽出来拼成一句（<code>api_client.dart:89-95</code>）。</div>
+  </div></details>
+
+  <details><summary>c · <code>pickImage</code> 为什么要传 maxWidth/maxHeight？</summary>
+  <div class="dbody">
+    <p><code>project_form_screen.dart:228-237</code>：</p>
+<pre><span class="k">final</span> XFile? file = <span class="k">await</span> <span class="t">ImagePicker</span>().<span class="t">pickImage</span>(
+  source: ImageSource.gallery,
+  maxWidth: <span class="n">1920</span>, maxHeight: <span class="n">1920</span>, imageQuality: <span class="n">85</span>,
+);</pre>
+    <div class="script">表面看是压缩省流量，<b>真正的作用是逼 image_picker 重新编码</b>。只要给了尺寸约束，它就必须解码再编码一次，而它<b>重编码的输出永远是 JPEG</b>——这就把 iPhone 的 HEIC 原图<b>顺手转成了后端认识的格式</b>。不传这两个参数的话，原始 HEIC 会直接透过来，上传就 422。</div>
+  </div></details>
+
+  <h4>为什么不让后端代传？（他可能追问架构）</h4>
+  <div class="script">
+    如果走后端中转，图片字节要先完整传到我们的 ECS 容器、占满它的内存和带宽，再由它转发到 S3——<b>流量走两遍，而且后端要为大文件扛住并发</b>。<br>
+    预签名让<b>字节直接从手机走到 S3</b>，后端只处理两个很轻的 JSON 请求：签发 URL 和登记 key。后端始终不碰文件内容，却仍然掌握着<b>鉴权</b>（签发时才验 token）和<b>元数据</b>（第三步才真正关联到项目）。
+  </div>
+</section>
+
+<!-- ══════════════════════════════ 07 ══════════════════════════════ -->
+<section id="s7">
+  <h2><span class="n">07</span> · F4 Growth 与离线</h2>
+  <h3>shared_preferences 做的离线降级</h3>
+  <p class="lead">这是 NFR 项，也是<b>课程大纲有 "Shared Preference" 词条却没教</b>的部分——讲清楚是纯加分。</p>
+
+<pre><span class="c">// growth_provider.dart:33-69（projects_provider.dart:79-111 同构）</span>
+<span class="k">try</span> {
+  <span class="k">final</span> res = <span class="k">await</span> _api.dio.get(<span class="s">'/plaza'</span>, queryParameters: {...});
+  _feed = ...;
+  _feedFromCache = <span class="k">false</span>;
+  <span class="k">if</span> (role 和 stage 都为空) {                          <span class="c">// ← 只缓存"无筛选"的那份</span>
+    (<span class="k">await</span> SharedPreferences.<span class="t">getInstance</span>())
+        .<span class="t">setString</span>(_feedCacheKey, <span class="t">jsonEncode</span>(res.data));
+  }
+} <span class="k">catch</span> (e) {
+  _error = ApiClient.<span class="t">describeError</span>(e);
+  <span class="k">final</span> cached = prefs.<span class="t">getString</span>(_feedCacheKey);
+  <span class="k">if</span> (cached != <span class="k">null</span>) {
+    _feed = <span class="t">jsonDecode</span>(cached) ... ;
+    _feedFromCache = <span class="k">true</span>;                            <span class="c">// ← UI 据此打 OFFLINE 角标</span>
+  }
+}</pre>
+
+  <div class="script">
+    需求是"断网时 Plaza 和自己的资料仍然可读"。<br><br>
+    实现是<b>每次成功请求都把原始 JSON 存进 shared_preferences，失败时回落到那份缓存</b>。shared_preferences 只能存基本类型，所以我存的是 <code>jsonEncode</code> 之后的字符串，读出来再 <code>jsonDecode</code> 走同一个 <code>fromJson</code>——<b>解析路径只有一条，缓存数据和网络数据走完全相同的代码</b>。<br><br>
+    <b>关键设计是那个 if：只有"无筛选"的请求才写缓存。</b> 如果带 stage 筛选的结果也写进去，用户筛完"launched"再断网，看到的就是一份<b>只有 launched 项目的"全部动态"</b>——比没有数据更糟，因为它是错的但看起来是对的。<br><br>
+    <code>_feedFromCache</code> 这个标志位让 UI 能打一条 <code>OFFLINE · SHOWING CACHED FEED</code> 的角标——<b>降级必须让用户看得见</b>，否则他会以为数据是新的。
+  </div>
+
+  <h4>三处缓存 key 一览</h4>
+  <table>
+    <tr><th>key</th><th>存什么</th><th>在哪</th></tr>
+    <tr><td><code>bp_access_token</code></td><td>JWT</td><td><code>api_client.dart:44</code></td></tr>
+    <tr><td><code>bp_cache_me</code></td><td>自己的 profile</td><td><code>auth_provider.dart:224,229</code></td></tr>
+    <tr><td><code>bp_cache_discovery</code></td><td>Plaza 项目流</td><td><code>projects_provider.dart:48</code></td></tr>
+    <tr><td><code>bp_cache_plaza_growth</code></td><td>成长动态流</td><td><code>growth_provider.dart:25</code></td></tr>
+  </table>
+  <p><code>auth_provider.dart:226-235</code> 还多一层判断：只有在 <code>_currentUser == null</code>（也就是这次是冷启动、内存里什么都没有）时才从缓存恢复，并注释为 <b>offline read-only session</b>。<b>已经有内存数据时不用旧缓存覆盖它。</b></p>
+
+  <h4>主动认领的一个设计缺陷</h4>
+  <div class="warn">
+    <code>refreshGrowth</code>（<code>growth_provider.dart:86-105</code>）返回 <code>null</code> 有<b>两种含义</b>：请求失败 / 成功但没有新动态。文档注释自己都写了 "check <code>error</code> to tell the two apart"。<br><br>
+    <b>标准答法：</b>"用 nullable 表达两种不同的结果是个坏设计，调用方必须再去读 <code>error</code> 才能分辨。正确做法是返回一个 sealed class——<code>Refreshed(post)</code> / <code>NoNews()</code> / <code>Failed(msg)</code>——让类型系统强制调用方处理三种情况。这是我知道但没来得及改的。"
+  </div>
+</section>
+
+<!-- ══════════════════════════════ 08 ══════════════════════════════ -->
+<section id="s8">
+  <h2><span class="n">08</span> · 组件与主题层</h2>
+  <h3>直接命中"代码质量五项"的两条</h3>
+  <p class="lead">讲师原话点名了 "widgets that we are reusing in multiple screens" 和 "our own custom theme applied to all the screens"。<b>这两条是送分，但你得主动端上去。</b></p>
+
+  <h4><code>BrutalButton</code> —— 唯一有内部状态的基础组件</h4>
+  <p><code>widgets/brutal_button.dart</code>。他要是问"举一个你自己写的 StatefulWidget"，答这个（比屏幕小，好讲完）。</p>
+<pre><span class="k">class</span> _BrutalButtonState <span class="k">extends</span> State&lt;BrutalButton&gt; {
+  <span class="k">bool</span> _pressed = <span class="k">false</span>;
+  <span class="k">static const</span> Offset _shadowOffset = <span class="t">Offset</span>(<span class="n">4</span>, <span class="n">4</span>);
+  <span class="k">bool</span> <span class="k">get</span> _enabled => widget.onPressed != <span class="k">null</span> &amp;&amp; !widget.loading;
+  ...
+  <span class="t">GestureDetector</span>(
+    onTapDown:   (_) => <span class="t">_setPressed</span>(<span class="k">true</span>),
+    onTapUp:     (_) => <span class="t">_setPressed</span>(<span class="k">false</span>),
+    onTapCancel: ()  => <span class="t">_setPressed</span>(<span class="k">false</span>),   <span class="c">// ← 手指滑出去也要弹回来</span>
+    onTap: _enabled ? widget.onPressed : <span class="k">null</span>,
+    child: <span class="t">AnimatedContainer</span>(
+      duration: AppMotion.press, curve: AppMotion.ease,
+      transform: Matrix4.<span class="t">translationValues</span>(dx, dy, <span class="n">0</span>),   <span class="c">// 按下时平移 (4,4)</span>
+      boxShadow: _pressed ? <span class="k">const</span> [] : [...],                 <span class="c">// 同时去掉阴影 → "按扁"</span>
+    ),
+  )</pre>
+  <div class="script">
+    它是 StatefulWidget 只因为一个 <code>bool _pressed</code>——<b>按下去的视觉反馈</b>。<br><br>
+    效果是这样做出来的：静止时按钮浮在一个 <code>(4,4)</code> 的硬阴影上；按下时<b>同时</b>把自己往右下平移 4px、并把阴影去掉——两件事一起发生，视觉上就是<b>按扁贴到纸面上</b>。用 <code>AnimatedContainer</code> 是因为它会自动在新旧属性之间补间，我不用写 <code>AnimationController</code>。<br><br>
+    <code>onTapCancel</code> 必须处理：用户按下之后手指滑出按钮范围，<code>onTapUp</code> 不会触发，<b>不补这个回调按钮就永远卡在按下状态</b>。<br><br>
+    <code>widget.xxx</code> 这个写法是因为在 <code>State</code> 类里访问配置要通过 <code>widget</code> 引用——<b>Widget 是不可变的配置，State 是可变的状态，两者分开</b>，这也是 StatefulWidget 为什么是两个类。
+  </div>
+
+  <h4><code>BrutalField</code> —— 参数化复用的样板</h4>
+  <p>一个 StatelessWidget，11 个可选参数，被项目表单用了 5 次、Intent 编辑器 1 次、职位表单若干次。<b>讲它的重点是"错误态是怎么统一的"</b>：<code>errorText</code> 非空时边框转 tomato 色、下面补一行红字（见文件末尾的 <code>if (hasError) ...[...]</code>）——<b>所有屏幕的错误呈现自动一致</b>，我不用在每个表单里重复写红边逻辑。</p>
+  <p><code>...[ ]</code> 这个语法叫 <b>collection-if + spread</b>：<code>if (cond) ...[a, b]</code> 表示条件成立时把 a、b <b>两个</b>元素铺进 children 列表。没有它就得写 <code>cond ? Column(...) : SizedBox.shrink()</code>，多一层无意义的嵌套。</p>
+
+  <h4>主题层：为什么颜色只能从 <code>Palette</code> 取</h4>
+  <div class="script">
+    <code>theme/palette.dart</code> 是全部颜色的<b>单一来源</b>，文件顶上就写着 "Never hard-code hex values in widgets"。<br><br>
+    好处很实际：改一次主色，36 个 import 它的文件<b>全部跟着变</b>。如果散落在各处写 <code>Color(0xFF1F7A6C)</code>，改配色就是全局搜索替换，一定会漏。<br><br>
+    另外颜色是<b>有语义槽位</b>的，不是随便取的：teal = 主操作，lime = 信任，mustard = 证据，tomato = 错误 / 模拟，copper = 意向。<b>所以我选颜色是按"这块内容是什么意思"，不是按"哪个好看"。</b>
+  </div>
+  <p><code>AppType</code>（<code>theme/typography.dart</code>）同理，三种字体各封装成静态方法：<code>AppType.display()</code> 标题、<code>AppType.body()</code> 正文、<code>AppType.mono()</code> 标签与数据。</p>
+  <div class="warn"><b>这里有一个他可能挑的点：</b>我这套排版<b>绕过了 <code>Theme.of(context).textTheme</code></b>，每个 Text 直接调 <code>AppType.body(size: 14)</code>。<br>
+  <b>答法：</b>"因为我这套系统的尺寸是连续可调的，而 <code>textTheme</code> 是一组固定槽位（displayLarge / bodyMedium…），我需要的很多尺寸没有对应槽位。代价是没法通过切换 ThemeData 来整体换字体——<b>如果要做深色模式或多主题，就必须改回 <code>Theme.of(context)</code></b>。<code>AppTheme.build()</code> 里我确实配了 <code>ColorScheme.fromSeed</code> 和 <code>GoogleFonts.interTightTextTheme</code>，那是给 Material 自带组件用的兜底。"</div>
+</section>
+
+<!-- ══════════════════════════════ 09 ══════════════════════════════ -->
+<section id="s9">
+  <h2><span class="n">09</span> · 语法急救包</h2>
+  <h3>Fail 判据写着 "Poor syntax knowledge"</h3>
+  <div class="warn">这是官方 rubric 里<b>唯一</b>把「Dart/Flutter 语法本身」写进 Fail 的地方。他不只问你的代码，会随口考基础。以下每条要能<b>三句话之内</b>答完。</div>
+
+  <div class="grid2">
+    <div class="card"><div class="kicker">Widget 基础</div><ul>
+      <li><b>Stateless vs Stateful</b> — 前者一旦构建其配置不变，只在父级重建或依赖变化时重建；后者有一个独立于 widget 生命周期的 <code>State</code> 对象，可以 <code>setState</code> 触发自己重建。<b>判断标准：这个 widget 内部有没有会变的数据。</b></li>
+      <li><b><code>setState</code> 做了什么</b> — 执行你的回调改字段，然后把该 element 标记为 dirty，Flutter 在下一帧重新调用它的 <code>build</code>。<b>不是立刻重建。</b></li>
+      <li><b>为什么必须在 <code>setState</code> 里改</b> — 直接改字段不会通知框架，界面不会刷新。</li>
+      <li><b><code>initState</code></b> — State 创建后调一次，做订阅、初始化、发起首次加载。<b>不能在里面用会依赖 InheritedWidget 的 context 操作。</b></li>
+      <li><b><code>dispose</code></b> — State 永久移除时调一次，释放 controller / timer / 订阅。</li>
+      <li><b><code>BuildContext</code></b> — 当前 widget 在树中位置的句柄，用来向上查找 InheritedWidget（<code>Theme.of</code>、<code>context.read</code> 都是它）。</li>
+      <li><b><code>const</code> 构造函数</b> — 编译期创建、<b>同参数复用同一个实例</b>，Flutter 重建时能直接跳过它的子树 diff。</li>
+      <li><b><code>super.key</code></b> — 把 key 传给父类。<b>key 的作用是让 Flutter 在列表重排时认出"还是同一个 widget"</b>，从而保留它的 State。</li>
+    </ul></div>
+
+    <div class="card"><div class="kicker">Dart 语言</div><ul>
+      <li><b><code>final</code> vs <code>const</code></b> — <code>final</code> 运行时赋值一次；<code>const</code> <b>编译期</b>就确定。</li>
+      <li><b><code>late</code></b> — 声明时不赋值但保证使用前会赋值；<code>late final</code> 用在必须延迟到 <code>initState</code> 才能构造的字段（<code>main.dart</code> 的 <code>_auth</code> / <code>_router</code>）。</li>
+      <li><b><code>?</code> / <code>!</code> / <code>??</code> / <code>?.</code></b> — 可空类型 / 断言非空（错了就崩）/ 为 null 时取右边 / 非 null 才调用。</li>
+      <li><b>命名参数与 <code>required</code></b> — <code>{required this.label, this.color = Palette.teal}</code>：花括号内是命名参数，<code>required</code> 表示必传，<code>=</code> 给默认值。</li>
+      <li><b><code>_</code> 前缀</b> — Dart 没有 private 关键字，<b>下划线开头 = 库级私有</b>（同一个 .dart 文件内可见）。</li>
+      <li><b><code>factory</code> 构造函数</b> — 不强制返回新实例，可以做解析、缓存、返回子类。所有 <code>fromJson</code> 都是 factory。</li>
+      <li><b><code>async</code> / <code>await</code> / <code>Future</code></b> — <code>Future&lt;T&gt;</code> 是"以后会有一个 T"；<code>async</code> 标记函数返回 Future；<code>await</code> 挂起当前函数等它完成，<b>不阻塞 UI 线程</b>。</li>
+      <li><b><code>=&gt;</code></b> — 单表达式函数体的简写。</li>
+      <li><b><code>...</code></b> — spread，把一个集合铺进另一个集合。</li>
+    </ul></div>
+  </div>
+
+  <div class="card"><div class="kicker">布局 · 列表 · 异步 UI</div><ul>
+    <li><b><code>Column</code> / <code>Row</code></b> — 主轴 <code>mainAxisAlignment</code>、交叉轴 <code>crossAxisAlignment</code>；Column 主轴是竖直。</li>
+    <li><b><code>Expanded</code></b> — 在 Row/Column 里按 <code>flex</code> 瓜分<b>剩余</b>空间。<code>_HomeTab</code> 里两个 <code>Expanded</code> 就是让 Intent 和 Projects 各占一半。</li>
+    <li><b><code>SizedBox</code></b> — 固定尺寸；只给一边就是间距。</li>
+    <li><b><code>Stack</code> / <code>Positioned</code></b> — 层叠定位；<code>_Thumb</code> 用它把删除按钮压在缩略图右上角。</li>
+    <li><b><code>ListView</code> vs <code>ListView.builder</code></b> — 前者一次构建全部 children；后者<b>懒构建</b>，只造可见项并回收滚出去的。<b>数据量不确定就必须用 builder。</b></li>
+    <li><b><code>IndexedStack</code></b> — 同时保留所有子节点的 State，只显示 index 那个。<b>换 tab 不丢滚动位置和表单内容</b>，代价是所有 tab 都被构建。对比：条件渲染 <code>[a,b][i]</code> 会销毁另一个的 State。</li>
+    <li><b><code>LayoutBuilder</code></b> — 拿到父级给的 <code>BoxConstraints</code>，据此选布局。<code>home_shell.dart:117</code> 用 <code>constraints.maxWidth &gt;= 700</code> 切 side rail / bottom nav。<b>比 <code>MediaQuery</code> 好，因为它量的是"我被分到多大"，不是整块屏幕。</b></li>
+    <li><b><code>RefreshIndicator</code></b> — 下拉刷新，<code>onRefresh</code> 返回一个 Future，转圈到它完成。<code>_HomeTab:185-187</code>。</li>
+    <li><b><code>context.mounted</code></b> — <code>await</code> 之后 widget 可能已经被销毁了，此时再用 context 会崩。所有异步之后用 context 的地方都要先判。<b>lint 规则名：<code>use_build_context_synchronously</code>。</b></li>
+  </ul></div>
+
+  <div class="card"><div class="kicker">概念题（MOCK 考过）</div>
+  <p><b>Ephemeral state vs App state</b> — 前者只有一个 widget 关心、生命周期跟着它走（表单输入、当前 tab、按钮按下态），用 <code>setState</code>；后者跨屏共享、需要在屏幕间存活（登录用户、项目列表、离线缓存），用 Provider。<br>
+  <b>用你自己的代码举例：</b> <code>project_form_screen</code> 的 <code>_titleError</code> 是 ephemeral，<code>ProjectsProvider._mine</code> 是 app state。</p></div>
+</section>
+
+<!-- ══════════════════════════════ 10 ══════════════════════════════ -->
+<section id="s10">
+  <h2><span class="n">10</span> · 现场改代码演练</h2>
+  <h3>"minor change, one place"</h3>
+  <div class="warn">
+    <b>这四类不是猜的。</b>讲师在 Lab 里反复用同一个动作预演 viva，措辞和 viva 例题一模一样：<br>
+    <span style="font-family:var(--mono);font-size:12.5px">LAB-5 07-09 [00:27:41] "Right now, how many items are there? Three. So you need to modify the code. So instead of three, it will display 4." → [00:29:12] "<b>If you can do it, it means you are clear about the navigation used here.</b>"<br>
+    LAB-4 06-11 [01:04:26] "Modify your code, maybe you put a description field. So then <b>refactor your code according to that field everywhere</b>." → "<b>If that works, it means that you have full clarity on the overall code.</b>"</span><br><br>
+    <b>今晚每一类真的敲一遍，然后 <code>git stash</code>。</b> 手感比背清单强十倍。
+  </div>
+
+  <details open><summary><span class="tag t-hi">最可能</span> 演练一 · 给 Project Card 加一个 <code>description</code> 字段</summary>
+  <div class="dbody">
+    <p><b>先说改动链，再动手</b>——他要听的是你知道"要动哪几处"。</p>
+    <div class="chain">
+<b>1</b> <i>models/project_card.dart</i>       <i>加 final String? description; + 构造参数 + fromJson 一行</i>
+<b>2</b> <i>state/projects_provider.dart</i>    <i>createProject 加命名参数 + payload 里 collection-if</i>
+<b>3</b> <i>screens/…/project_form_screen</i>   <i>:32 加 controller → :66 dispose → :275 加 BrutalField → :177/:186 两条 save 分支各加一行</i>
+<b>4</b> <i>screens/…/project_detail_screen</i> <i>渲染</i>
+<b>5</b> <i>后端 schema + model</i>              <i>（如果他继续追）</i>
+    </div>
+<pre><span class="c">// ① models/project_card.dart</span>
+  <span class="k">final</span> <span class="t">String</span>? description;                         <span class="add">// 加字段</span>
+  <span class="c">// 构造函数参数列表里加：</span>  <span class="add">this.description,</span>
+  <span class="c">// fromJson 的 return 里加：</span>
+      <span class="add">description: json['description'] as String?,</span>
+
+<span class="c">// ② state/projects_provider.dart · createProject</span>
+  <span class="k">required</span> <span class="t">String</span> stage,
+  <span class="add">String? description,</span>
+  ...
+  data: {
+    <span class="s">'title'</span>: title, <span class="s">'stage'</span>: stage,
+    <span class="add">if (description != null &amp;&amp; description.isNotEmpty) 'description': description,</span>
+
+<span class="c">// ③ project_form_screen.dart</span>
+  <span class="add">final _descController = TextEditingController();</span>       <span class="c">// :32 附近</span>
+  <span class="add">_descController.dispose();</span>                              <span class="c">// :66 dispose 里</span>
+  <span class="add">_descController.text = card.description ?? '';</span>          <span class="c">// :88 _adopt 里</span>
+  <span class="c">// :302 附近，跟着别的 BrutalField 抄一个：</span>
+  <span class="add">BrutalField(label: 'Description (optional)', controller: _descController, maxLines: 3),</span>
+  <span class="add">const SizedBox(height: 20),</span>
+  <span class="c">// :186 createProject 调用里：</span>  <span class="add">description: _descController.text.trim(),</span>
+  <span class="c">// :177 updateProject 的 patch 里：</span>  <span class="add">'description': _descController.text.trim(),</span></pre>
+    <div class="good"><b>边改边说这两句（每句都是加分）：</b><br>
+    ① "PATCH 那边我<b>不</b>加 collection-if，空串也要发出去——不然用户清空描述就永远保存不了。这是 PATCH 和 POST 的语义差别。"<br>
+    ② "<code>fromJson</code> 我用 <code>as String?</code> 不加默认值，因为它本来就是可空字段；如果是必填的 <code>String</code>，我会写 <code>as String? ?? ''</code> 兜底，避免后端漏字段时整个列表崩掉。"</div>
+  </div></details>
+
+  <details><summary><span class="tag t-hi">LAB 原题</span> 演练二 · 底部导航从 4 个变 5 个</summary>
+  <div class="dbody">
+    <p><b>这是 LAB-5 07-09 的原题</b>（"instead of three, it will display 4"），几乎一定会被问到某种变体。</p>
+<pre><span class="c">// home_shell.dart:36-41 —— 只改这一处</span>
+<span class="k">const</span> _kNavItems = [
+  (Icons.home_filled, <span class="s">'Home'</span>),
+  (Icons.grid_view,   <span class="s">'Plaza'</span>),
+  (Icons.join_inner,  <span class="s">'Match'</span>),
+  (Icons.person,      <span class="s">'Profile'</span>),
+  <span class="add">(Icons.inbox, 'Inbox'),          // ← 加这一行</span>
+];
+
+<span class="c">// 然后三个平行数组必须同步（他会检查你有没有漏）：</span>
+<span class="c">// :106-111  titles     加 'Inbox'</span>
+<span class="c">// :112      barColors  加一个颜色</span>
+<span class="c">// :119-127  IndexedStack 的 children 加对应页面</span></pre>
+    <div class="script">
+      这里主动说：<b>我把导航项抽成了一个 <code>_kNavItems</code> 常量，<code>_BottomNav</code>（:556）和 <code>_SideRail</code>（:603）两套布局都从它遍历</b>——所以加一项，窄屏的底部导航和宽屏的侧边栏<b>同时生效，不可能漂移</b>。这正是我抽这个常量的原因。<br><br>
+      不过 <code>titles</code> / <code>barColors</code> / <code>IndexedStack.children</code> 还是三个平行数组，<b>这是我这里的设计缺陷</b>——它们必须和 <code>_kNavItems</code> 保持等长，靠人记。更好的做法是把图标、文字、标题、颜色、页面<b>合成一个 record 或小类</b>，一个列表定义完，四处全部由它派生，就不可能漏。
+    </div>
+    <div class="good"><b>最后那段"我知道这里不够好、应该怎么改"就是 Distinction 想要的 "extra spark"</b>——不是炫技，是展示你有架构判断力。</div>
+  </div></details>
+
+  <details><summary><span class="tag t-hi">性能题</span> 演练三 · 列表改成 <code>ListView.builder</code></summary>
+  <div class="dbody">
+    <p>现状 <code>home_shell.dart:319-322</code>：</p>
+<pre><span class="del">for (var i = 0; i &lt; projects.mine.length; i++) ...[</span>
+<span class="del">  if (i &gt; 0) const Divider(color: Palette.ink200, height: 18),</span>
+<span class="del">  _ProjectRow(project: projects.mine[i]),</span>
+<span class="del">]</span></pre>
+    <p>改成（注意这一段外面已经被 <code>SingleChildScrollView</code> 包着，所以要给 <code>shrinkWrap</code> + 禁用内层滚动）：</p>
+<pre><span class="add">ListView.builder(</span>
+<span class="add">  shrinkWrap: true,                              // 高度由内容决定，不抢无限高</span>
+<span class="add">  physics: const NeverScrollableScrollPhysics(), // 滚动交给外层，避免嵌套滚动打架</span>
+<span class="add">  itemCount: projects.mine.length,</span>
+<span class="add">  itemBuilder: (context, i) => Column(</span>
+<span class="add">    crossAxisAlignment: CrossAxisAlignment.start,</span>
+<span class="add">    children: [</span>
+<span class="add">      if (i &gt; 0) const Divider(color: Palette.ink200, height: 18),</span>
+<span class="add">      _ProjectRow(project: projects.mine[i]),</span>
+<span class="add">    ],</span>
+<span class="add">  ),</span>
+<span class="add">)</span></pre>
+    <div class="script">
+      <code>ListView.builder</code> 是<b>懒构建</b>：它只调用可见范围内那几项的 <code>itemBuilder</code>，滚出屏幕的会被回收。<code>ListView(children:)</code> 则是一次性把全部子 widget 都构建出来——数据量一大，首帧时间和内存都是线性增长。<br><br>
+      这里有个坑要处理：<b>这段外面已经有一个 <code>SingleChildScrollView</code></b>。ListView 默认想要无限高度，嵌在可滚动父级里会直接抛 unbounded height 错误。所以要加 <code>shrinkWrap: true</code> 让它按内容算高度，再加 <code>NeverScrollableScrollPhysics</code> 把滚动完全交给外层，否则两层滚动会互相抢手势。<br><br>
+      <b>不过说实话，<code>shrinkWrap: true</code> 会强制它一次性测量全部子项，懒构建的收益就被抵消了大半。</b>真正干净的做法是<b>把外层那个 <code>SingleChildScrollView</code> 去掉</b>，让 <code>_ProjectsSection</code> 自己就是那个滚动容器；或者整页改成 <code>CustomScrollView</code> + <code>SliverList.builder</code>，让所有区块共用一个 sliver 滚动上下文。
+    </div>
+    <div class="good"><b>最后这段是本次演练的价值所在。</b>只答 "<code>.builder</code> 更省性能" 是 Pass；说清 <code>shrinkWrap</code> 的副作用并给出 Sliver 方案是 Credit 以上。</div>
+  </div></details>
+
+  <details><summary><span class="tag t-md">送分</span> 演练四 · 改显示 / 改颜色 / 改数量</summary>
+  <div class="dbody">
+    <table>
+      <tr><th>他可能说</th><th>你改哪</th><th>顺口一句</th></tr>
+      <tr><td>把这个标题改成 X</td><td><code>home_shell.dart:162-167</code> <code>_roleTitle</code> 的 switch expression</td><td>"这是 Dart 3 的 switch <b>表达式</b>，直接求值，不用 break"</td></tr>
+      <tr><td>把主色换成红色</td><td><b>只改 <code>theme/palette.dart:41</code></b></td><td>"我 widget 里一个 hex 都没硬编码，颜色只有这一个来源，36 个文件全部跟着变"</td></tr>
+      <tr><td>Top languages 只显示 3 个</td><td><code>home_shell.dart:804</code> <code>.take(5)</code> → <code>.take(3)</code></td><td>"<code>take</code> 是 Iterable 的惰性方法，不复制整个列表"</td></tr>
+      <tr><td>标题字号大一点</td><td>对应的 <code>AppType.display(size: 30)</code></td><td>"排版也是集中的，三种字体各一个静态方法"</td></tr>
+      <tr><td>宽屏断点改成 900</td><td><code>home_shell.dart:54</code> <code>kWideLayoutBreakpoint</code></td><td>"这是个具名常量，<code>LayoutBuilder</code> 和 widget test 都引用它"</td></tr>
+      <tr><td>按钮按下的位移大一点</td><td><code>brutal_button.dart</code> 的 <code>_shadowOffset</code></td><td>"位移和阴影用的是<b>同一个常量</b>，所以一定对得齐"</td></tr>
+    </table>
+    <div class="warn"><b>共同话术：</b>不管改哪一个，说完都补一句 <b>"因为这是集中定义的，所以只需要改这一处"</b>。这句话每说一次，就在他心里给"separation of concerns"记一分。</div>
+  </div></details>
+</section>
+
+<!-- ══════════════════════════════ 11 ══════════════════════════════ -->
+<section id="s11">
+  <h2><span class="n">11</span> · 我代码里的雷</h2>
+  <h3>先认领，比被挖出来强</h3>
+
+  <div class="card stamp">
+    <div class="kicker">已修 · 可以主动展示</div>
+    <p>提交 <code>063c43d</code> 修掉了五处。<b>如果他问"你有没有 review 过自己的代码"，答这个清单</b>——这是能力证据，不是污点。</p>
+    <table>
+      <tr><th>问题</th><th>怎么修的</th></tr>
+      <tr><td>E2E 断言 <code>find.text('MY PROJECTS')</code> 匹配不上实际的 <code>MY PROJECTS (0)</code></td><td>改用 <code>find.textContaining</code>（<code>e2e_test.dart:95</code>）</td></tr>
+      <tr><td><code>pop()</code> 之后才取 <code>ScaffoldMessenger.of(context)</code>，context 已 deactivate</td><td><b>先捕获 messenger 再 pop</b>（<code>posting_form_screen.dart:87</code>、<code>request_form_sheet.dart:86</code>）</td></tr>
+      <tr><td><code>kRoleColors</code> 定义在 dev-only 的 <code>login_screen.dart</code> 里，被 widget 层反向 import</td><td>挪到 <code>theme/palette.dart:105</code></td></tr>
+      <tr><td><code>uploadAvatar</code> 每次 <code>Dio()</code> 新建且不关闭 → 连接池泄漏</td><td>改为复用 <code>_storageDio</code> 字段 + <code>tuneConnectionReuse</code>（<code>auth_provider.dart:25-28</code>）</td></tr>
+      <tr><td><code>_index ??= ...</code> 在 <code>build()</code> 里写 state</td><td>改成<b>只读派生</b>局部变量 <code>index</code>，<code>_index</code> 只在 tab 点击时写（<code>home_shell.dart:91-96</code>）</td></tr>
+    </table>
+    <div class="script" style="margin-bottom:0">交之前我自己过了一遍代码，修了五个问题：一个测试断言和 UI 文案对不上；两处在 <code>pop()</code> 之后才去拿 <code>ScaffoldMessenger</code>——那时候 context 已经失效了，随时会抛异常；一个常量放错了层，让 widget 反向依赖了 screen；一个每次上传都新建 Dio 的连接池泄漏；还有一处在 <code>build()</code> 里给 state 赋值，这是 Flutter 明确禁止的副作用。</div>
+  </div>
+
+  <h4>还在的（想好答案，别慌）</h4>
+  <table>
+    <tr><th style="width:30%">位置</th><th>问题</th><th>话术</th></tr>
+    <tr><td><code>home_shell.dart:197-216</code></td><td><b>三层嵌套滚动 + 魔法数</b>：外层 ListView 里放一个 <code>MediaQuery.size.height * 0.5</code> 的固定盒子，里面再放两个 <code>SingleChildScrollView</code></td><td>"我想让 Intent 和 Projects 各占半屏、各自独立滚动，这样项目一多不会把 Intent 挤没。<b>但 <code>0.5</code> 是个魔法数，横屏和小屏上会很挤，而且键盘弹出时不响应。</b>更好的做法是 <code>CustomScrollView</code> + 两个 Sliver。"</td></tr>
+    <tr><td><code>home_shell.dart:319</code></td><td><code>ListView(children:)</code> 非 builder</td><td>见 §10 演练三，<b>能当场改</b></td></tr>
+    <tr><td><code>config.dart:7-10</code></td><td>硬编码<b>明文 HTTP</b> 的生产地址</td><td>"<code>--dart-define</code> 可覆盖，默认值是为了评分时零配置能跑。<b>生产必须上 HTTPS，地址应该走 CI 注入。</b>"</td></tr>
+    <tr><td><code>auth_provider.dart:134-137</code></td><td><code>fetchLinkedInMode</code> 的 catch 里写了 <code>_error</code> 但<b>没有 <code>notifyListeners()</code></b></td><td>"这是有意的——这个方法失败会静默回落到 simulated，不该弹错误给用户。<b>但把 <code>_error</code> 写脏了是副作用</b>，后面某个屏幕可能显示这条陈旧错误。我加了 <code>clearError()</code>（:51）缓解，正确做法是这里根本不该碰 <code>_error</code>。"</td></tr>
+    <tr><td><code>growth_provider.dart:86</code></td><td><code>null</code> 有两种含义</td><td>见 §07 末尾，答 sealed class</td></tr>
+    <tr><td><code>projects_provider</code> / <code>auth_provider</code></td><td>都没有重写 <code>dispose()</code>，<code>_storageDio</code> 从不 <code>close()</code></td><td>"它们的生命周期等于整个 App，所以实际不会泄漏。<b>但严格说应该重写 <code>dispose()</code> 调 <code>_storageDio.close()</code></b>——<code>AuthProvider</code> 在 <code>main.dart:38-42</code> 是被显式 dispose 的，所以那里补上是有意义的。"</td></tr>
+    <tr><td><code>project_form_screen.dart:617</code> 等</td><td><code>Image.network</code> 裸用，无 <code>loadingBuilder</code>、无缓存</td><td>"有 <code>errorBuilder</code> 兜底，但<b>没有加载占位，也没有磁盘缓存</b>——每次重建都可能重新请求。生产应该上 <code>cached_network_image</code>。"</td></tr>
+    <tr><td>多处</td><td><code>maxWidth: 560 / 520 / 480…</code> 裸数字</td><td>"这些是内容最大宽度，为了在宽屏上不让文字拉得太长。<b>应该像 <code>kWideLayoutBreakpoint</code> 一样抽成具名常量</b>，现在是散落的魔法数。"</td></tr>
+  </table>
+  <div class="good"><b>统一姿态：</b>承认 → 说清为什么当时这么选 → 给出正确做法。<b>千万不要硬辩。</b> rubric 的 Fail 判据是"答不出"，不是"代码不完美"；而 Credit 判据是 "able to clearly answer questions"——<b>清楚地承认一个缺陷，也是清楚地回答</b>。</div>
+</section>
+
+<!-- ══════════════════════════════ 12 ══════════════════════════════ -->
+<section id="s12">
+  <h2><span class="n">12</span> · 快问快答 ×26</h2>
+  <h3>先自己答，再展开对</h3>
+
+  <details><summary>1 · 用户点了 New project，到项目出现在列表，完整发生了什么？</summary><div class="dbody"><code>context.push('/projects/new')</code> → go_router 匹配 <code>GoRoute</code> → <code>ProjectFormScreen</code> → 填表 → <code>_save()</code> 置 <code>_submitted</code> 并 <code>_validate()</code> → <code>context.read&lt;ProjectsProvider&gt;().createProject()</code> → dio POST（拦截器挂 token）→ <code>ProjectCard.fromJson</code> → <code>_upsertMine</code> 造新 List → <code>notifyListeners()</code> → 首页 <code>context.watch</code> 的 <code>_HomeTab</code> 重建 → 新项目出现。</div></details>
+  <details><summary>2 · <code>context.watch</code> 和 <code>context.read</code> 分别什么时候用？用反了会怎样？</summary><div class="dbody"><code>build()</code> 里 watch（订阅，数据变了会重建），回调 / <code>initState</code> 里 read（只取一次）。<b>build 里用 read → 数据变了 UI 不刷新；回调里用 watch → 在错误的生命周期建立订阅。</b></div></details>
+  <details><summary>3 · <code>notifyListeners()</code> 之后发生了什么？</summary><div class="dbody">ChangeNotifier 遍历监听者列表逐个回调 → 由 <code>context.watch</code> 注册的 element 被标记 dirty → 下一帧 Flutter 重新调用它们的 <code>build</code>。<b>不是立刻重建。</b></div></details>
+  <details><summary>4 · 为什么 <code>_loading = false</code> 一定要放在 <code>finally</code>？</summary><div class="dbody">放 try 末尾的话，一旦抛异常就跳过，UI 永远卡在转圈。</div></details>
+  <details><summary>5 · 为什么每次都造新 List 而不是 <code>_mine.add(card)</code>？</summary><div class="dbody">① getter 直接暴露列表，原地改能绕过 provider 且不触发通知 → 状态变了但 UI 不刷新，极难查；② 不可变快照更安全。</div></details>
+  <details><summary>6 · <code>whereType&lt;Map&lt;String,dynamic&gt;&gt;()</code> 干什么？</summary><div class="dbody">过滤掉不是该类型的元素，同时把静态类型收窄。<b>一条脏数据不会炸掉整个列表。</b></div></details>
+  <details><summary>7 · <code>.map(ProjectCard.fromJson)</code> 为什么可以不写参数？</summary><div class="dbody">构造函数撕裂（tear-off）——把构造函数当作一个函数值传进去，等价于 <code>.map((j) =&gt; ProjectCard.fromJson(j))</code>。</div></details>
+  <details><summary>8 · <code>factory</code> 构造函数和普通构造函数的区别？</summary><div class="dbody">factory 不强制返回新实例，可以做解析、返回缓存、返回子类实例。所以 <code>fromJson</code> 都是 factory。</div></details>
+  <details><summary>9 · 为什么模型字段都写 <code>as String? ?? ''</code>？</summary><div class="dbody">防御式解析。后端并行开发，字段可能缺或类型不对；不兜底就会抛异常，一条坏数据白屏整个列表。</div></details>
+  <details><summary>10 · 为什么用 <code>DateTime.tryParse</code> 不用 <code>DateTime.parse</code>？</summary><div class="dbody"><code>parse</code> 失败抛 <code>FormatException</code>，<code>tryParse</code> 返回 null。<b>解析层的原则是永不抛异常。</b></div></details>
+  <details><summary>11 · token 存在哪？每个请求怎么带上的？</summary><div class="dbody"><code>shared_preferences</code> 的 <code>bp_access_token</code> + 内存 <code>_cachedToken</code>；dio 的 <code>InterceptorsWrapper.onRequest</code> 统一挂 <code>Authorization</code>。</div></details>
+  <details><summary>12 · 为什么 <code>ApiClient</code> 是单例？</summary><div class="dbody">私有构造 <code>._internal()</code> + <code>static final instance</code>。全 App 共用一个 Dio → 连接池、拦截器、token 缓存都只有一份。</div></details>
+  <details><summary>13 · <code>handler.next(options)</code> 不调会怎样？</summary><div class="dbody">请求卡在拦截器里永远发不出去。<code>next</code> 放行、<code>reject</code> 直接失败、<code>resolve</code> 返回假响应。</div></details>
+  <details><summary>14 · 截图上传为什么要两个 Dio？</summary><div class="dbody">第二步是发给 S3 不是我们后端。预签名 URL 本身是凭证，多带我们的 Bearer 会和签名冲突被拒。<code>_storageDio</code> 没有拦截器。</div></details>
+  <details><summary>15 · 为什么不让后端代传图片？</summary><div class="dbody">流量走两遍、后端要扛大文件并发。预签名让字节手机直达 S3，后端只处理两个轻 JSON，鉴权和元数据仍在后端手里。</div></details>
+  <details><summary>16 · <code>addPostFrameCallback</code> 为什么必要？</summary><div class="dbody">直接在 <code>initState</code> 调会在 build 期间触发 <code>notifyListeners</code> → "setState called during build" 报错。推迟到本帧渲染完之后就安全了。</div></details>
+  <details><summary>17 · <code>initState</code> 和 <code>dispose</code> 各在什么时候调？</summary><div class="dbody">State 创建后一次 / State 永久移除时一次。凡是 initState 里订阅或创建的，dispose 里必须释放，<code>super.dispose()</code> 放最后。</div></details>
+  <details><summary>18 · 不 dispose <code>TextEditingController</code> 会怎样？</summary><div class="dbody">它是 ChangeNotifier，监听关系不断 → 内存泄漏；异步回调还可能对已销毁的 widget setState。</div></details>
+  <details><summary>19 · <code>IndexedStack</code> 和条件渲染的区别？</summary><div class="dbody">IndexedStack 保留所有子节点的 State（换 tab 不丢滚动位置和表单内容），代价是全部都会被构建；条件渲染只建一个但会销毁另一个的 State。</div></details>
+  <details><summary>20 · 宽屏窄屏是怎么切的？为什么用 LayoutBuilder 不用 MediaQuery？</summary><div class="dbody"><code>LayoutBuilder</code> 拿 <code>constraints.maxWidth</code> 和 <code>kWideLayoutBreakpoint = 700</code> 比。<b>LayoutBuilder 量的是"我被分到多大"，MediaQuery 量的是整块屏幕</b>——嵌在侧栏里的组件用 MediaQuery 会判断错。</div></details>
+  <details><summary>21 · 断网了 Plaza 为什么还有内容？</summary><div class="dbody">每次成功请求把原始 JSON 存进 shared_preferences，失败时回落。<b>只缓存无筛选的那份</b>，否则会拿一份筛过的数据冒充全量。<code>_feedFromCache</code> 让 UI 打 OFFLINE 角标。</div></details>
+  <details><summary>22 · <code>Form</code> 和 <code>validator</code> 你为什么没用？</summary><div class="dbody">见 §02 ⑤。要点：<code>_submitted</code> 实现"提交后才报错"、stage 徽章不是 FormField 管不到；<b>并主动说 <code>autovalidateMode.onUserInteraction</code> 能达到同样效果、重构会换过去。</b></div></details>
+  <details><summary>23 · <code>ListView</code> 和 <code>ListView.builder</code> 的区别？你为什么用了前者？</summary><div class="dbody">见 §02 ⑥ + §10 演练三。<b>能当场改，并说清 <code>shrinkWrap</code> 的副作用。</b></div></details>
+  <details><summary>24 · 条件导入是什么？为什么运行时 <code>if (kIsWeb)</code> 不行？</summary><div class="dbody">编译期分支。<code>dart:io</code> 在 Web 上不存在，直接 import 会<b>编译失败</b>——运行时判断救不了，那时代码已经编进包里了。</div></details>
+  <details><summary>25 · <code>abstract final class</code> 是什么？</summary><div class="dbody">Dart 3 类修饰符：不可实例化 + 不可继承 = 纯静态常量容器。用类型系统守住"单一颜色来源"这个约定。</div></details>
+  <details><summary>26 · 这个项目你写得最满意 / 最不满意的一段是什么？</summary><div class="dbody"><b>最满意：</b><code>connection_tuning_io.dart</code> 的 idleTimeout（§02 ④）——它是真事故的复盘，能讲出完整故事。<br><b>最不满意：</b><code>_HomeTab</code> 那个 <code>height * 0.5</code> 的三层嵌套滚动（§11）——为了"各占半屏"用了魔法数，应该改成 CustomScrollView + Sliver。<br><b>这道题几乎一定会被问，两个答案都要准备好。</b></div></details>
+</section>
+
+<!-- ══════════════════════════════ 13 ══════════════════════════════ -->
+<section id="s13">
+  <h2><span class="n">13</span> · 临场清单</h2>
+  <h3>进场前 60 分钟</h3>
+
+  <div class="chk" id="chk">
+    <label><input type="checkbox"><span><b>确认时间地点。</b> 排期表写 7 月 30 日 16:45–17:05，跟组员对一遍有没有改期</span></label>
+    <label><input type="checkbox"><span><b>跟组员划清 <code>home_shell.dart</code> 的归属</b>：Home tab + 完成度卡是我的，Plaza / Match 是他们的</span></label>
+    <label><input type="checkbox"><span><b>项目能跑</b>：<code>flutter run</code> 起得来，后端可达（<code>/dev</code> 连通性页能全绿）</span></label>
+    <label><input type="checkbox"><span><b>编辑器开好</b>，<code>router.dart</code> / <code>projects_provider.dart</code> / <code>project_form_screen.dart</code> 三个标签页预先打开</span></label>
+    <label><input type="checkbox"><span><b>演练一（加 description 字段）真的敲过一遍</b>，能在 3 分钟内改完</span></label>
+    <label><input type="checkbox"><span><b>演练三（ListView.builder）真的敲过一遍</b>，记得 <code>shrinkWrap</code> + <code>NeverScrollableScrollPhysics</code></span></label>
+    <label><input type="checkbox"><span><b>30 秒开场稿能不看稿说完</b>（§01），最后一句把话题引到三步上传</span></label>
+    <label><input type="checkbox"><span><b>12 条选型辩护每条能一句话答</b>（§02），尤其 go_router / dio / 条件导入 / 没用 Form / 没用 builder</span></label>
+    <label><input type="checkbox"><span><b>idleTimeout 那个故事能完整讲</b>（§02 ④）——这是"代码是我写的"最强证据</span></label>
+    <label><input type="checkbox"><span><b>语法急救包过一遍</b>（§09），Fail 判据里唯一写死的就是 syntax knowledge</span></label>
+    <label><input type="checkbox"><span><b>"已修五处"清单能背</b>（§11），他问到 code review 就答这个</span></label>
+    <label><input type="checkbox"><span><b>"最满意 / 最不满意的一段"想好了</b>（§12 第 26 题）</span></label>
+    <label><input type="checkbox"><span><b>PATCH vs POST 的空字段语义能讲清</b>（§05 末尾）——这是主动展示深度的机会</span></label>
+    <label><input type="checkbox"><span><b>被问倒时的话术准备好</b>：见下方</span></label>
+    <div id="score">掌握度 0 / 14</div>
+  </div>
+
+  <div class="warn" style="margin-top:20px">
+    <b>被问倒了怎么办（这句要背下来）：</b><br><br>
+    ❌ 不要说 "I don't know" 然后沉默。<br>
+    ✅ 说：<b>"我不确定这一处的具体行为，但我可以推。这个方法在 <code>xxx.dart</code>，它的职责是 …… 所以如果要改 ……，我会先看 ……。"</b><br><br>
+    rubric 的原话是 "<b>capable of tracing</b> and showing an in-depth understanding"。<b>tracing 就是这个动作</b>——不是背下来，是能顺着代码追。<b>展示追踪过程本身就是得分项</b>；沉默和乱编才是失分项。
+  </div>
+
+  <div class="good">
+    <b>最后一条，也是最重要的一条：</b>他明说了 "even if you use some AI to help to draft it, but if you understand it, you should be able to change it."<br>
+    <b>这场考的不是"你有没有独自写下每一行"，是"你现在能不能改动它"。</b> 所以今晚的时间，全部投给 §10 的实际敲代码，不要用来背这份文档。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script>
+(function(){
+  // 阅读进度
+  var bar = document.getElementById('bar');
+  var links = Array.prototype.slice.call(document.querySelectorAll('nav a'));
+  var secs = links.map(function(a){ return document.querySelector(a.getAttribute('href')); });
+
+  function onScroll(){
+    var h = document.documentElement;
+    var max = h.scrollHeight - h.clientHeight;
+    bar.style.width = (max > 0 ? (h.scrollTop / max) * 100 : 0) + '%';
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+
+  // 目录高亮
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if (!e.isIntersecting) return;
+        var i = secs.indexOf(e.target);
+        if (i < 0) return;
+        links.forEach(function(a){ a.classList.remove('on'); });
+        links[i].classList.add('on');
+      });
+    }, {rootMargin: '-10% 0px -75% 0px'});
+    secs.forEach(function(s){ if (s) io.observe(s); });
+  }
+
+  // 掌握度清单持久化
+  var KEY = 'bp_viva_liuwei_v1';
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('#chk input'));
+  var out = document.getElementById('score');
+
+  function render(){
+    var n = boxes.filter(function(b){ return b.checked; }).length;
+    out.textContent = '掌握度 ' + n + ' / ' + boxes.length +
+      (n === boxes.length ? '  ✓ 全部就绪' : '');
+  }
+  try {
+    var saved = JSON.parse(localStorage.getItem(KEY) || '[]');
+    boxes.forEach(function(b, i){ b.checked = !!saved[i]; });
+  } catch (e) {}
+  boxes.forEach(function(b){
+    b.addEventListener('change', function(){
+      try {
+        localStorage.setItem(KEY, JSON.stringify(boxes.map(function(x){ return x.checked; })));
+      } catch (e) {}
+      render();
+    });
+  });
+  render();
+
+  // 打印时展开全部折叠块
+  window.addEventListener('beforeprint', function(){
+    document.querySelectorAll('details').forEach(function(d){ d.open = true; });
+  });
+})();
+</script>
+</body>
+</html>

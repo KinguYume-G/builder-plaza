@@ -60,7 +60,7 @@ accounts that have onboarded.
 | # | Do | Database |
 |---|---|---|
 | 1 | Connect GitHub with an unused username — live repos, languages, stars | `users` +1 |
-| 2 | LinkedIn step — name the **SIMULATED FOR DEMO** watermark out loud | — |
+| 2 | LinkedIn — the **real** OIDC flow (production runs `LINKEDIN_MODE=live`). Consent in the browser, then force-close and reopen the app to pick up the binding | `linkedin_sub` fills |
 | 3 | Pick Builder | — |
 | 4 | Profile → completeness bar, point at the 40/70 gates | — |
 | 5 | Tap avatar → upload a photo | `avatar_s3_key` fills |
@@ -75,8 +75,9 @@ accounts that have onboarded.
 **Say these three things** — this is what turns a feature tour into a design
 argument:
 
-- *"Every signal here is pulled from GitHub's API. Nothing on this profile is
-  typed in by me."* (step 1, 9, 12)
+- *"Every signal here is pulled from GitHub's API, and the LinkedIn step is real
+  OpenID Connect, not a mock. Nothing on this profile is typed in by me."*
+  (steps 1, 2, 9, 12)
 - *"The 40 and 70 gates mean you can't lurk — you unlock contact and matching by
   actually having evidence."* (step 4)
 - *"I don't write my own progress updates. It reads the repo events and an AI
@@ -150,8 +151,9 @@ records move through the shared database across all three segments."*
 **Close** (all three): one line each, then the engineering claim:
 
 - AWS ECS Fargate behind an ALB, RDS Postgres with pgvector
-- Third-party APIs: **GitHub** (evidence), **AWS Bedrock** (growth summaries),
-  **S3** (avatars and screenshots), **LinkedIn OIDC** (identity)
+- Third-party APIs: **GitHub** (evidence), **LinkedIn OpenID Connect — live**
+  (identity), **AWS Bedrock** (growth summaries), **S3** (avatars and
+  screenshots)
 - 176 backend tests, 15 widget tests, CI on every push
 - **Real-device testing on AWS Device Farm** — show a few seconds of the
   crawler's own video from `docs/test-evidence/`, and say the offline path is

@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Builder Plaza · 前端依赖图谱</title>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter+Tight:wght@400..800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#FFFEF8; --cream50:#FAF6EC; --cream100:#F4ECD8;
+  --ink:#0A0A0A; --ink600:#3D3D3D; --ink400:#857C70; --ink200:#CFC8BD;
+  --teal:#1F7A6C; --tomato:#B8503A; --mustard:#B08A2E; --lime:#3F8259;
+  --copper:#8B5E3C; --rose:#C43D6E; --tangerine:#E07830;
+  --disp:'Archivo Black',sans-serif; --body:'Inter Tight',sans-serif; --mono:'JetBrains Mono',monospace;
+  --stamp:4px 4px 0 var(--ink);
+  --soft:0 1px 2px rgba(10,10,10,.08), 0 6px 16px -4px rgba(10,10,10,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--body);background:var(--cream50);color:var(--ink);
+  height:100vh;overflow:hidden;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased}
+
+/* ── 顶栏 ── */
+header{border-bottom:2px solid var(--ink);background:var(--paper);
+  padding:13px 22px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;z-index:10}
+h1{font-family:var(--disp);font-size:19px;letter-spacing:-.6px;line-height:1;white-space:nowrap}
+h1 em{font-style:normal;color:var(--teal)}
+.stat{font-family:var(--mono);font-size:10.5px;color:var(--ink400);letter-spacing:.05em;white-space:nowrap}
+.grow{flex:1}
+.seg{display:flex;border:2px solid var(--ink);border-radius:8px;overflow:hidden;background:var(--cream100)}
+.seg button{font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.06em;
+  border:0;background:none;padding:7px 13px;cursor:pointer;color:var(--ink600);white-space:nowrap}
+.seg button+button{border-left:2px solid var(--ink)}
+.seg button.on{background:var(--teal);color:var(--paper)}
+input#q{font-family:var(--mono);font-size:12px;padding:7px 11px;width:170px;
+  border:2px solid var(--ink);border-radius:8px;background:var(--paper);outline:none}
+input#q:focus{border-color:var(--teal);box-shadow:2px 2px 0 var(--teal)}
+button.gh{font-family:var(--mono);font-size:10.5px;font-weight:700;padding:7px 12px;
+  border:2px solid var(--ink);border-radius:8px;background:var(--paper);cursor:pointer;white-space:nowrap}
+button.gh:hover{background:var(--cream100)}
+
+/* ── 主体 ── */
+.main{flex:1;display:flex;min-height:0}
+#cv{flex:1;display:block;cursor:grab;background:
+  radial-gradient(circle at 20% 15%, rgba(31,122,108,.05), transparent 45%),
+  radial-gradient(circle at 82% 78%, rgba(139,94,60,.05), transparent 42%), var(--cream50)}
+#cv.drag{cursor:grabbing}
+
+/* ── 侧栏 ── */
+aside{width:308px;flex:0 0 308px;border-left:2px solid var(--ink);background:var(--paper);
+  overflow-y:auto;padding:18px 18px 40px}
+.lbl{font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:.15em;
+  text-transform:uppercase;color:var(--ink400);margin:0 0 9px}
+.legend{margin-bottom:22px}
+.lg{display:flex;align-items:center;gap:9px;padding:5px 8px;border-radius:6px;cursor:pointer;
+  border:1.5px solid transparent;transition:all .13s;margin-bottom:1px}
+.lg:hover{background:var(--cream50);border-color:var(--ink200)}
+.lg.off{opacity:.32}
+.lg .sw{width:13px;height:13px;border:2px solid var(--ink);border-radius:4px;flex:0 0 13px}
+.lg .tx{flex:1;min-width:0}
+.lg .tx b{font-size:13px;font-weight:700;display:block;line-height:1.25}
+.lg .tx small{font-family:var(--mono);font-size:9.5px;color:var(--ink400);display:block;line-height:1.4}
+.lg .ct{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--ink400)}
+
+.card{border:2px solid var(--ink);border-radius:10px;background:var(--cream50);
+  padding:14px;box-shadow:var(--stamp);margin-bottom:16px}
+.card .path{font-family:var(--mono);font-size:11px;color:var(--ink400);word-break:break-all;margin-bottom:5px}
+.card h2{font-family:var(--disp);font-size:19px;letter-spacing:-.6px;line-height:1.1;margin-bottom:10px}
+.pills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px}
+.pill{font-family:var(--mono);font-size:9.5px;font-weight:700;padding:3px 8px;
+  border:2px solid var(--ink);border-radius:5px;background:var(--paper)}
+.pill.f{color:var(--paper)}
+
+.dl{margin-top:14px}
+.dl h3{font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--ink400);margin:14px 0 7px;
+  padding-bottom:5px;border-bottom:1.5px solid var(--ink200)}
+.dl a{display:flex;gap:7px;align-items:center;font-family:var(--mono);font-size:11.5px;
+  color:var(--ink600);text-decoration:none;padding:4px 7px;border-radius:5px;cursor:pointer}
+.dl a:hover{background:var(--cream100);color:var(--ink)}
+.dl a .d{width:8px;height:8px;border-radius:2px;border:1.5px solid var(--ink);flex:0 0 8px}
+.dl .none{font-size:12px;color:var(--ink400);padding:3px 7px;font-style:italic}
+
+.hint{font-size:12.5px;color:var(--ink600);line-height:1.6;
+  border-left:3px solid var(--teal);padding:2px 0 2px 11px;margin-top:6px}
+.tip{border:2px dashed var(--ink200);border-radius:9px;padding:12px 13px;
+  font-size:12.5px;line-height:1.6;color:var(--ink600);margin-top:16px}
+.tip b{color:var(--ink)}
+
+#tt{position:fixed;pointer-events:none;z-index:99;display:none;
+  font-family:var(--mono);font-size:11px;background:var(--ink);color:var(--cream100);
+  padding:5px 9px;border-radius:5px;white-space:nowrap}
+
+@media(max-width:900px){aside{display:none}}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>依赖<em>图谱</em></h1>
+  <span class="stat" id="hd"></span>
+  <span class="grow"></span>
+  <input id="q" placeholder="搜文件名…" autocomplete="off">
+  <div class="seg">
+    <button id="mLay" class="on">架构分层</button>
+    <button id="mForce">力导向</button>
+  </div>
+  <button class="gh" id="rst">重置</button>
+</header>
+
+<div class="main">
+  <canvas id="cv"></canvas>
+  <aside>
+    <p class="lbl">七层架构 · 点击可隐藏</p>
+    <div class="legend" id="lg"></div>
+    <div id="panel"></div>
+  </aside>
+</div>
+<div id="tt"></div>
+
+<script>
+const G = {"nodes": [{"id": "api/api_client.dart", "l": 2, "loc": 90, "i": 9, "o": 1, "n": "api_client"}, {"id": "config.dart", "l": 0, "loc": 10, "i": 2, "o": 0, "n": "config"}, {"id": "main.dart", "l": 6, "loc": 63, "i": 0, "o": 8, "n": "main"}, {"id": "models/activity.dart", "l": 1, "loc": 137, "i": 1, "o": 0, "n": "activity"}, {"id": "models/collab.dart", "l": 1, "loc": 143, "i": 5, "o": 0, "n": "collab"}, {"id": "models/github_summary.dart", "l": 1, "loc": 71, "i": 3, "o": 0, "n": "github_summary"}, {"id": "models/growth_post.dart", "l": 1, "loc": 112, "i": 3, "o": 1, "n": "growth_post"}, {"id": "models/linkedin_profile.dart", "l": 1, "loc": 45, "i": 2, "o": 0, "n": "linkedin_profile"}, {"id": "models/match.dart", "l": 1, "loc": 85, "i": 2, "o": 0, "n": "match"}, {"id": "models/project_card.dart", "l": 1, "loc": 183, "i": 9, "o": 0, "n": "project_card"}, {"id": "models/repo_activity.dart", "l": 1, "loc": 48, "i": 2, "o": 0, "n": "repo_activity"}, {"id": "models/role_posting.dart", "l": 1, "loc": 103, "i": 4, "o": 1, "n": "role_posting"}, {"id": "models/trust_score.dart", "l": 1, "loc": 84, "i": 1, "o": 0, "n": "trust_score"}, {"id": "models/user.dart", "l": 1, "loc": 78, "i": 2, "o": 0, "n": "user"}, {"id": "router.dart", "l": 6, "loc": 217, "i": 1, "o": 19, "n": "router"}, {"id": "screens/connectivity_screen.dart", "l": 5, "loc": 187, "i": 1, "o": 6, "n": "connectivity_screen"}, {"id": "screens/home/home_shell.dart", "l": 5, "loc": 951, "i": 1, "o": 15, "n": "home_shell"}, {"id": "screens/login_screen.dart", "l": 5, "loc": 154, "i": 5, "o": 6, "n": "login_screen"}, {"id": "screens/market/market_screen.dart", "l": 5, "loc": 255, "i": 1, "o": 10, "n": "market_screen"}, {"id": "screens/market/posting_detail_screen.dart", "l": 5, "loc": 220, "i": 1, "o": 10, "n": "posting_detail_screen"}, {"id": "screens/market/posting_form_screen.dart", "l": 5, "loc": 244, "i": 1, "o": 11, "n": "posting_form_screen"}, {"id": "screens/matches/matches_screen.dart", "l": 5, "loc": 346, "i": 1, "o": 9, "n": "matches_screen"}, {"id": "screens/mocked/mocked_suite_screen.dart", "l": 5, "loc": 499, "i": 1, "o": 7, "n": "mocked_suite_screen"}, {"id": "screens/onboarding/github_connect_screen.dart", "l": 5, "loc": 263, "i": 1, "o": 8, "n": "github_connect_screen"}, {"id": "screens/onboarding/linkedin_live_screen.dart", "l": 5, "loc": 188, "i": 1, "o": 6, "n": "linkedin_live_screen"}, {"id": "screens/onboarding/linkedin_simulated_screen.dart", "l": 5, "loc": 226, "i": 1, "o": 8, "n": "linkedin_simulated_screen"}, {"id": "screens/onboarding/linkedin_step_screen.dart", "l": 5, "loc": 64, "i": 1, "o": 4, "n": "linkedin_step_screen"}, {"id": "screens/onboarding/role_select_screen.dart", "l": 5, "loc": 178, "i": 1, "o": 5, "n": "role_select_screen"}, {"id": "screens/profile/evidence_screen.dart", "l": 5, "loc": 317, "i": 1, "o": 7, "n": "evidence_screen"}, {"id": "screens/profile/trust_screen.dart", "l": 5, "loc": 272, "i": 1, "o": 8, "n": "trust_screen"}, {"id": "screens/projects/discovery_screen.dart", "l": 5, "loc": 245, "i": 1, "o": 10, "n": "discovery_screen"}, {"id": "screens/projects/intent_editor_screen.dart", "l": 5, "loc": 173, "i": 1, "o": 9, "n": "intent_editor_screen"}, {"id": "screens/projects/project_detail_screen.dart", "l": 5, "loc": 551, "i": 1, "o": 14, "n": "project_detail_screen"}, {"id": "screens/projects/project_form_screen.dart", "l": 5, "loc": 637, "i": 1, "o": 9, "n": "project_form_screen"}, {"id": "screens/requests/conversation_screen.dart", "l": 5, "loc": 245, "i": 1, "o": 6, "n": "conversation_screen"}, {"id": "screens/requests/requests_screen.dart", "l": 5, "loc": 281, "i": 1, "o": 9, "n": "requests_screen"}, {"id": "state/auth_provider.dart", "l": 3, "loc": 297, "i": 14, "o": 4, "n": "auth_provider"}, {"id": "state/collab_provider.dart", "l": 3, "loc": 152, "i": 4, "o": 2, "n": "collab_provider"}, {"id": "state/growth_provider.dart", "l": 3, "loc": 106, "i": 3, "o": 2, "n": "growth_provider"}, {"id": "state/market_provider.dart", "l": 3, "loc": 85, "i": 4, "o": 2, "n": "market_provider"}, {"id": "state/matches_provider.dart", "l": 3, "loc": 64, "i": 2, "o": 2, "n": "matches_provider"}, {"id": "state/projects_provider.dart", "l": 3, "loc": 380, "i": 7, "o": 3, "n": "projects_provider"}, {"id": "theme/app_theme.dart", "l": 0, "loc": 39, "i": 1, "o": 1, "n": "app_theme"}, {"id": "theme/motion.dart", "l": 0, "loc": 18, "i": 1, "o": 0, "n": "motion"}, {"id": "theme/palette.dart", "l": 0, "loc": 100, "i": 36, "o": 0, "n": "palette"}, {"id": "theme/typography.dart", "l": 0, "loc": 63, "i": 31, "o": 1, "n": "typography"}, {"id": "widgets/brutal_badge.dart", "l": 4, "loc": 65, "i": 19, "o": 2, "n": "brutal_badge"}, {"id": "widgets/brutal_button.dart", "l": 4, "loc": 138, "i": 16, "o": 3, "n": "brutal_button"}, {"id": "widgets/brutal_card.dart", "l": 4, "loc": 85, "i": 21, "o": 1, "n": "brutal_card"}, {"id": "widgets/brutal_dropdown.dart", "l": 4, "loc": 59, "i": 2, "o": 2, "n": "brutal_dropdown"}, {"id": "widgets/brutal_field.dart", "l": 4, "loc": 96, "i": 3, "o": 2, "n": "brutal_field"}, {"id": "widgets/brutal_scaffold.dart", "l": 4, "loc": 101, "i": 13, "o": 2, "n": "brutal_scaffold"}, {"id": "widgets/growth_post_card.dart", "l": 4, "loc": 125, "i": 2, "o": 5, "n": "growth_post_card"}, {"id": "widgets/onboarding_step_header.dart", "l": 4, "loc": 63, "i": 4, "o": 2, "n": "onboarding_step_header"}, {"id": "widgets/project_list_card.dart", "l": 4, "loc": 128, "i": 1, "o": 6, "n": "project_list_card"}, {"id": "widgets/request_form_sheet.dart", "l": 4, "loc": 182, "i": 3, "o": 7, "n": "request_form_sheet"}, {"id": "widgets/simulated_badge.dart", "l": 4, "loc": 36, "i": 1, "o": 2, "n": "simulated_badge"}, {"id": "widgets/simulated_watermark.dart", "l": 4, "loc": 110, "i": 1, "o": 2, "n": "simulated_watermark"}], "edges": [["api/api_client.dart", "config.dart"], ["main.dart", "router.dart"], ["main.dart", "state/auth_provider.dart"], ["main.dart", "state/collab_provider.dart"], ["main.dart", "state/growth_provider.dart"], ["main.dart", "state/market_provider.dart"], ["main.dart", "state/matches_provider.dart"], ["main.dart", "state/projects_provider.dart"], ["main.dart", "theme/app_theme.dart"], ["models/growth_post.dart", "models/project_card.dart"], ["models/role_posting.dart", "models/collab.dart"], ["router.dart", "screens/connectivity_screen.dart"], ["router.dart", "screens/home/home_shell.dart"], ["router.dart", "screens/login_screen.dart"], ["router.dart", "screens/onboarding/github_connect_screen.dart"], ["router.dart", "screens/onboarding/linkedin_step_screen.dart"], ["router.dart", "screens/market/market_screen.dart"], ["router.dart", "screens/market/posting_detail_screen.dart"], ["router.dart", "screens/market/posting_form_screen.dart"], ["router.dart", "screens/mocked/mocked_suite_screen.dart"], ["router.dart", "screens/onboarding/role_select_screen.dart"], ["router.dart", "screens/profile/evidence_screen.dart"], ["router.dart", "screens/profile/trust_screen.dart"], ["router.dart", "screens/requests/conversation_screen.dart"], ["router.dart", "screens/requests/requests_screen.dart"], ["router.dart", "screens/projects/intent_editor_screen.dart"], ["router.dart", "screens/projects/project_detail_screen.dart"], ["router.dart", "screens/projects/project_form_screen.dart"], ["router.dart", "state/auth_provider.dart"], ["router.dart", "theme/palette.dart"], ["screens/connectivity_screen.dart", "api/api_client.dart"], ["screens/connectivity_screen.dart", "config.dart"], ["screens/connectivity_screen.dart", "theme/palette.dart"], ["screens/connectivity_screen.dart", "theme/typography.dart"], ["screens/connectivity_screen.dart", "widgets/brutal_button.dart"], ["screens/connectivity_screen.dart", "widgets/brutal_card.dart"], ["screens/home/home_shell.dart", "models/github_summary.dart"], ["screens/home/home_shell.dart", "models/project_card.dart"], ["screens/home/home_shell.dart", "models/user.dart"], ["screens/home/home_shell.dart", "state/auth_provider.dart"], ["screens/home/home_shell.dart", "state/projects_provider.dart"], ["screens/home/home_shell.dart", "theme/palette.dart"], ["screens/home/home_shell.dart", "theme/typography.dart"], ["screens/home/home_shell.dart", "widgets/brutal_badge.dart"], ["screens/home/home_shell.dart", "widgets/brutal_button.dart"], ["screens/home/home_shell.dart", "widgets/brutal_card.dart"], ["screens/home/home_shell.dart", "widgets/brutal_dropdown.dart"], ["screens/home/home_shell.dart", "widgets/brutal_scaffold.dart"], ["screens/home/home_shell.dart", "screens/login_screen.dart"], ["screens/home/home_shell.dart", "screens/matches/matches_screen.dart"], ["screens/home/home_shell.dart", "screens/projects/discovery_screen.dart"], ["screens/login_screen.dart", "state/auth_provider.dart"], ["screens/login_screen.dart", "theme/palette.dart"], ["screens/login_screen.dart", "theme/typography.dart"], ["screens/login_screen.dart", "widgets/brutal_badge.dart"], ["screens/login_screen.dart", "widgets/brutal_button.dart"], ["screens/login_screen.dart", "widgets/brutal_card.dart"], ["screens/market/market_screen.dart", "models/role_posting.dart"], ["screens/market/market_screen.dart", "state/auth_provider.dart"], ["screens/market/market_screen.dart", "state/market_provider.dart"], ["screens/market/market_screen.dart", "theme/palette.dart"], ["screens/market/market_screen.dart", "theme/typography.dart"], ["screens/market/market_screen.dart", "widgets/brutal_badge.dart"], ["screens/market/market_screen.dart", "widgets/brutal_button.dart"], ["screens/market/market_screen.dart", "widgets/brutal_card.dart"], ["screens/market/market_screen.dart", "widgets/brutal_scaffold.dart"], ["screens/market/market_screen.dart", "widgets/request_form_sheet.dart"], ["screens/market/posting_detail_screen.dart", "models/role_posting.dart"], ["screens/market/posting_detail_screen.dart", "state/auth_provider.dart"], ["screens/market/posting_detail_screen.dart", "state/market_provider.dart"], ["screens/market/posting_detail_screen.dart", "theme/palette.dart"], ["screens/market/posting_detail_screen.dart", "theme/typography.dart"], ["screens/market/posting_detail_screen.dart", "widgets/brutal_badge.dart"], ["screens/market/posting_detail_screen.dart", "widgets/brutal_button.dart"], ["screens/market/posting_detail_screen.dart", "widgets/brutal_card.dart"], ["screens/market/posting_detail_screen.dart", "widgets/brutal_scaffold.dart"], ["screens/market/posting_detail_screen.dart", "widgets/request_form_sheet.dart"], ["screens/market/posting_form_screen.dart", "models/project_card.dart"], ["screens/market/posting_form_screen.dart", "models/role_posting.dart"], ["screens/market/posting_form_screen.dart", "state/market_provider.dart"], ["screens/market/posting_form_screen.dart", "state/projects_provider.dart"], ["screens/market/posting_form_screen.dart", "theme/palette.dart"], ["screens/market/posting_form_screen.dart", "theme/typography.dart"], ["screens/market/posting_form_screen.dart", "widgets/brutal_badge.dart"], ["screens/market/posting_form_screen.dart", "widgets/brutal_button.dart"], ["screens/market/posting_form_screen.dart", "widgets/brutal_card.dart"], ["screens/market/posting_form_screen.dart", "widgets/brutal_field.dart"], ["screens/market/posting_form_screen.dart", "widgets/brutal_scaffold.dart"], ["screens/matches/matches_screen.dart", "models/match.dart"], ["screens/matches/matches_screen.dart", "state/matches_provider.dart"], ["screens/matches/matches_screen.dart", "theme/palette.dart"], ["screens/matches/matches_screen.dart", "theme/typography.dart"], ["screens/matches/matches_screen.dart", "widgets/brutal_badge.dart"], ["screens/matches/matches_screen.dart", "widgets/brutal_button.dart"], ["screens/matches/matches_screen.dart", "widgets/brutal_card.dart"], ["screens/matches/matches_screen.dart", "widgets/request_form_sheet.dart"], ["screens/matches/matches_screen.dart", "screens/login_screen.dart"], ["screens/mocked/mocked_suite_screen.dart", "theme/palette.dart"], ["screens/mocked/mocked_suite_screen.dart", "theme/typography.dart"], ["screens/mocked/mocked_suite_screen.dart", "widgets/brutal_badge.dart"], ["screens/mocked/mocked_suite_screen.dart", "widgets/brutal_button.dart"], ["screens/mocked/mocked_suite_screen.dart", "widgets/brutal_card.dart"], ["screens/mocked/mocked_suite_screen.dart", "widgets/brutal_scaffold.dart"], ["screens/mocked/mocked_suite_screen.dart", "widgets/simulated_badge.dart"], ["screens/onboarding/github_connect_screen.dart", "models/github_summary.dart"], ["screens/onboarding/github_connect_screen.dart", "state/auth_provider.dart"], ["screens/onboarding/github_connect_screen.dart", "theme/palette.dart"], ["screens/onboarding/github_connect_screen.dart", "theme/typography.dart"], ["screens/onboarding/github_connect_screen.dart", "widgets/brutal_badge.dart"], ["screens/onboarding/github_connect_screen.dart", "widgets/brutal_button.dart"], ["screens/onboarding/github_connect_screen.dart", "widgets/brutal_card.dart"], ["screens/onboarding/github_connect_screen.dart", "widgets/onboarding_step_header.dart"], ["screens/onboarding/linkedin_live_screen.dart", "state/auth_provider.dart"], ["screens/onboarding/linkedin_live_screen.dart", "theme/palette.dart"], ["screens/onboarding/linkedin_live_screen.dart", "theme/typography.dart"], ["screens/onboarding/linkedin_live_screen.dart", "widgets/brutal_button.dart"], ["screens/onboarding/linkedin_live_screen.dart", "widgets/brutal_card.dart"], ["screens/onboarding/linkedin_live_screen.dart", "widgets/onboarding_step_header.dart"], ["screens/onboarding/linkedin_simulated_screen.dart", "models/linkedin_profile.dart"], ["screens/onboarding/linkedin_simulated_screen.dart", "state/auth_provider.dart"], ["screens/onboarding/linkedin_simulated_screen.dart", "theme/palette.dart"], ["screens/onboarding/linkedin_simulated_screen.dart", "theme/typography.dart"], ["screens/onboarding/linkedin_simulated_screen.dart", "widgets/brutal_badge.dart"], ["screens/onboarding/linkedin_simulated_screen.dart", "widgets/brutal_card.dart"], ["screens/onboarding/linkedin_simulated_screen.dart", "widgets/onboarding_step_header.dart"], ["screens/onboarding/linkedin_simulated_screen.dart", "widgets/simulated_watermark.dart"], ["screens/onboarding/linkedin_step_screen.dart", "state/auth_provider.dart"], ["screens/onboarding/linkedin_step_screen.dart", "theme/palette.dart"], ["screens/onboarding/linkedin_step_screen.dart", "screens/onboarding/linkedin_live_screen.dart"], ["screens/onboarding/linkedin_step_screen.dart", "screens/onboarding/linkedin_simulated_screen.dart"], ["screens/onboarding/role_select_screen.dart", "state/auth_provider.dart"], ["screens/onboarding/role_select_screen.dart", "theme/palette.dart"], ["screens/onboarding/role_select_screen.dart", "theme/typography.dart"], ["screens/onboarding/role_select_screen.dart", "widgets/brutal_card.dart"], ["screens/onboarding/role_select_screen.dart", "widgets/onboarding_step_header.dart"], ["screens/profile/evidence_screen.dart", "api/api_client.dart"], ["screens/profile/evidence_screen.dart", "models/activity.dart"], ["screens/profile/evidence_screen.dart", "theme/palette.dart"], ["screens/profile/evidence_screen.dart", "theme/typography.dart"], ["screens/profile/evidence_screen.dart", "widgets/brutal_badge.dart"], ["screens/profile/evidence_screen.dart", "widgets/brutal_card.dart"], ["screens/profile/evidence_screen.dart", "widgets/brutal_scaffold.dart"], ["screens/profile/trust_screen.dart", "api/api_client.dart"], ["screens/profile/trust_screen.dart", "models/trust_score.dart"], ["screens/profile/trust_screen.dart", "theme/palette.dart"], ["screens/profile/trust_screen.dart", "theme/typography.dart"], ["screens/profile/trust_screen.dart", "widgets/brutal_badge.dart"], ["screens/profile/trust_screen.dart", "widgets/brutal_button.dart"], ["screens/profile/trust_screen.dart", "widgets/brutal_card.dart"], ["screens/profile/trust_screen.dart", "widgets/brutal_scaffold.dart"], ["screens/projects/discovery_screen.dart", "models/project_card.dart"], ["screens/projects/discovery_screen.dart", "state/growth_provider.dart"], ["screens/projects/discovery_screen.dart", "state/projects_provider.dart"], ["screens/projects/discovery_screen.dart", "theme/palette.dart"], ["screens/projects/discovery_screen.dart", "theme/typography.dart"], ["screens/projects/discovery_screen.dart", "widgets/brutal_badge.dart"], ["screens/projects/discovery_screen.dart", "widgets/brutal_dropdown.dart"], ["screens/projects/discovery_screen.dart", "widgets/brutal_scaffold.dart"], ["screens/projects/discovery_screen.dart", "widgets/growth_post_card.dart"], ["screens/projects/discovery_screen.dart", "widgets/project_list_card.dart"], ["screens/projects/intent_editor_screen.dart", "models/project_card.dart"], ["screens/projects/intent_editor_screen.dart", "state/projects_provider.dart"], ["screens/projects/intent_editor_screen.dart", "theme/palette.dart"], ["screens/projects/intent_editor_screen.dart", "theme/typography.dart"], ["screens/projects/intent_editor_screen.dart", "widgets/brutal_badge.dart"], ["screens/projects/intent_editor_screen.dart", "widgets/brutal_button.dart"], ["screens/projects/intent_editor_screen.dart", "widgets/brutal_card.dart"], ["screens/projects/intent_editor_screen.dart", "widgets/brutal_field.dart"], ["screens/projects/intent_editor_screen.dart", "widgets/brutal_scaffold.dart"], ["screens/projects/project_detail_screen.dart", "models/growth_post.dart"], ["screens/projects/project_detail_screen.dart", "models/project_card.dart"], ["screens/projects/project_detail_screen.dart", "models/repo_activity.dart"], ["screens/projects/project_detail_screen.dart", "state/auth_provider.dart"], ["screens/projects/project_detail_screen.dart", "state/growth_provider.dart"], ["screens/projects/project_detail_screen.dart", "state/projects_provider.dart"], ["screens/projects/project_detail_screen.dart", "theme/palette.dart"], ["screens/projects/project_detail_screen.dart", "theme/typography.dart"], ["screens/projects/project_detail_screen.dart", "widgets/brutal_badge.dart"], ["screens/projects/project_detail_screen.dart", "widgets/brutal_button.dart"], ["screens/projects/project_detail_screen.dart", "widgets/brutal_card.dart"], ["screens/projects/project_detail_screen.dart", "widgets/brutal_scaffold.dart"], ["screens/projects/project_detail_screen.dart", "widgets/growth_post_card.dart"], ["screens/projects/project_detail_screen.dart", "screens/login_screen.dart"], ["screens/projects/project_form_screen.dart", "models/project_card.dart"], ["screens/projects/project_form_screen.dart", "state/projects_provider.dart"], ["screens/projects/project_form_screen.dart", "theme/palette.dart"], ["screens/projects/project_form_screen.dart", "theme/typography.dart"], ["screens/projects/project_form_screen.dart", "widgets/brutal_badge.dart"], ["screens/projects/project_form_screen.dart", "widgets/brutal_button.dart"], ["screens/projects/project_form_screen.dart", "widgets/brutal_card.dart"], ["screens/projects/project_form_screen.dart", "widgets/brutal_field.dart"], ["screens/projects/project_form_screen.dart", "widgets/brutal_scaffold.dart"], ["screens/requests/conversation_screen.dart", "models/collab.dart"], ["screens/requests/conversation_screen.dart", "state/auth_provider.dart"], ["screens/requests/conversation_screen.dart", "state/collab_provider.dart"], ["screens/requests/conversation_screen.dart", "theme/palette.dart"], ["screens/requests/conversation_screen.dart", "theme/typography.dart"], ["screens/requests/conversation_screen.dart", "widgets/brutal_scaffold.dart"], ["screens/requests/requests_screen.dart", "models/collab.dart"], ["screens/requests/requests_screen.dart", "state/auth_provider.dart"], ["screens/requests/requests_screen.dart", "state/collab_provider.dart"], ["screens/requests/requests_screen.dart", "theme/palette.dart"], ["screens/requests/requests_screen.dart", "theme/typography.dart"], ["screens/requests/requests_screen.dart", "widgets/brutal_badge.dart"], ["screens/requests/requests_screen.dart", "widgets/brutal_button.dart"], ["screens/requests/requests_screen.dart", "widgets/brutal_card.dart"], ["screens/requests/requests_screen.dart", "widgets/brutal_scaffold.dart"], ["state/auth_provider.dart", "api/api_client.dart"], ["state/auth_provider.dart", "models/github_summary.dart"], ["state/auth_provider.dart", "models/linkedin_profile.dart"], ["state/auth_provider.dart", "models/user.dart"], ["state/collab_provider.dart", "api/api_client.dart"], ["state/collab_provider.dart", "models/collab.dart"], ["state/growth_provider.dart", "api/api_client.dart"], ["state/growth_provider.dart", "models/growth_post.dart"], ["state/market_provider.dart", "api/api_client.dart"], ["state/market_provider.dart", "models/role_posting.dart"], ["state/matches_provider.dart", "api/api_client.dart"], ["state/matches_provider.dart", "models/match.dart"], ["state/projects_provider.dart", "api/api_client.dart"], ["state/projects_provider.dart", "models/project_card.dart"], ["state/projects_provider.dart", "models/repo_activity.dart"], ["theme/app_theme.dart", "theme/palette.dart"], ["theme/typography.dart", "theme/palette.dart"], ["widgets/brutal_badge.dart", "theme/palette.dart"], ["widgets/brutal_badge.dart", "theme/typography.dart"], ["widgets/brutal_button.dart", "theme/motion.dart"], ["widgets/brutal_button.dart", "theme/palette.dart"], ["widgets/brutal_button.dart", "theme/typography.dart"], ["widgets/brutal_card.dart", "theme/palette.dart"], ["widgets/brutal_dropdown.dart", "theme/palette.dart"], ["widgets/brutal_dropdown.dart", "theme/typography.dart"], ["widgets/brutal_field.dart", "theme/palette.dart"], ["widgets/brutal_field.dart", "theme/typography.dart"], ["widgets/brutal_scaffold.dart", "theme/palette.dart"], ["widgets/brutal_scaffold.dart", "theme/typography.dart"], ["widgets/growth_post_card.dart", "models/growth_post.dart"], ["widgets/growth_post_card.dart", "theme/palette.dart"], ["widgets/growth_post_card.dart", "theme/typography.dart"], ["widgets/growth_post_card.dart", "widgets/brutal_badge.dart"], ["widgets/growth_post_card.dart", "widgets/brutal_card.dart"], ["widgets/onboarding_step_header.dart", "theme/palette.dart"], ["widgets/onboarding_step_header.dart", "theme/typography.dart"], ["widgets/project_list_card.dart", "models/project_card.dart"], ["widgets/project_list_card.dart", "screens/login_screen.dart"], ["widgets/project_list_card.dart", "theme/palette.dart"], ["widgets/project_list_card.dart", "theme/typography.dart"], ["widgets/project_list_card.dart", "widgets/brutal_badge.dart"], ["widgets/project_list_card.dart", "widgets/brutal_card.dart"], ["widgets/request_form_sheet.dart", "models/collab.dart"], ["widgets/request_form_sheet.dart", "state/collab_provider.dart"], ["widgets/request_form_sheet.dart", "theme/palette.dart"], ["widgets/request_form_sheet.dart", "theme/typography.dart"], ["widgets/request_form_sheet.dart", "widgets/brutal_badge.dart"], ["widgets/request_form_sheet.dart", "widgets/brutal_button.dart"], ["widgets/request_form_sheet.dart", "widgets/brutal_card.dart"], ["widgets/simulated_badge.dart", "theme/palette.dart"], ["widgets/simulated_badge.dart", "theme/typography.dart"], ["widgets/simulated_watermark.dart", "theme/palette.dart"], ["widgets/simulated_watermark.dart", "theme/typography.dart"]], "layers": [["theme + config", "基础：色板/字体/常量"], ["models", "纯数据类 · fromJson"], ["api", "Dio 单例 + 拦截器"], ["state", "6 个 ChangeNotifier"], ["widgets", "可复用 UI 组件"], ["screens", "页面"], ["app", "main + router"]]};
+const COL = ['#E07830','#B08A2E','#1F7A6C','#8B5E3C','#3F8259','#C43D6E','#B8503A'];
+
+const N = G.nodes, E = G.edges;
+const byId = {}; N.forEach((n,i)=>{ n.idx=i; byId[n.id]=n; n.out=[]; n.inn=[]; });
+E.forEach(([s,t])=>{ byId[s].out.push(t); byId[t].inn.push(s); });
+N.forEach(n=>{ n.r = 5.5 + Math.sqrt(n.i)*2.6; });
+
+const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+const tt=document.getElementById('tt');
+let W=0,H=0,DPR=1;
+let mode='lay', sel=null, hov=null;
+let cam={x:0,y:0,k:1}, hidden=new Set(), query='';
+
+function resize(){
+  DPR = window.devicePixelRatio||1;
+  W = cv.clientWidth; H = cv.clientHeight;
+  cv.width = W*DPR; cv.height = H*DPR;
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  if(mode==='lay') layout();
+  draw();
+}
+
+/* ══ 分层布局 · 重心排序减少交叉 ══ */
+function layout(){
+  const cols = 7, pad = 92;
+  const cw = (W - pad*2)/(cols-1);
+  const groups = [];
+  for(let l=0;l<cols;l++) groups[l] = N.filter(n=>n.l===l);
+  groups.forEach((g,l)=>{
+    g.forEach((n,i)=>{ n.x = pad + cw*l; n.ord = i; });
+  });
+  for(let it=0; it<24; it++){
+    groups.forEach(g=>{
+      g.forEach(n=>{
+        const nb = n.out.concat(n.inn).map(id=>byId[id]).filter(m=>m.l!==n.l);
+        n.bary = nb.length ? nb.reduce((s,m)=>s+m.ord,0)/nb.length : n.ord;
+      });
+      g.sort((a,b)=>a.bary-b.bary);
+      g.forEach((n,i)=>n.ord=i);
+    });
+  }
+  groups.forEach(g=>{
+    const gap = (H-110)/Math.max(1,g.length);
+    g.forEach((n,i)=>{ n.y = 62 + gap*(i+0.5); });
+  });
+}
+
+/* ══ 力导向 ══ */
+let tick=0, raf=null;
+function force(){
+  for(const n of N){ n.vx=n.vx||0; n.vy=n.vy||0; }
+  for(let i=0;i<N.length;i++)for(let j=i+1;j<N.length;j++){
+    const a=N[i],b=N[j]; let dx=b.x-a.x, dy=b.y-a.y;
+    let d2=dx*dx+dy*dy||1; if(d2>90000) continue;
+    const f=2600/d2, d=Math.sqrt(d2);
+    const fx=f*dx/d, fy=f*dy/d;
+    a.vx-=fx;a.vy-=fy;b.vx+=fx;b.vy+=fy;
+  }
+  for(const [s,t] of E){
+    const a=byId[s],b=byId[t]; const dx=b.x-a.x,dy=b.y-a.y;
+    const d=Math.hypot(dx,dy)||1; const f=(d-118)*0.012;
+    const fx=f*dx/d, fy=f*dy/d;
+    a.vx+=fx;a.vy+=fy;b.vx-=fx;b.vy-=fy;
+  }
+  const cx=W/2, cy=H/2;
+  for(const n of N){
+    n.vx += (cx + (n.l-3)*86 - n.x)*0.008;
+    n.vy += (cy - n.y)*0.006;
+    n.vx*=0.86; n.vy*=0.86;
+    n.x+=n.vx; n.y+=n.vy;
+  }
+  draw();
+  if(++tick<420) raf=requestAnimationFrame(force);
+}
+
+function related(n){
+  const s=new Set([n.id]); n.out.forEach(x=>s.add(x)); n.inn.forEach(x=>s.add(x)); return s;
+}
+const vis = n => !hidden.has(n.l);
+const match = n => query && n.id.toLowerCase().includes(query);
+
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  ctx.save(); ctx.translate(cam.x,cam.y); ctx.scale(cam.k,cam.k);
+
+  if(mode==='lay'){
+    ctx.font='700 9.5px JetBrains Mono, monospace'; ctx.textAlign='center';
+    G.layers.forEach((L,l)=>{
+      const g=N.filter(n=>n.l===l); if(!g.length) return;
+      ctx.fillStyle = hidden.has(l)?'#CFC8BD':COL[l];
+      ctx.fillText(L[0].toUpperCase(), g[0].x, 30);
+      ctx.fillStyle='#857C70';
+      ctx.fillText('L'+l, g[0].x, 44);
+    });
+  }
+
+  const rel = sel ? related(sel) : null;
+  ctx.lineWidth=1;
+  for(const [s,t] of E){
+    const a=byId[s], b=byId[t];
+    if(!vis(a)||!vis(b)) continue;
+    let col='rgba(133,124,112,.20)', w=1;
+    if(rel){
+      if(s===sel.id){ col='rgba(31,122,108,.85)'; w=2; }
+      else if(t===sel.id){ col='rgba(196,61,110,.75)'; w=2; }
+      else if(rel.has(s)&&rel.has(t)) col='rgba(133,124,112,.22)';
+      else col='rgba(133,124,112,.06)';
+    }
+    ctx.strokeStyle=col; ctx.lineWidth=w;
+    ctx.beginPath();
+    const mx=(a.x+b.x)/2, my=(a.y+b.y)/2 + (mode==='lay'? (b.y-a.y)*0.06 : 0);
+    ctx.moveTo(a.x,a.y); ctx.quadraticCurveTo(mx,my,b.x,b.y); ctx.stroke();
+  }
+
+  for(const n of N){
+    if(!vis(n)) continue;
+    const dim = (rel && !rel.has(n.id)) || (query && !match(n));
+    ctx.globalAlpha = dim?0.16:1;
+    ctx.beginPath(); ctx.arc(n.x,n.y,n.r,0,6.284);
+    ctx.fillStyle=COL[n.l]; ctx.fill();
+    ctx.lineWidth = (sel&&sel.id===n.id)?3.5:2;
+    ctx.strokeStyle = (sel&&sel.id===n.id)?'#0A0A0A':'rgba(10,10,10,.85)'; ctx.stroke();
+    if(hov&&hov.id===n.id){ ctx.lineWidth=2; ctx.strokeStyle='#0A0A0A';
+      ctx.beginPath(); ctx.arc(n.x,n.y,n.r+5,0,6.284); ctx.stroke(); }
+
+    const big = n.r>8.4 || (sel&&rel.has(n.id)) || match(n) || mode==='lay';
+    if(big && !dim){
+      ctx.font='700 10px Inter Tight, sans-serif'; ctx.textAlign='left';
+      ctx.fillStyle='#0A0A0A';
+      ctx.fillText(n.n, n.x+n.r+5, n.y+3.5);
+    }
+    ctx.globalAlpha=1;
+  }
+  ctx.restore();
+}
+
+/* ══ 交互 ══ */
+function pick(mx,my){
+  const x=(mx-cam.x)/cam.k, y=(my-cam.y)/cam.k;
+  let best=null,bd=1e9;
+  for(const n of N){ if(!vis(n))continue;
+    const d=Math.hypot(n.x-x,n.y-y); if(d<n.r+7&&d<bd){bd=d;best=n;} }
+  return best;
+}
+let dragging=false,last=null,moved=false;
+cv.addEventListener('mousedown',e=>{dragging=true;moved=false;last=[e.clientX,e.clientY];cv.classList.add('drag')});
+addEventListener('mouseup',()=>{dragging=false;cv.classList.remove('drag')});
+cv.addEventListener('mousemove',e=>{
+  const r=cv.getBoundingClientRect(), mx=e.clientX-r.left, my=e.clientY-r.top;
+  if(dragging){ moved=true; cam.x+=e.clientX-last[0]; cam.y+=e.clientY-last[1];
+    last=[e.clientX,e.clientY]; draw(); return; }
+  const n=pick(mx,my);
+  if(n!==hov){ hov=n; draw(); }
+  if(n){ tt.style.display='block'; tt.style.left=(e.clientX+13)+'px'; tt.style.top=(e.clientY+13)+'px';
+    tt.textContent=n.id+'  ·  '+n.loc+' 行'; }
+  else tt.style.display='none';
+});
+cv.addEventListener('click',e=>{
+  if(moved) return;
+  const r=cv.getBoundingClientRect();
+  select(pick(e.clientX-r.left, e.clientY-r.top));
+});
+cv.addEventListener('wheel',e=>{
+  e.preventDefault();
+  const r=cv.getBoundingClientRect(), mx=e.clientX-r.left, my=e.clientY-r.top;
+  const k=Math.max(.35,Math.min(3, cam.k*(e.deltaY<0?1.12:0.89)));
+  cam.x = mx-(mx-cam.x)*(k/cam.k); cam.y = my-(my-cam.y)*(k/cam.k); cam.k=k; draw();
+},{passive:false});
+
+function select(n){ sel=n; panel(); draw(); }
+
+/* ══ 侧栏 ══ */
+function panel(){
+  const p=document.getElementById('panel');
+  if(!sel){
+    p.innerHTML = '<p class="lbl">怎么用</p>'
+      + '<div class="hint">点任意节点：<b style="color:#1F7A6C">青线</b>是它 import 的，'
+      + '<b style="color:#C43D6E">玫红线</b>是 import 它的。圆越大 = 被依赖越多。</div>'
+      + '<div class="tip"><b>复习路径：</b>从最右 <b>L6 app</b> 出发 —— '
+      + 'main.dart 装配 Provider，router.dart 连接所有 screens；'
+      + '再往左看 screens 怎么依赖 state 和 widgets，state 怎么依赖 api 和 models。'
+      + '<br><br><b>Viva 用法：</b>被问到某个文件时，先在图上找到它，'
+      + '看清它的上下游再回答 —— 「这个文件被 X 个页面依赖，所以改它要注意…」'
+      + '比孤立地背单个文件强得多。</div>'
+      + '<div class="tip"><b>被依赖 Top 3</b><br>'
+      + 'theme/palette.dart · 36 处<br>theme/typography.dart · 31 处<br>'
+      + 'widgets/brutal_card.dart · 21 处<br><br>'
+      + '这三个就是你的设计系统落地证据 —— 颜色和字体全部单点定义，'
+      + '没有在 widget 里硬编码 hex。<b>这是可以主动讲的点。</b></div>';
+    return;
+  }
+  const L=G.layers[sel.l];
+  const lk = arr => arr.length
+    ? arr.map(id=>{const m=byId[id];
+        return '<a data-go="'+m.id+'"><span class="d" style="background:'+COL[m.l]+'"></span>'+m.id+'</a>';}).join('')
+    : '<div class="none">无</div>';
+  p.innerHTML =
+    '<div class="card"><div class="path">'+sel.id+'</div>'
+    + '<h2>'+sel.n+'</h2><div class="pills">'
+    + '<span class="pill f" style="background:'+COL[sel.l]+'">L'+sel.l+' '+L[0]+'</span>'
+    + '<span class="pill">'+sel.loc+' 行</span>'
+    + '<span class="pill">被依赖 '+sel.i+'</span>'
+    + '<span class="pill">依赖 '+sel.o+'</span></div></div>'
+    + '<div class="dl"><h3>▸ 它 import 了 ('+sel.out.length+')</h3>'+lk(sel.out)
+    + '<h3>◂ 谁 import 了它 ('+sel.inn.length+')</h3>'+lk(sel.inn)+'</div>';
+  p.querySelectorAll('[data-go]').forEach(a=>a.onclick=()=>select(byId[a.dataset.go]));
+}
+
+/* ══ 图例 ══ */
+const lg=document.getElementById('lg');
+G.layers.forEach((L,l)=>{
+  const c=N.filter(n=>n.l===l).length;
+  const d=document.createElement('div'); d.className='lg';
+  d.innerHTML='<span class="sw" style="background:'+COL[l]+'"></span>'
+    +'<span class="tx"><b>L'+l+' · '+L[0]+'</b><small>'+L[1]+'</small></span>'
+    +'<span class="ct">'+c+'</span>';
+  d.onclick=()=>{ hidden.has(l)?hidden.delete(l):hidden.add(l);
+    d.classList.toggle('off'); draw(); };
+  lg.appendChild(d);
+});
+
+document.getElementById('hd').textContent =
+  N.length+' files · '+E.length+' imports · '+N.reduce((s,n)=>s+n.loc,0).toLocaleString()+' LOC';
+
+document.getElementById('q').oninput=e=>{ query=e.target.value.trim().toLowerCase(); draw(); };
+document.getElementById('rst').onclick=()=>{
+  cam={x:0,y:0,k:1}; sel=null; query=''; document.getElementById('q').value='';
+  hidden.clear(); [...lg.children].forEach(c=>c.classList.remove('off'));
+  if(mode==='lay') layout(); else { N.forEach(n=>{n.x=W/2+(Math.random()-.5)*400;n.y=H/2+(Math.random()-.5)*300;n.vx=n.vy=0;}); tick=0; cancelAnimationFrame(raf); force(); }
+  panel(); draw();
+};
+function setMode(m){
+  mode=m;
+  document.getElementById('mLay').classList.toggle('on',m==='lay');
+  document.getElementById('mForce').classList.toggle('on',m==='force');
+  cancelAnimationFrame(raf);
+  if(m==='lay'){ layout(); draw(); }
+  else { N.forEach(n=>{n.vx=n.vy=0;}); tick=0; force(); }
+}
+document.getElementById('mLay').onclick=()=>setMode('lay');
+document.getElementById('mForce').onclick=()=>setMode('force');
+
+addEventListener('resize',resize);
+addEventListener('keydown',e=>{ if(e.key==='Escape') select(null); });
+resize(); panel();
+</script>
+</body>
+</html>

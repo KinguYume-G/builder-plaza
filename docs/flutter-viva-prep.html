@@ -1,0 +1,1434 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Builder Plaza · Flutter 前端 Viva 复习手册</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter+Tight:ital,wght@0,400..800;1,400..700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════════════════════════
+   Soft Brutalism — 与 lib/theme/palette.dart 同源
+   ══════════════════════════════════════════════════════════════ */
+:root{
+  --paper:#FFFEF8;  --cream50:#FAF6EC; --cream100:#F4ECD8;
+  --ink:#0A0A0A;    --ink600:#3D3D3D;  --ink400:#857C70; --ink200:#CFC8BD;
+  --teal:#1F7A6C;   --tomato:#B8503A;  --mustard:#B08A2E;
+  --lime:#3F8259;   --copper:#8B5E3C;  --rose:#C43D6E;   --tangerine:#E07830;
+
+  --disp:'Archivo Black',sans-serif;
+  --body:'Inter Tight',sans-serif;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+
+  --soft:0 1px 2px rgba(10,10,10,.08), 0 6px 16px -4px rgba(10,10,10,.12);
+  --stamp:4px 4px 0 var(--ink);
+  --rail:264px;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:90px}
+body{
+  font-family:var(--body);
+  background:var(--cream50);
+  color:var(--ink);
+  font-size:16px; line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* 纸纹：细横线 + 噪点，让底不是一块死色 */
+body::before{
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+  background-image:
+    repeating-linear-gradient(to bottom, transparent 0 27px, rgba(133,124,112,.09) 27px 28px),
+    radial-gradient(circle at 12% 8%, rgba(31,122,108,.06), transparent 45%),
+    radial-gradient(circle at 88% 72%, rgba(139,94,60,.055), transparent 42%);
+}
+body::after{
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:1; opacity:.32;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
+  mix-blend-mode:multiply;
+}
+
+/* ── 顶部阅读进度条 ───────────────────────────────── */
+#bar{
+  position:fixed; top:0; left:0; height:5px; width:0%; z-index:60;
+  background:linear-gradient(90deg,var(--teal),var(--lime) 40%,var(--mustard) 70%,var(--copper));
+  border-bottom:2px solid var(--ink);
+  transition:width .12s linear;
+}
+
+/* ── 布局 ─────────────────────────────────────────── */
+.shell{position:relative; z-index:2; display:flex; gap:0; align-items:flex-start}
+
+/* 侧栏目录 */
+nav.toc{
+  position:sticky; top:0; flex:0 0 var(--rail); width:var(--rail);
+  height:100vh; overflow-y:auto; padding:26px 16px 60px 22px;
+  border-right:2px solid var(--ink); background:var(--cream100);
+}
+nav.toc .brand{font-family:var(--disp); font-size:19px; line-height:1.05; letter-spacing:-.5px}
+nav.toc .brand em{font-style:normal; color:var(--teal)}
+nav.toc .sub{font-family:var(--mono); font-size:9.5px; font-weight:700; color:var(--ink400);
+  letter-spacing:.14em; margin-top:7px; text-transform:uppercase}
+nav.toc hr{border:0; border-top:2px solid var(--ink); margin:18px 0 14px}
+nav.toc a{
+  display:flex; gap:9px; align-items:baseline; text-decoration:none; color:var(--ink600);
+  font-size:13.5px; font-weight:600; padding:6px 9px; margin:1px 0;
+  border:1.5px solid transparent; border-radius:7px; transition:all .16s;
+}
+nav.toc a .n{font-family:var(--mono); font-size:10px; font-weight:700; color:var(--ink400); flex:0 0 18px}
+nav.toc a:hover{background:var(--paper); border-color:var(--ink200); color:var(--ink)}
+nav.toc a.on{background:var(--paper); border-color:var(--teal); color:var(--ink); box-shadow:2px 2px 0 var(--teal)}
+nav.toc a.on .n{color:var(--teal)}
+.tocfoot{margin-top:20px; font-family:var(--mono); font-size:10px; color:var(--ink400); line-height:1.7}
+
+/* 主内容 */
+main{flex:1 1 auto; min-width:0; padding:0 0 140px}
+.wrap{max-width:880px; margin:0 auto; padding:0 40px}
+
+/* ── HERO ─────────────────────────────────────────── */
+header.hero{
+  border-bottom:2px solid var(--ink); background:var(--paper);
+  padding:64px 0 46px; margin-bottom:56px; position:relative; overflow:hidden;
+}
+header.hero::before{
+  content:'{ }'; position:absolute; right:-26px; top:-46px;
+  font-family:var(--disp); font-size:230px; color:var(--ink);
+  opacity:.045; letter-spacing:-16px; pointer-events:none;
+}
+.kick{font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:.2em;
+  color:var(--teal); text-transform:uppercase; margin-bottom:18px}
+h1{font-family:var(--disp); font-size:clamp(38px,6vw,64px); line-height:.96;
+  letter-spacing:-2px; margin-bottom:22px}
+h1 .hl{
+  background:linear-gradient(180deg,transparent 62%, rgba(63,130,89,.34) 62%);
+  padding:0 3px;
+}
+.lede{font-size:17.5px; color:var(--ink600); max-width:60ch; line-height:1.6}
+.metarow{display:flex; flex-wrap:wrap; gap:9px; margin-top:28px}
+.chip{
+  font-family:var(--mono); font-size:10.5px; font-weight:700; letter-spacing:.06em;
+  padding:5px 10px; border:2px solid var(--ink); border-radius:6px;
+  background:var(--cream100); text-transform:uppercase;
+}
+.chip.t{background:var(--teal); color:var(--paper); border-color:var(--ink)}
+.chip.c{background:var(--copper); color:var(--paper)}
+.chip.l{background:var(--lime); color:var(--paper)}
+
+/* ── 章节 ─────────────────────────────────────────── */
+section{margin-bottom:82px; scroll-margin-top:24px}
+.sechead{position:relative; margin-bottom:30px; padding-top:16px}
+.sechead .num{
+  font-family:var(--disp); font-size:88px; line-height:.8; letter-spacing:-5px;
+  color:transparent; -webkit-text-stroke:2px var(--ink200);
+  position:absolute; left:-14px; top:-16px; z-index:0; user-select:none;
+}
+.sechead h2{
+  font-family:var(--disp); font-size:clamp(25px,3.4vw,34px); line-height:1.06;
+  letter-spacing:-1px; position:relative; z-index:1;
+}
+.sechead .tag{
+  font-family:var(--mono); font-size:10px; font-weight:700; letter-spacing:.16em;
+  color:var(--ink400); text-transform:uppercase; position:relative; z-index:1; margin-bottom:6px;
+}
+h3{font-family:var(--body); font-weight:800; font-size:19.5px; letter-spacing:-.3px;
+  margin:36px 0 12px; padding-left:12px; border-left:4px solid var(--teal)}
+h4{font-family:var(--mono); font-size:11.5px; font-weight:700; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--ink400); margin:26px 0 10px}
+p{margin:0 0 14px; max-width:72ch}
+p+p{margin-top:-2px}
+strong{font-weight:800}
+em.q{font-style:normal; background:rgba(176,138,46,.2); padding:1px 4px; border-radius:3px; font-weight:600}
+a.ref{
+  font-family:var(--mono); font-size:12.5px; color:var(--teal); font-weight:500;
+  text-decoration:none; border-bottom:1.5px dashed var(--teal); word-break:break-all;
+}
+a.ref:hover{background:rgba(31,122,108,.1)}
+ul,ol{margin:0 0 16px; padding-left:22px; max-width:72ch}
+li{margin-bottom:7px}
+li::marker{color:var(--teal); font-weight:700}
+code.inl{
+  font-family:var(--mono); font-size:.87em; background:var(--cream100);
+  border:1px solid var(--ink200); border-radius:4px; padding:1px 5px; white-space:nowrap;
+}
+
+/* ── 代码块 ───────────────────────────────────────── */
+.code{
+  position:relative; margin:16px 0 20px;
+  border:2px solid var(--ink); border-radius:9px; background:#12110F;
+  box-shadow:var(--soft); overflow:hidden;
+}
+.code .cap{
+  font-family:var(--mono); font-size:10px; font-weight:700; letter-spacing:.1em;
+  padding:7px 13px; background:var(--ink); color:var(--cream100);
+  display:flex; justify-content:space-between; align-items:center; text-transform:uppercase;
+}
+.code .cap .dot{width:8px;height:8px;border-radius:50%;background:var(--lime);
+  box-shadow:14px 0 0 var(--mustard), 28px 0 0 var(--tomato); margin-right:34px}
+.code pre{margin:0; padding:15px 17px; overflow-x:auto}
+.code code{font-family:var(--mono); font-size:13px; line-height:1.68; color:#E8E2D4; display:block}
+.k{color:#7FD4C1; font-weight:500}   /* keyword  */
+.s{color:#D9A44C}                     /* string   */
+.c{color:#6E675C; font-style:italic}  /* comment  */
+.t{color:#F0B27A}                     /* Type     */
+.a{color:#C97FA8}                     /* @annot   */
+.n{color:#A8C98E}                     /* number   */
+.hi{background:rgba(63,130,89,.24); display:inline-block; width:100%;
+    box-shadow:-17px 0 0 rgba(63,130,89,.24), 17px 0 0 rgba(63,130,89,.24)}
+
+/* ── 高亮块 ───────────────────────────────────────── */
+.box{
+  border:2px solid var(--ink); border-radius:10px; background:var(--paper);
+  padding:16px 18px; margin:20px 0; box-shadow:var(--soft); position:relative;
+}
+.box .lbl{
+  font-family:var(--mono); font-size:9.5px; font-weight:700; letter-spacing:.14em;
+  text-transform:uppercase; display:inline-block; padding:3px 8px; border-radius:5px;
+  border:2px solid var(--ink); margin-bottom:11px; color:var(--paper);
+}
+.box p:last-child,.box ul:last-child,.box ol:last-child{margin-bottom:0}
+.box.exam{background:linear-gradient(180deg,rgba(184,80,58,.07),transparent 60%),var(--paper);
+  box-shadow:var(--stamp); border-color:var(--ink)}
+.box.exam .lbl{background:var(--tomato)}
+.box.why{border-color:var(--teal)} .box.why .lbl{background:var(--teal); border-color:var(--teal)}
+.box.trap{border-color:var(--mustard)} .box.trap .lbl{background:var(--mustard); border-color:var(--mustard)}
+.box.weak{border-color:var(--copper)} .box.weak .lbl{background:var(--copper); border-color:var(--copper)}
+
+/* ── 表格 ─────────────────────────────────────────── */
+.tw{overflow-x:auto; margin:18px 0 22px; border:2px solid var(--ink);
+  border-radius:10px; box-shadow:var(--soft); background:var(--paper)}
+table{border-collapse:collapse; width:100%; min-width:520px; font-size:14.5px}
+th{background:var(--ink); color:var(--cream100); font-family:var(--mono); font-size:10px;
+  font-weight:700; letter-spacing:.11em; text-transform:uppercase; text-align:left; padding:9px 13px}
+td{padding:10px 13px; border-top:1.5px solid var(--ink200); vertical-align:top}
+tbody tr:nth-child(even){background:var(--cream50)}
+td code{font-family:var(--mono); font-size:12.5px; background:var(--cream100);
+  border:1px solid var(--ink200); border-radius:4px; padding:1px 5px}
+
+/* ── 流程图 ───────────────────────────────────────── */
+.flow{margin:22px 0; counter-reset:f}
+.flow .st{
+  display:flex; gap:14px; align-items:flex-start; padding:11px 14px;
+  border:2px solid var(--ink); border-radius:9px; background:var(--paper);
+  margin-bottom:0; position:relative; box-shadow:var(--soft);
+}
+.flow .st+.st{margin-top:26px}
+.flow .st+.st::before{
+  content:'▼'; position:absolute; left:27px; top:-23px; font-size:12px; color:var(--teal);
+}
+.flow .st .i{
+  flex:0 0 26px; height:26px; border-radius:6px; background:var(--teal); color:var(--paper);
+  font-family:var(--mono); font-size:12px; font-weight:700;
+  display:grid; place-items:center; border:2px solid var(--ink);
+}
+.flow .st .b{flex:1; min-width:0; font-size:14.5px; line-height:1.5}
+.flow .st .b code{font-family:var(--mono); font-size:12.5px; background:var(--cream100);
+  border:1px solid var(--ink200); border-radius:4px; padding:1px 5px}
+.flow .st .b small{display:block; color:var(--ink400); font-family:var(--mono);
+  font-size:10.5px; margin-top:4px; letter-spacing:.04em}
+
+/* ── Q&A 翻卡 ─────────────────────────────────────── */
+.qa{margin:20px 0}
+.q{
+  border:2px solid var(--ink); border-radius:10px; background:var(--paper);
+  margin-bottom:11px; overflow:hidden; box-shadow:var(--soft); transition:box-shadow .18s;
+}
+.q[open]{box-shadow:var(--stamp)}
+.q summary{
+  list-style:none; cursor:pointer; padding:13px 16px; display:flex; gap:12px;
+  align-items:flex-start; font-weight:700; font-size:15px; user-select:none;
+}
+.q summary::-webkit-details-marker{display:none}
+.q summary::before{
+  content:'Q'; flex:0 0 22px; height:22px; border-radius:5px; background:var(--ink);
+  color:var(--cream100); font-family:var(--mono); font-size:11px; font-weight:700;
+  display:grid; place-items:center; margin-top:1px;
+}
+.q summary::after{
+  content:'点开看答案 ▸'; margin-left:auto; font-family:var(--mono); font-size:10px;
+  font-weight:700; color:var(--ink400); letter-spacing:.08em; white-space:nowrap; padding-top:4px;
+}
+.q[open] summary::after{content:'▾'; }
+.q[open] summary::before{background:var(--teal)}
+.q .ans{padding:0 16px 15px 50px; font-size:14.5px; line-height:1.62; color:var(--ink600)}
+.q .ans strong{color:var(--ink)}
+.q .ans code{font-family:var(--mono); font-size:12.5px; background:var(--cream100);
+  border:1px solid var(--ink200); border-radius:4px; padding:1px 5px}
+.q .ans p{margin-bottom:9px}
+.q .ans p:last-child{margin-bottom:0}
+
+/* ── 掌握度清单 ───────────────────────────────────── */
+.check{border:2px solid var(--ink); border-radius:11px; background:var(--paper);
+  padding:18px 20px; box-shadow:var(--stamp); margin:24px 0}
+.check .hd{display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;
+  padding-bottom:12px; border-bottom:2px solid var(--ink200)}
+.check .hd h4{margin:0}
+.check .score{font-family:var(--disp); font-size:26px; letter-spacing:-1px; color:var(--teal)}
+.check label{
+  display:flex; gap:11px; align-items:flex-start; padding:7px 0; cursor:pointer;
+  font-size:14.5px; border-bottom:1px dashed var(--ink200);
+}
+.check label:last-child{border-bottom:0}
+.check input{
+  appearance:none; flex:0 0 19px; height:19px; margin-top:2px;
+  border:2px solid var(--ink); border-radius:5px; background:var(--cream50);
+  cursor:pointer; transition:all .14s; position:relative;
+}
+.check input:checked{background:var(--lime); box-shadow:2px 2px 0 var(--ink)}
+.check input:checked::after{
+  content:'✓'; position:absolute; inset:0; display:grid; place-items:center;
+  color:var(--paper); font-size:12px; font-weight:900;
+}
+.check input:checked+span{color:var(--ink400); text-decoration:line-through}
+.reset{font-family:var(--mono); font-size:10px; font-weight:700; letter-spacing:.08em;
+  background:none; border:1.5px solid var(--ink200); border-radius:5px; padding:4px 9px;
+  cursor:pointer; color:var(--ink400)}
+.reset:hover{border-color:var(--tomato); color:var(--tomato)}
+
+/* ── 收尾 ─────────────────────────────────────────── */
+.pitch{
+  border:2px solid var(--ink); border-radius:12px; padding:26px 28px;
+  background:linear-gradient(135deg, rgba(31,122,108,.13), rgba(139,94,60,.13)), var(--paper);
+  box-shadow:var(--stamp); font-size:16.5px; line-height:1.72;
+}
+.pitch .mk{font-family:var(--disp); font-size:44px; line-height:0; color:var(--teal);
+  vertical-align:-8px; margin-right:4px}
+.pitch b{font-weight:800}
+footer{border-top:2px solid var(--ink); margin-top:70px; padding:26px 0 0;
+  font-family:var(--mono); font-size:11px; color:var(--ink400); line-height:1.8}
+
+.top{
+  position:fixed; right:24px; bottom:24px; z-index:50; width:46px; height:46px;
+  border:2px solid var(--ink); border-radius:9px; background:var(--paper);
+  box-shadow:var(--stamp); cursor:pointer; font-size:16px; color:var(--ink);
+  display:none; place-items:center; transition:transform .14s;
+}
+.top:hover{transform:translate(2px,2px); box-shadow:2px 2px 0 var(--ink)}
+.top.show{display:grid}
+
+/* ── 响应式 ───────────────────────────────────────── */
+@media(max-width:1000px){
+  nav.toc{display:none}
+  .wrap{padding:0 22px}
+  .sechead .num{left:-4px; font-size:64px}
+  header.hero{padding:44px 0 34px; margin-bottom:40px}
+}
+@media print{
+  nav.toc,#bar,.top{display:none}
+  body::after{display:none}
+  .q{page-break-inside:avoid} .q .ans{display:block !important}
+}
+</style>
+</head>
+<body>
+
+<div id="bar"></div>
+
+<div class="shell">
+
+<!-- ══════ 目录 ══════ -->
+<nav class="toc">
+  <div class="brand">Builder&nbsp;Plaza<br><em>Viva 手册</em></div>
+  <div class="sub">Flutter Frontend · Code Viva</div>
+  <hr>
+  <a href="#s0"><span class="n">00</span><span>读懂一行 Dart</span></a>
+  <a href="#s1"><span class="n">01</span><span>Widget 是什么</span></a>
+  <a href="#s2"><span class="n">02</span><span>布局与集合语法</span></a>
+  <a href="#s3"><span class="n">03</span><span>导航 go_router</span></a>
+  <a href="#s4"><span class="n">04</span><span>状态管理 Provider</span></a>
+  <a href="#s5"><span class="n">05</span><span>异步 Future/await</span></a>
+  <a href="#s6"><span class="n">06</span><span>网络层 Dio</span></a>
+  <a href="#s7"><span class="n">07</span><span>数据模型 fromJson</span></a>
+  <a href="#s8"><span class="n">08</span><span>Dart 3 新语法</span></a>
+  <a href="#s9"><span class="n">09</span><span>现场改代码</span></a>
+  <a href="#s10"><span class="n">10</span><span>代码软肋</span></a>
+  <hr>
+  <a href="#drill"><span class="n">★</span><span>20 题快问快答</span></a>
+  <a href="#final"><span class="n">★</span><span>掌握度清单</span></a>
+  <a href="#pitch"><span class="n">★</span><span>30 秒开场陈述</span></a>
+  <div class="tocfoot">
+    58 files · 9,001 LOC<br>
+    Flutter 3.11 · Dart 3<br>
+    provider · go_router · dio
+  </div>
+</nav>
+
+<main>
+
+<!-- ══════ HERO ══════ -->
+<header class="hero">
+  <div class="wrap">
+    <div class="kick">MAP Assignment · Code Viva Preparation</div>
+    <h1>从一行 Dart，<br>讲到<span class="hl">整个前端架构</span>。</h1>
+    <p class="lede">
+      讲师说得很明确：<em class="q">“我在 viva 里只问你的代码，不问你的功能。”</em>
+      所以这份手册不讲 Builder Plaza 能干什么，只讲它<strong>怎么写出来的</strong>——
+      从 <code class="inl">final</code> 和 <code class="inl">?.</code> 这种符号级的东西开始，
+      一路铺到 Provider 的通知链和 go_router 的重定向守卫。每一段代码都是你仓库里真实存在的行。
+    </p>
+    <div class="metarow">
+      <span class="chip t">10 层递进</span>
+      <span class="chip">20 道模拟提问</span>
+      <span class="chip c">3 处高危代码</span>
+      <span class="chip l">1 段开场陈述</span>
+      <span class="chip">进度自动保存</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+<!-- ══════════════ 第 0 层 ══════════════ -->
+<section id="s0">
+  <div class="sechead">
+    <div class="num">00</div>
+    <div class="tag">LAYER ZERO · SYNTAX</div>
+    <h2>先能读懂一行 Dart</h2>
+  </div>
+
+  <p>Dart 的语法是 Java 和 JavaScript 的混血。先把你代码里高频出现的符号全部拆掉——
+    这一层不需要理解任何 Flutter 概念，纯粹是"这个符号什么意思"。</p>
+
+  <h3>变量与类型</h3>
+  <div class="code"><div class="cap"><span class="dot"></span>models/project_card.dart · main.dart</div><pre><code>final String id;                 // final = 只能赋值一次（构造时），类型 String
+final String? avatarUrl;         // String? = 可空类型，可以是 null
+late final AuthProvider _auth;   // late = "我保证用之前会赋值"，允许晚点初始化
+const List&lt;String&gt; kStages = []; // const = 编译期常量，运行前就定死</code></pre></div>
+
+  <div class="box exam"><span class="lbl">必考</span>
+    <p><strong>final 和 const 的区别？</strong></p>
+    <ul>
+      <li><code class="inl">final</code> = <strong>运行时</strong>确定一次，之后不能改</li>
+      <li><code class="inl">const</code> = <strong>编译期</strong>就确定，同样的 const 值全程序共享同一个内存对象</li>
+    </ul>
+    <p style="margin-top:10px"><a class="ref" href="../frontend/lib/main.dart">main.dart:26-27</a>
+      用 <code class="inl">late final</code>，是因为 <code class="inl">_auth</code> 要在
+      <code class="inl">initState()</code> 里才创建，但一旦创建就不再变。</p>
+  </div>
+
+  <h3>下划线 = 私有</h3>
+  <p>Dart 没有 <code class="inl">private</code> 关键字，<strong>下划线开头 = 库内私有</strong>（文件级私有）。</p>
+  <div class="code"><div class="cap"><span class="dot"></span>screens/home/home_shell.dart</div><pre><code>class _PlazaBodyState extends State&lt;PlazaBody&gt;   // 外部文件看不见
+String? _stageFilter;                            // 私有字段
+void _refresh() {}                               // 私有方法</code></pre></div>
+  <p><a class="ref" href="../frontend/lib/screens/home/home_shell.dart">home_shell.dart:172</a> 的
+    <code class="inl">_HomeTab</code>、<code class="inl">_ProfileTab</code> 都是私有 widget——
+    只在这个文件里用，不污染外部命名空间。<strong>这是个可以主动说的设计点。</strong></p>
+
+  <h3>空安全三剑客（你代码里到处都是）</h3>
+  <div class="code"><div class="cap"><span class="dot"></span>router.dart:83</div><pre><code>user?.onboardingComplete ?? false
+//   ↑ 如果 user 是 null，整个表达式短路成 null，不崩溃
+//                          ↑ 左边是 null 就用右边的默认值
+
+res.data!                  // ! = "我确定它不是 null"，断言。错了就运行时崩
+current.note!.isNotEmpty</code></pre></div>
+
+  <div class="box trap"><span class="lbl">陷阱</span>
+    <p>讲师指着 <a class="ref" href="../frontend/lib/state/projects_provider.dart">projects_provider.dart:113</a>
+      的 <code class="inl">ProjectCard.fromJson(res.data!)</code> 问：<em class="q">"这个 ! 如果服务器返回 null 会怎样？"</em></p>
+    <p><strong>答：</strong>抛 <code class="inl">TypeError</code>，但这是<strong>故意的</strong>——这个方法的文档注释写了
+      <em class="q">throws on failure so callers can show a per-screen error</em>，调用方会 catch。
+      这跟 <code class="inl">fetchMine()</code> 里用 try/catch 吞掉错误是<strong>两种不同的错误策略</strong>，
+      你要能说出为什么区别对待：列表页坏了要降级显示，详情页坏了应该整页报错。</p>
+  </div>
+
+  <h3>函数与箭头</h3>
+  <div class="code"><div class="cap"><span class="dot"></span>models/project_card.dart:29</div><pre><code>String stageLabel(String stage) =&gt; kStageLabels[stage] ?? stage;
+// =&gt; 是 { return ...; } 的简写。只能装一个表达式。
+
+onTap: () =&gt; context.push('/projects/${project.id}'),
+// () =&gt; ... 是匿名函数（闭包）</code></pre></div>
+
+  <div class="box exam"><span class="lbl">必考</span>
+    <p><strong>为什么写 <code class="inl">onTap: () =&gt; foo()</code> 而不是 <code class="inl">onTap: foo()</code>？</strong></p>
+    <p>因为后者是<strong>立刻执行 foo，把返回值赋给 onTap</strong>——等于 build 的时候就触发了跳转。
+      前者把这个动作<strong>打包成一个函数对象</strong>，等用户点击时 Flutter 才调用它。
+      这是初学者最容易被问倒的地方。</p>
+  </div>
+
+  <h3>命名参数 / required</h3>
+  <div class="code"><div class="cap"><span class="dot"></span>models/project_card.dart:110</div><pre><code>const ProjectCard({
+  required this.id,      // required = 调用时必须传
+  required this.title,
+  this.needs,            // 可选，不传就是 null
+  this.demoUrl,
+});
+// 调用：ProjectCard(id: 'x', title: 'y')  ← 必须写参数名</code></pre></div>
+  <p><code class="inl">this.id</code> 写在构造函数参数里是语法糖，等价于"把传进来的值直接赋给字段 id"。
+    命名参数就是为什么 Flutter 代码嵌套很深还能读懂——<strong>每个参数都自带标签</strong>。</p>
+</section>
+
+<!-- ══════════════ 第 1 层 ══════════════ -->
+<section id="s1">
+  <div class="sechead">
+    <div class="num">01</div>
+    <div class="tag">LAYER ONE · THE ONLY CONCEPT</div>
+    <h2>Widget —— Flutter 的唯一概念</h2>
+  </div>
+
+  <p><strong>一句话：Flutter 里所有东西都是 Widget。</strong>
+    按钮是 widget，一段间距是 widget（<code class="inl">SizedBox</code>），甚至"内边距"也是 widget（<code class="inl">Padding</code>）。</p>
+
+  <div class="box why"><span class="lbl">核心心智模型</span>
+    <p>Widget <strong>不是</strong>屏幕上的像素，<strong>它是一份配置说明书</strong>（immutable 描述）。
+      Flutter 拿这份说明书去构建真正的渲染树。所以 widget 全用 <code class="inl">const</code> 构造——它们只是数据。</p>
+  </div>
+
+  <h3>StatelessWidget：没有内部状态</h3>
+  <div class="code"><div class="cap"><span class="dot"></span>screens/projects/discovery_screen.dart:17</div><pre><code>class DiscoveryScreen extends StatelessWidget {
+  const DiscoveryScreen({super.key});      // super.key 把 key 转发给父类
+
+  @override
+  Widget build(BuildContext context) {     // 唯一必须实现的方法
+    return const BrutalScaffold(
+      title: 'The Plaza',
+      titleBarColor: Palette.lime,
+      body: PlazaBody(),
+    );
+  }
+}</code></pre></div>
+  <ul>
+    <li><code class="inl">super.key</code> —— <code class="inl">key</code> 是 Flutter 用来在重建时识别"这还是同一个 widget 吗"的身份标记</li>
+    <li><code class="inl">BuildContext context</code> —— <strong>你在 widget 树里的位置句柄</strong>。
+      用它可以向上查找祖先（<code class="inl">Theme.of(context)</code>、<code class="inl">context.read&lt;Provider&gt;()</code>）</li>
+  </ul>
+  <p><strong>为什么它是 Stateless？</strong> 因为它的样子完全由传进来的参数决定，自己不记任何东西。
+    给同样的输入永远画出同样的东西。</p>
+
+  <h3>StatefulWidget：有内部状态</h3>
+  <div class="code"><div class="cap"><span class="dot"></span>screens/projects/discovery_screen.dart:33</div><pre><code>class PlazaBody extends StatefulWidget {
+  const PlazaBody({super.key});
+
+  @override
+  State&lt;PlazaBody&gt; createState() =&gt; _PlazaBodyState();
+}
+
+class _PlazaBodyState extends State&lt;PlazaBody&gt; {
+  final _searchController = TextEditingController();
+  String? _stageFilter;
+  bool _growthMode = false;</code></pre></div>
+
+  <div class="box exam"><span class="lbl">必考</span>
+    <p><strong>为什么 StatefulWidget 要拆成两个类？</strong></p>
+    <p>因为 Widget 本身是 immutable、会被频繁丢弃重建的；而<strong>状态必须活得比 widget 久</strong>。
+      所以 Flutter 把状态放进独立的 <code class="inl">State</code> 对象——父组件重建时，
+      widget 实例被换掉了，但 Flutter 会<strong>复用同一个 State 对象</strong>，
+      <code class="inl">_stageFilter</code> 的值就保住了。</p>
+    <p>在 State 里访问 widget 的参数用 <code class="inl">widget.xxx</code>，
+      例如 <a class="ref" href="../frontend/lib/screens/home/home_shell.dart">home_shell.dart:71</a>
+      的 <code class="inl">_index = widget.initialIndex;</code></p>
+  </div>
+
+  <h3>setState —— 让界面更新的开关</h3>
+  <div class="code"><div class="cap"><span class="dot"></span>screens/projects/discovery_screen.dart:132</div><pre><code>onChanged: (stage) {
+  setState(() =&gt; _stageFilter = stage);   // ① 改状态 ② 标记"我脏了，请重建"
+  _refresh();
+},</code></pre></div>
+  <div class="box exam"><span class="lbl">必考</span>
+    <p><strong>光写 <code class="inl">_stageFilter = stage</code> 界面不会变</strong>，必须包在
+      <code class="inl">setState</code> 里。setState 做两件事：执行回调改状态，
+      然后告诉 Flutter <em class="q">"我脏了，请重新调用我的 build()"</em>。</p>
+  </div>
+
+  <h3>生命周期：initState / dispose</h3>
+  <div class="code"><div class="cap"><span class="dot"></span>screens/projects/discovery_screen.dart:50-60</div><pre><code>@override
+void initState() {
+  super.initState();
+  WidgetsBinding.instance.addPostFrameCallback((_) =&gt; _refresh());
+}
+
+@override
+void dispose() {
+  _searchController.dispose();   // 必须！否则内存泄漏
+  super.dispose();
+}</code></pre></div>
+
+  <div class="box exam"><span class="lbl">必考</span>
+    <p><strong>为什么要 <code class="inl">_searchController.dispose()</code>？</strong></p>
+    <p><code class="inl">TextEditingController</code> 内部持有监听器，不释放会<strong>内存泄漏</strong>。
+      规则：凡是你 new 出来的 Controller / AnimationController / StreamSubscription，都要在 dispose 里释放。</p>
+  </div>
+
+  <div class="box trap"><span class="lbl">高频追问</span>
+    <p><strong><code class="inl">addPostFrameCallback</code> 是干嘛的？</strong></p>
+    <p>在 <code class="inl">initState</code> 里<strong>不能直接调用会触发 <code class="inl">notifyListeners()</code> 的方法</strong>。
+      因为那一刻 widget 树正在构建中，Provider 通知监听者重建会抛
+      <em class="q">setState() or markNeedsBuild() called during build</em>。</p>
+    <p><code class="inl">addPostFrameCallback</code> 把 <code class="inl">_refresh()</code>
+      推迟到<strong>当前这一帧画完之后</strong>再执行，就安全了。
+      <strong>这个点你如果能主动说出来，会显得非常懂。</strong></p>
+  </div>
+</section>
+
+<!-- ══════════════ 第 2 层 ══════════════ -->
+<section id="s2">
+  <div class="sechead">
+    <div class="num">02</div>
+    <div class="tag">LAYER TWO · LAYOUT</div>
+    <h2>布局 —— 你代码里的那些盒子</h2>
+  </div>
+
+  <p>Flutter 布局就是嵌套盒子。你代码里的常客：</p>
+  <div class="tw"><table>
+    <thead><tr><th>Widget</th><th>作用</th><th>你的例子</th></tr></thead>
+    <tbody>
+      <tr><td><code>Column</code></td><td>竖着排</td><td>home_shell.dart:144</td></tr>
+      <tr><td><code>Row</code></td><td>横着排</td><td>discovery_screen.dart:100</td></tr>
+      <tr><td><code>Expanded</code></td><td>在 Row/Column 里抢占剩余空间</td><td>discovery_screen.dart:138</td></tr>
+      <tr><td><code>SizedBox</code></td><td>固定尺寸 / 当间距用</td><td>随处可见</td></tr>
+      <tr><td><code>Container</code></td><td>万能盒（尺寸+装饰+padding 三合一）</td><td>home_shell.dart:905</td></tr>
+      <tr><td><code>Stack</code></td><td>层叠（配 <code>Positioned</code>）</td><td>头像上的相机角标 :409</td></tr>
+      <tr><td><code>ListView</code></td><td>可滚动列表</td><td>discovery_screen.dart:88</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Expanded 和 flex</h3>
+  <p><a class="ref" href="../frontend/lib/screens/home/home_shell.dart">home_shell.dart:855</a>
+    的语言占比条是个好例子：</p>
+  <div class="code"><div class="cap"><span class="dot"></span>GitHub 风格语言条</div><pre><code>for (var i = 0; i &lt; topLangs.length; i++)
+  Expanded(
+    flex: topLangs[i].count &gt; 0 ? topLangs[i].count : 1,
+    child: Container(color: _langColors[i % _langColors.length]),
+  ),</code></pre></div>
+  <p><code class="inl">flex</code> 是权重。Dart 100 个仓库、Python 50 个 → flex 是 100 和 50 → 宽度自动 2:1。
+    这就复刻了 GitHub 的语言条。</p>
+  <div class="box trap"><span class="lbl">可能追问</span>
+    <p><strong>为什么 <code class="inl">count &gt; 0 ? count : 1</code>？</strong>
+      <code class="inl">flex: 0</code> 会让那一段宽度为 0 完全消失，
+      且如果所有 flex 都是 0 会有除零问题，兜底成 1 保证至少画得出来。</p>
+  </div>
+
+  <h3>集合语法糖（你代码里非常多，必须会读）</h3>
+  <div class="code"><div class="cap"><span class="dot"></span>discovery_screen.dart:88-217</div><pre><code>children: [
+  Text('...'),
+
+  if (_growthMode) ...[                          // collection-if + spread
+    const BrutalBadge(...),
+    const SizedBox(height: 12),
+  ],
+
+  for (final project in provider.discovery) ...[ // collection-for
+    ProjectListCard(project: project),
+    const SizedBox(height: 14),
+  ],
+]</code></pre></div>
+  <ul>
+    <li><code class="inl">if (cond) widget</code> —— <strong>collection-if</strong>，条件成立才放进列表</li>
+    <li><code class="inl">...[a, b]</code> —— <strong>spread operator</strong>，把一个列表"摊平"进外层列表。
+      因为 collection-if 只能带一个元素，要放多个就得先包成 list 再摊开</li>
+    <li><code class="inl">for (...) ...[]</code> —— <strong>collection-for</strong>，循环生成元素</li>
+  </ul>
+  <p>这比 <code class="inl">.map().toList()</code> 更符合 Flutter 风格，而且不需要中间数组。</p>
+
+  <h3>Records（Dart 3 新特性，你用了）</h3>
+  <div class="code"><div class="cap"><span class="dot"></span>home_shell.dart:37 / :582</div><pre><code>const _kNavItems = [
+  (Icons.home_filled, 'Home'),      // (a, b) 是 Record —— 轻量元组
+  (Icons.grid_view,   'Plaza'),
+  (Icons.join_inner,  'Match'),
+  (Icons.person,      'Profile'),
+];
+
+icon:  _kNavItems[i].$1,   // .$1 .$2 按位置取值
+label: _kNavItems[i].$2,</code></pre></div>
+  <div class="box why"><span class="lbl">主动展示</span>
+    <p>这段代码的注释写得很好：<em class="q">so the two layouts can never drift out of sync</em>——
+      底部导航和侧边栏共用同一个数据源。<strong>主动说这句话，讲师会认为你在做设计，而不是在堆代码。</strong></p>
+  </div>
+
+  <h3>响应式布局：LayoutBuilder</h3>
+  <p><a class="ref" href="../frontend/lib/screens/home/home_shell.dart">home_shell.dart:115-155</a>
+    是你整个 app 里<strong>最值得讲的一段</strong>：</p>
+  <div class="code"><div class="cap"><span class="dot"></span>adaptive layout · 700px 断点</div><pre><code>body: LayoutBuilder(
+  builder: (context, constraints) {
+    final tabs = IndexedStack(index: index, children: [...]);
+
+    if (constraints.maxWidth &gt;= kWideLayoutBreakpoint) {   // 700
+      // 平板 / 桌面 / Web —— 左侧竖排导航栏
+      return Row(
+        key: const Key('home_shell_wide_layout'),
+        children: [_SideRail(...), Expanded(child: tabs)],
+      );
+    }
+    // 手机 —— 底部导航栏
+    return Column(
+      key: const Key('home_shell_narrow_layout'),
+      children: [Expanded(child: tabs), _BottomNav(...)],
+    );
+  },
+),</code></pre></div>
+  <p><code class="inl">LayoutBuilder</code> 把<strong>父级给的尺寸约束</strong>（<code class="inl">constraints</code>）
+    交给你，让你按可用宽度决定长什么样。这是移动开发课程的经典考点（adaptive layout）。</p>
+  <p>而且你还给两个分支加了 <code class="inl">Key(...)</code>——那是给测试用的，
+    能让 widget test 断言"当前渲染的是哪个布局"。这点也值得说。</p>
+
+  <div class="box exam"><span class="lbl">一定会问</span>
+    <p><strong><code class="inl">IndexedStack</code> 为什么不用 if/else 或者直接 <code class="inl">children[index]</code>？</strong></p>
+    <p><code class="inl">IndexedStack</code> <strong>把 4 个 tab 全部构建并保留在树里</strong>，只显示第 index 个。</p>
+    <p><strong>好处：</strong>切 tab 不丢状态——Plaza 的滚动位置、搜索框内容、Match 的加载结果都保留着，切回来还在。
+      如果用条件渲染，另外三个 State 会被销毁，每次切换都要重新请求网络。</p>
+    <p><strong>代价：</strong>内存占用高一点，4 个页面同时在内存里。</p>
+    <p>这是个真实的 trade-off，<strong>能说清楚就是满分回答</strong>。</p>
+  </div>
+</section>
+
+<!-- ══════════════ 第 3 层 ══════════════ -->
+<section id="s3">
+  <div class="sechead">
+    <div class="num">03</div>
+    <div class="tag">LAYER THREE · NAVIGATION</div>
+    <h2>导航 —— go_router</h2>
+  </div>
+
+  <p>你用的不是 Flutter 内置的 <code class="inl">Navigator.push</code>，
+    而是 <strong>go_router</strong>（声明式路由，URL 驱动）。</p>
+
+  <h3>路由表与传参</h3>
+  <div class="code"><div class="cap"><span class="dot"></span>router.dart:152-184</div><pre><code>GoRoute(
+  path: '/projects/:id',                                    // :id 是路径参数
+  builder: (context, state) =&gt;
+      ProjectDetailScreen(projectId: state.pathParameters['id']!),
+),
+
+// 三种取参方式：
+state.pathParameters['id']              // 路径参数   /projects/abc
+state.uri.queryParameters['linkedin']   // 查询参数   ?linkedin=ok
+state.extra as String?                  // 任意对象   push(path, extra: obj)</code></pre></div>
+
+  <div class="box exam"><span class="lbl">必考</span>
+    <p><strong><code class="inl">context.push</code> 和 <code class="inl">context.go</code> 的区别？</strong></p>
+    <ul>
+      <li><code class="inl">push</code> —— <strong>压栈</strong>，可以按返回键回来</li>
+      <li><code class="inl">go</code> —— <strong>替换整个栈</strong>，回不去了</li>
+    </ul>
+    <p style="margin-top:10px">看 <a class="ref" href="../frontend/lib/screens/home/home_shell.dart">home_shell.dart:367</a>：
+      <strong>登出后用 go 而不是 push</strong>。为什么？因为登出后不应该能按返回键回到已登录的页面。
+      这个区别几乎必问。</p>
+  </div>
+
+  <h3>redirect —— 你的路由守卫（最容易被深挖）</h3>
+  <p><a class="ref" href="../frontend/lib/router.dart">router.dart:53-108</a> 实现了三步 onboarding 强制流程：</p>
+  <div class="code"><div class="cap"><span class="dot"></span>router.dart · Trust Gateway 守卫</div><pre><code>redirect: (context, state) {
+  if (!auth.bootstrapped) return null;   // 还没恢复会话，先不拦
+
+  // 完全 onboarding 完成 → 放行，只把 / 和 /onboarding/* 送去 /home
+  if (onboardingComplete) {
+    if (loc == '/' || loc.startsWith('/onboarding')) return '/home';
+    return null;
+  }
+  // STEP 1 —— 还没有 user：必须先连 GitHub
+  if (user == null) {
+    return loc == '/onboarding/github' ? null : '/onboarding/github';
+  }
+  // STEP 2 —— GitHub 连了，LinkedIn 没绑
+  if (!linkedinConnected) { ... return '/onboarding/linkedin'; }
+
+  // STEP 3 —— LinkedIn 绑了，角色没选
+  return loc == '/onboarding/role' ? null : '/onboarding/role';
+}</code></pre></div>
+  <p><strong>关键规则：</strong><code class="inl">return null</code> 表示"放行，不重定向"；
+    返回一个路径字符串表示"跳到那里去"。</p>
+
+  <div class="box exam"><span class="lbl">必考</span>
+    <p><strong><code class="inl">refreshListenable: auth</code> 是什么？</strong></p>
+    <p><code class="inl">AuthProvider</code> 是个 <code class="inl">ChangeNotifier</code>。
+      每次它调 <code class="inl">notifyListeners()</code>（比如 <code class="inl">loadMe()</code> 拿到用户、
+      <code class="inl">confirmRole()</code> 改完角色），go_router 就会<strong>重新跑一遍 redirect</strong>。</p>
+    <p>所以状态一变，路由守卫自动重新判定。<strong>这就是"声明式路由"的含义</strong>——
+      你不手动 push，你只描述"什么状态该在什么页面"。</p>
+  </div>
+
+  <div class="box trap"><span class="lbl">陷阱题</span>
+    <p><strong>为什么每个分支都要写 <code class="inl">loc == 'xxx' ? null : 'xxx'</code>？</strong></p>
+    <p><strong>防止无限重定向循环。</strong>如果已经在 <code class="inl">/onboarding/github</code> 了
+      还返回 <code class="inl">'/onboarding/github'</code>，redirect 会被反复触发，
+      go_router 会抛 redirect loop 异常。所以"目标就是当前位置"时必须返回 null。</p>
+  </div>
+
+  <div class="box weak"><span class="lbl">进阶 · 你代码最聪明的一段</span>
+    <p><strong><a class="ref" href="../frontend/lib/router.dart">router.dart:48</a>
+      那个 <code class="inl">linkedinResync</code> 布尔量为什么存在？</strong></p>
+    <p>LinkedIn 真实 OIDC 登录是<strong>整页重定向回来</strong>，回来时 URL 带
+      <code class="inl">?linkedin=ok</code>，但本地的 <code class="inl">currentUser</code>
+      还是旧的（LinkedIn 未绑定）。所以要重新 <code class="inl">loadMe()</code> 一次。</p>
+    <p>但 <code class="inl">loadMe()</code> 会 <code class="inl">notifyListeners()</code>
+      → 触发 redirect 重跑 → 又会 <code class="inl">loadMe()</code> → <strong>死循环</strong>。
+      这个一次性标志位打破了循环。因为整页重定向本身就是一次完整重载，这个变量自然会重置。</p>
+    <p><strong>这是讲师最可能挑出来问的一段。务必背熟。</strong></p>
+  </div>
+</section>
+
+<!-- ══════════════ 第 4 层 ══════════════ -->
+<section id="s4">
+  <div class="sechead">
+    <div class="num">04</div>
+    <div class="tag">LAYER FOUR · STATE MANAGEMENT</div>
+    <h2>状态管理 —— Provider + ChangeNotifier</h2>
+  </div>
+
+  <p><strong>这是这门课的核心考点。</strong>三个角色，缺一不可。</p>
+
+  <h3>① ChangeNotifier —— 数据 + 通知能力</h3>
+  <div class="code"><div class="cap"><span class="dot"></span>state/projects_provider.dart:19-52</div><pre><code>class ProjectsProvider extends ChangeNotifier {
+  List&lt;ProjectCard&gt; _discovery = const [];   // 字段全私有
+  bool _loadingDiscovery = false;
+  String? _error;
+
+  List&lt;ProjectCard&gt; get discovery =&gt; _discovery;   // 只读暴露
+  bool get loadingDiscovery =&gt; _loadingDiscovery;
+  String? get error =&gt; _error;</code></pre></div>
+  <div class="box why"><span class="lbl">主动展示</span>
+    <p>注意这个模式：<strong>字段全私有，只通过 getter 暴露。</strong>
+      外部只能读不能写，改状态必须走方法。这是可以主动讲的封装设计。</p>
+    <p><code class="inl">ChangeNotifier</code> 本身就干一件事：
+      <code class="inl">notifyListeners()</code> —— 广播"我变了"。</p>
+  </div>
+
+  <h3>② Provider —— 把它注入 widget 树</h3>
+  <div class="code"><div class="cap"><span class="dot"></span>main.dart:46-61</div><pre><code>MultiProvider(
+  providers: [
+    ChangeNotifierProvider.value(value: _auth),               // ← 注意 .value
+    ChangeNotifierProvider(create: (_) =&gt; ProjectsProvider()),
+    ChangeNotifierProvider(create: (_) =&gt; GrowthProvider()),
+    ChangeNotifierProvider(create: (_) =&gt; MatchesProvider()),
+    ChangeNotifierProvider(create: (_) =&gt; CollabProvider()),
+    ChangeNotifierProvider(create: (_) =&gt; MarketProvider()),
+  ],
+  child: MaterialApp.router(routerConfig: _router, ...),
+)</code></pre></div>
+  <p>放在最顶层，所以<strong>整棵树下面任何 widget 都能拿到这些 provider</strong>。</p>
+
+  <div class="box exam"><span class="lbl">必考</span>
+    <p><strong><code class="inl">.value</code> 和 <code class="inl">create:</code> 有什么区别？为什么 auth 用 .value？</strong></p>
+    <ul>
+      <li><code class="inl">create:</code> —— Provider 负责创建，<strong>并且负责 dispose</strong></li>
+      <li><code class="inl">.value</code> —— Provider 只是<strong>引用</strong>一个已存在的对象，<strong>不负责它的生命周期</strong></li>
+    </ul>
+    <p style="margin-top:10px"><code class="inl">_auth</code> 是在
+      <a class="ref" href="../frontend/lib/main.dart">main.dart:32</a> 的 initState 里手动创建的，
+      因为 <code class="inl">createRouter(_auth)</code> 需要它（路由要监听它）。
+      它的销毁由 main.dart:40 的 <code class="inl">_auth.dispose()</code> 负责。
+      <strong>如果这里用 create:，就会被 dispose 两次。</strong></p>
+  </div>
+
+  <h3>③ 消费：watch vs read（最高频考点）</h3>
+  <div class="tw"><table>
+    <thead><tr><th></th><th>行为</th><th>用在哪</th></tr></thead>
+    <tbody>
+      <tr><td><code>context.watch&lt;T&gt;()</code></td>
+          <td><strong>订阅</strong> —— T 调 notifyListeners 时，本 widget 重建</td>
+          <td><code>build()</code> 方法里</td></tr>
+      <tr><td><code>context.read&lt;T&gt;()</code></td>
+          <td><strong>只取一次，不订阅</strong></td>
+          <td>事件回调 / initState 里</td></tr>
+    </tbody>
+  </table></div>
+  <div class="code"><div class="cap"><span class="dot"></span>discovery_screen.dart:64-83</div><pre><code>@override
+Widget build(BuildContext context) {
+  final provider = context.watch&lt;ProjectsProvider&gt;();   // 要显示列表 → 订阅
+  final growth   = context.watch&lt;GrowthProvider&gt;();
+  ...
+}
+
+Future&lt;void&gt; _refresh() {
+  return context.read&lt;ProjectsProvider&gt;().fetchDiscovery(...); // 只发起动作 → read
+}</code></pre></div>
+
+  <div class="box trap"><span class="lbl">双向陷阱</span>
+    <p><strong>在 onPressed 里用 watch 会怎样？</strong>
+      会抛异常或造成不必要的重建。watch 必须在 build 期间调用才能建立订阅关系；
+      而且回调只是要"触发一个动作"，根本不需要订阅。</p>
+    <p><strong>反过来，在 build 里用 read 会怎样？</strong>
+      界面不更新——数据变了但没人通知这个 widget 重建。</p>
+    <p style="margin-top:10px">你的 discovery_screen 两边都用对了，<strong>可以直接指着讲</strong>。</p>
+  </div>
+
+  <h3>一次完整的状态流转（务必能完整复述）</h3>
+  <p>以"用户在 Plaza 选了 stage 筛选"为例：</p>
+  <div class="flow">
+    <div class="st"><div class="i">1</div><div class="b">用户点 <code>BrutalDropdown</code><small>UI EVENT</small></div></div>
+    <div class="st"><div class="i">2</div><div class="b"><code>onChanged</code> → <code>setState(() =&gt; _stageFilter = stage)</code><small>本地 UI 状态</small></div></div>
+    <div class="st"><div class="i">3</div><div class="b"><code>_refresh()</code> → <code>context.read&lt;ProjectsProvider&gt;().fetchDiscovery(stage: ...)</code><small>触发动作，不订阅</small></div></div>
+    <div class="st"><div class="i">4</div><div class="b">Provider：<code>_loadingDiscovery = true; notifyListeners();</code><small>→ watch 它的 PlazaBody 重建 → 显示 CircularProgressIndicator</small></div></div>
+    <div class="st"><div class="i">5</div><div class="b"><code>await _api.dio.get('/projects', queryParameters: {...})</code><small>网络请求，不阻塞 UI</small></div></div>
+    <div class="st"><div class="i">6</div><div class="b"><code>_discovery = _parseList(res.data)</code><small>JSON → List&lt;ProjectCard&gt;</small></div></div>
+    <div class="st"><div class="i">7</div><div class="b"><code>finally { _loadingDiscovery = false; notifyListeners(); }</code><small>→ 再次重建 → 渲染卡片列表</small></div></div>
+  </div>
+  <div class="box why"><span class="lbl">值得主动说</span>
+    <p><strong><code class="inl">notifyListeners()</code> 被调了两次</strong>——一次进入 loading 态，一次数据到位。
+      而且第二次放在 <code class="inl">finally</code> 里，<strong>保证即使抛异常也一定会关掉 loading</strong>。</p>
+  </div>
+</section>
+
+<!-- ══════════════ 第 5 层 ══════════════ -->
+<section id="s5">
+  <div class="sechead">
+    <div class="num">05</div>
+    <div class="tag">LAYER FIVE · ASYNC</div>
+    <h2>异步 —— Future / async / await</h2>
+  </div>
+
+  <div class="code"><div class="cap"><span class="dot"></span>state/projects_provider.dart:75</div><pre><code>Future&lt;void&gt; fetchDiscovery({String? stage, String? q}) async {
+  _loadingDiscovery = true;
+  notifyListeners();
+  try {
+    final res = await _api.dio.get&lt;List&lt;dynamic&gt;&gt;('/projects', ...);
+    _discovery = _parseList(res.data);
+  } catch (e) {
+    _error = ApiClient.describeError(e);
+    // NFR 离线降级：读 SharedPreferences 缓存
+  } finally {
+    _loadingDiscovery = false;   // 无论成功失败都执行
+    notifyListeners();
+  }
+}</code></pre></div>
+  <ul>
+    <li><code class="inl">Future&lt;T&gt;</code> = "以后会给你一个 T"，等价于 JS 的 Promise</li>
+    <li><code class="inl">async</code> 标记这个函数是异步的，<strong>它会立刻返回一个 Future</strong>，不阻塞 UI</li>
+    <li><code class="inl">await</code> = 暂停这个函数，等 Future 完成，拿到结果继续。<strong>不阻塞主线程</strong>，UI 依然流畅</li>
+    <li><code class="inl">Future&lt;void&gt;</code> = 会完成，但没有返回值（只关心"做完了没"）</li>
+  </ul>
+
+  <div class="box exam"><span class="lbl">最经典的 async 陷阱</span>
+    <p><a class="ref" href="../frontend/lib/screens/home/home_shell.dart">home_shell.dart:364-368</a>：</p>
+    <div class="code" style="margin:10px 0 12px"><pre><code>Future&lt;void&gt; _logout(BuildContext context) async {
+  await context.read&lt;AuthProvider&gt;().logout();
+  if (!context.mounted) return;              // ← 这一行
+  context.go('/onboarding/github');
+}</code></pre></div>
+    <p><strong><code class="inl">if (!context.mounted) return;</code> 是干什么的？</strong></p>
+    <p><code class="inl">await</code> 期间用户可能已经离开了这个页面，widget 被销毁了。
+      这时候再用 context 去导航或 <code class="inl">showSnackBar</code>，会崩溃
+      （<em class="q">Looking up a deactivated widget's ancestor</em>）。
+      <code class="inl">context.mounted</code> 检查这个 widget 是否还在树上。</p>
+    <p>这是 Flutter 官方 lint 规则 <code class="inl">use_build_context_synchronously</code> 强制要求的。
+      你在 home_shell.dart:379 和 :382 也做了。
+      <strong>能说出这个，会显示你不是复制粘贴来的。</strong></p>
+  </div>
+</section>
+
+<!-- ══════════════ 第 6 层 ══════════════ -->
+<section id="s6">
+  <div class="sechead">
+    <div class="num">06</div>
+    <div class="tag">LAYER SIX · NETWORKING</div>
+    <h2>网络层 —— Dio + 单例 + 拦截器</h2>
+  </div>
+
+  <p><a class="ref" href="../frontend/lib/api/api_client.dart">api/api_client.dart</a> 只有 90 行，但密度极高。</p>
+
+  <h3>单例模式</h3>
+  <div class="code"><div class="cap"><span class="dot"></span>api/api_client.dart:11-45</div><pre><code>class ApiClient {
+  ApiClient._internal() { ... }                             // 私有命名构造函数
+  static final ApiClient instance = ApiClient._internal();  // 唯一实例
+  late final Dio _dio;
+  Dio get dio =&gt; _dio;
+}</code></pre></div>
+  <ul>
+    <li><code class="inl">ApiClient._internal()</code> 是<strong>命名构造函数 + 私有</strong>（下划线）→ 外部无法 <code class="inl">new ApiClient()</code></li>
+    <li><code class="inl">static final instance</code> → 全局唯一实例，第一次访问时创建（Dart 的 static final 是 lazy 的）</li>
+  </ul>
+  <p><strong>为什么要单例？</strong> Dio 内部维护连接池和拦截器，每个请求都新建一个 Dio 会浪费资源，而且拦截器要重复注册。</p>
+
+  <h3>拦截器 —— 自动附加 Token</h3>
+  <div class="code"><div class="cap"><span class="dot"></span>api/api_client.dart:23-33</div><pre><code>_dio.interceptors.add(
+  InterceptorsWrapper(
+    onRequest: (options, handler) async {
+      final token = await _readToken();
+      if (token != null &amp;&amp; token.isNotEmpty) {
+        options.headers['Authorization'] = 'Bearer $token';
+      }
+      handler.next(options);      // 不写这行请求会永远卡住
+    },
+  ),
+);</code></pre></div>
+  <div class="box why"><span class="lbl">主动展示</span>
+    <p><strong>每一个请求发出前</strong>都会经过这里，自动加上
+      <code class="inl">Authorization: Bearer &lt;token&gt;</code>。</p>
+    <p>如果没有拦截器，你 58 个文件里每一次 API 调用都要手写 header。
+      <strong>这是 DRY 原则的教科书应用。</strong></p>
+  </div>
+  <div class="box trap"><span class="lbl">追问</span>
+    <p><strong><code class="inl">handler.next(options)</code> 不写会怎样？</strong>
+      请求会<strong>永远卡住</strong>——拦截器链断了，请求不会继续往下走。</p>
+  </div>
+
+  <h3>依赖注入（可测试性）</h3>
+  <div class="code"><div class="cap"><span class="dot"></span>state/projects_provider.dart:20</div><pre><code>ProjectsProvider({ApiClient? api}) : _api = api ?? ApiClient.instance;
+//                                  ↑ 初始化列表（在构造函数体之前给 final 赋值）</code></pre></div>
+  <p><strong>设计意图：</strong>默认用单例，<strong>但测试时可以传一个 mock ApiClient 进来</strong>。
+    这是可测试性设计，值得主动说。</p>
+
+  <h3>"裸 Dio" —— 最可能被追问的安全设计</h3>
+  <div class="code"><div class="cap"><span class="dot"></span>state/projects_provider.dart:28 · 220-267</div><pre><code>/// A separate Dio with NO auth interceptor, used only to PUT screenshot
+/// bytes to the presigned storage URL.
+final Dio _storageDio = Dio();</code></pre></div>
+  <p>截图上传是三步流程：</p>
+  <div class="flow">
+    <div class="st"><div class="i">1</div><div class="b"><code>POST /projects/{id}/screenshots-upload-url</code> → 拿到 S3 预签名 URL<small>走带 token 的 _api</small></div></div>
+    <div class="st"><div class="i">2</div><div class="b"><code>PUT &lt;presigned_url&gt;</code> 上传原始字节<small>走裸 Dio —— 不带 token</small></div></div>
+    <div class="st"><div class="i">3</div><div class="b"><code>POST /projects/{id}/screenshots {key}</code> → 告诉后端"上传好了"<small>走 _api</small></div></div>
+  </div>
+  <div class="box exam"><span class="lbl">必考</span>
+    <p><strong>为什么第 2 步必须用裸 Dio？</strong>两个理由，都要能说：</p>
+    <ol>
+      <li><strong>安全</strong>：不能把我们自己的 Bearer token 发给第三方对象存储（S3）</li>
+      <li><strong>技术</strong>：预签名 URL 本身就是凭证，多余的 <code class="inl">Authorization</code> header
+        会破坏 S3 的签名校验，请求会失败</li>
+    </ol>
+    <p style="margin-top:10px">还有 projects_provider.dart:246 的 <code class="inl">contentType: contentType</code>——
+      注释写了"防止 Dio 覆盖我们签名时用的确切 Content-Type"。
+      因为<strong>签名把 Content-Type 也算进去了</strong>，不一致就 403。</p>
+  </div>
+</section>
+
+<!-- ══════════════ 第 7 层 ══════════════ -->
+<section id="s7">
+  <div class="sechead">
+    <div class="num">07</div>
+    <div class="tag">LAYER SEVEN · DATA MODELS</div>
+    <h2>数据模型 —— fromJson</h2>
+  </div>
+
+  <h3>factory 构造函数</h3>
+  <div class="code"><div class="cap"><span class="dot"></span>models/project_card.dart:146</div><pre><code>factory ProjectCard.fromJson(Map&lt;String, dynamic&gt; json) {
+  return ProjectCard(
+    id:     json['id']    as String? ?? '',
+    stage:  json['stage'] as String? ?? 'idea',
+    needs:  json['needs'] as String?,        // 允许 null
+    status: json['status'] as String? ?? 'active',
+    ...
+  );
+}</code></pre></div>
+  <p><code class="inl">factory</code> 关键字表示"这个构造函数不一定新建对象，可以返回缓存/子类"。
+    这里主要是为了<strong>在返回前先做一堆解析逻辑</strong>（普通构造函数不能有函数体逻辑再返回）。</p>
+
+  <div class="box exam"><span class="lbl">必考</span>
+    <p><strong>为什么每个字段都写 <code class="inl">as String? ?? '默认值'</code>？</strong></p>
+    <p>答案就在文件顶部的注释里（project_card.dart:3-5）：</p>
+    <p style="padding-left:14px; border-left:3px solid var(--ink200); font-style:italic">
+      the backend is built in parallel, so a missing or wrongly-typed field must degrade
+      to a sensible default instead of throwing and taking down the whole list.</p>
+    <p style="margin-top:10px">如果直接 <code class="inl">json['id'] as String</code>，
+      后端少返一个字段就抛异常，<strong>整个列表页白屏</strong>。
+      降级成空字符串，用户至少能看到其他内容。</p>
+  </div>
+
+  <h3>whereType 过滤</h3>
+  <div class="code"><div class="cap"><span class="dot"></span>state/projects_provider.dart:349</div><pre><code>(data ?? const [])
+    .whereType&lt;Map&lt;String, dynamic&gt;&gt;()   // 只保留真正是 Map 的元素
+    .map(ProjectCard.fromJson)           // tear-off：方法当函数用
+    .toList();                           // Iterable 是 lazy 的，必须求值</code></pre></div>
+  <ul>
+    <li><code class="inl">whereType&lt;T&gt;()</code> 同时做了<strong>过滤 + 类型收窄</strong>——
+      后端返回数组里混了个 null 或字符串，直接跳过而不是崩</li>
+    <li><code class="inl">.map(ProjectCard.fromJson)</code> —— <strong>tear-off</strong>，
+      等价于 <code class="inl">.map((e) =&gt; ProjectCard.fromJson(e))</code></li>
+    <li><code class="inl">.toList()</code> —— map 返回的是 lazy Iterable，必须 toList 才真正求值</li>
+  </ul>
+
+  <h3>不可变更新（_upsertMine）</h3>
+  <div class="code"><div class="cap"><span class="dot"></span>state/projects_provider.dart:357-366</div><pre><code>void _upsertMine(ProjectCard card) {
+  final idx = _mine.indexWhere((p) =&gt; p.id == card.id);
+  if (idx == -1) {
+    _mine = [card, ..._mine];     // 新建：插到最前面（spread）
+  } else {
+    final next = [..._mine];      // 复制一份
+    next[idx] = card;
+    _mine = next;                 // 换新引用
+  }
+}</code></pre></div>
+  <div class="box trap"><span class="lbl">可能追问</span>
+    <p><strong>为什么不直接 <code class="inl">_mine[idx] = card</code>？</strong></p>
+    <p>创建<strong>新列表</strong>而不是原地修改，让"状态变了"这件事有明确的引用变化，
+      配合 <code class="inl">notifyListeners()</code> 语义清晰，
+      也避免了别处持有旧列表引用时被意外改动。这是不可变数据的常见做法。</p>
+  </div>
+</section>
+
+<!-- ══════════════ 第 8 层 ══════════════ -->
+<section id="s8">
+  <div class="sechead">
+    <div class="num">08</div>
+    <div class="tag">LAYER EIGHT · MODERN DART</div>
+    <h2>Dart 3 新语法（你用了，容易被问"这是什么"）</h2>
+  </div>
+
+  <h3>Switch expression</h3>
+  <div class="code"><div class="cap"><span class="dot"></span>home_shell.dart:160-165</div><pre><code>String _roleTitle(String role) =&gt; switch (role) {
+      'builder'      =&gt; 'Builder Home',
+      'collaborator' =&gt; 'Collaborator Home',
+      'founder'      =&gt; 'Founder Home',
+      _              =&gt; 'Home',          // _ 是 default
+    };</code></pre></div>
+  <p>这是 <strong>switch 表达式</strong>（不是语句）——它<strong>返回一个值</strong>，
+    不需要 <code class="inl">break</code>，而且编译器会检查穷尽性。</p>
+
+  <h3>Wildcard 参数</h3>
+  <div class="code"><div class="cap"><span class="dot"></span>home_shell.dart:947</div><pre><code>errorBuilder: (_, _, _) =&gt; Icon(Icons.person, color: Palette.ink400)
+// _ 表示"这个参数我不用"。Dart 3.7+ 允许多个 _ 同名。</code></pre></div>
+
+  <h3>withValues（替代已废弃的 withOpacity）</h3>
+  <div class="code"><div class="cap"><span class="dot"></span>home_shell.dart:675</div><pre><code>Color.alphaBlend(accent.withValues(alpha: 0.16), Palette.paper)</code></pre></div>
+  <div class="box trap"><span class="lbl">可能追问</span>
+    <p><strong>为什么不用 <code class="inl">withOpacity()</code>？</strong>
+      新版 Flutter 已废弃它，因为 <code class="inl">withValues</code> 支持宽色域并避免精度损失。</p>
+  </div>
+</section>
+
+<!-- ══════════════ 第 9 层 ══════════════ -->
+<section id="s9">
+  <div class="sechead">
+    <div class="num">09</div>
+    <div class="tag">LAYER NINE · LIVE CODING</div>
+    <h2>现场改代码环节</h2>
+  </div>
+
+  <p>讲师说可能现场改代码。基于你的架构，最可能的四道题：</p>
+
+  <div class="qa">
+    <details class="q"><summary>"加一个新的 stage 叫 'paused'"</summary>
+      <div class="ans">
+        <p>只改 <a class="ref" href="../frontend/lib/models/project_card.dart">project_card.dart:12</a>
+          的 <code>kStages</code> 和 <code>kStageLabels</code>。</p>
+        <p>Plaza 的筛选下拉框和表单的 stage 选择器都是
+          <code>for (final stage in kStages)</code> 生成的，<strong>自动就有了</strong>。</p>
+        <p><strong>这是单一数据源（single source of truth）的价值——你可以主动演示这个，比被动答题分高。</strong></p>
+      </div>
+    </details>
+
+    <details class="q"><summary>"给底部导航加第五个 tab"</summary>
+      <div class="ans">
+        <p>三处：</p>
+        <p>① <code>home_shell.dart:37</code> 的 <code>_kNavItems</code> 加一项<br>
+           ② <code>IndexedStack.children</code>（:117）加一个页面<br>
+           ③ <code>titles</code> 和 <code>barColors</code>（:104/:110）各加一项</p>
+        <p>底部导航和侧边栏<strong>都是遍历同一个 <code>_kNavItems</code></strong>，所以两处布局同时生效——
+          这正是把它抽成常量数组的原因。</p>
+      </div>
+    </details>
+
+    <details class="q"><summary>"Plaza 的列表加个'按创建时间排序'"</summary>
+      <div class="ans">
+        <p><code>ProjectCard</code> 已经有 <code>createdAt</code>（<code>DateTime?</code>），
+          可以在 <code>PlazaBody</code> 的 build 里对 <code>provider.discovery</code> 排序。</p>
+        <p>但更好的答案是：<strong>加个 query param 让后端排序</strong>——
+          分页场景下前端排序是错的，只能排到当前这一页。能主动说出这点是加分项。</p>
+      </div>
+    </details>
+
+    <details class="q"><summary>"搜索框现在要按回车才搜，改成输入时实时搜"</summary>
+      <div class="ans">
+        <p>把 <code>onSubmitted</code> 换成 <code>onChanged</code>。</p>
+        <p>但<strong>一定要主动提 debounce</strong>——否则每敲一个字母发一次请求。
+          用 <code>Timer</code> 延迟 300ms，新输入进来就 cancel 掉上一个。
+          不提这点，改完就是个性能 bug。</p>
+      </div>
+    </details>
+  </div>
+</section>
+
+<!-- ══════════════ 第 10 层 ══════════════ -->
+<section id="s10">
+  <div class="sechead">
+    <div class="num">10</div>
+    <div class="tag">LAYER TEN · KNOWN WEAKNESSES</div>
+    <h2>你代码里的软肋 —— 提前准备好答案</h2>
+  </div>
+
+  <p>诚实地讲，有两处如果讲师眼尖会问到。<strong>主动承认并给出更好方案，比被问倒强得多。</strong></p>
+
+  <div class="box weak"><span class="lbl">软肋 01 · build 里有副作用</span>
+    <div class="code" style="margin:6px 0 12px"><div class="cap"><span class="dot"></span>home_shell.dart:93-94</div><pre><code>final index = _index ??=
+    (user != null &amp;&amp; user.primaryRole == 'builder') ? 0 : 1;</code></pre></div>
+    <p>这行<strong>在 build() 里修改了 State 字段</strong> <code class="inl">_index</code>。
+      严格来说 build 应该是纯函数、无副作用。</p>
+    <p><strong>准备好的答案：</strong>这是"首次确定默认 tab"的惰性初始化——
+      因为默认 tab 取决于用户角色，而用户是异步加载的，initState 时还不知道。
+      <code class="inl">??=</code> 保证只赋值一次，之后的 build 不会再改，所以幂等、不会引起额外重建。
+      <strong>如果要做得更干净，可以在 <code class="inl">didChangeDependencies</code>
+      或者用户加载完成的回调里设置。</strong></p>
+  </div>
+
+  <div class="box weak"><span class="lbl">软肋 02 · 缩进没对齐</span>
+    <p><a class="ref" href="../frontend/lib/screens/projects/discovery_screen.dart">discovery_screen.dart:200-217</a>
+      的 <code class="inl">else ...[</code> 分支比 <code class="inl">if (_growthMode) ...[</code>
+      浅了两格，读起来对不齐。</p>
+    <p>纯格式问题，<code class="inl">dart format</code> 一跑就好。如果被问就直说是格式没跑到位。</p>
+  </div>
+</section>
+
+<!-- ══════════════ 快问快答 ══════════════ -->
+<section id="drill">
+  <div class="sechead">
+    <div class="num">★</div>
+    <div class="tag">RAPID FIRE · 20 QUESTIONS</div>
+    <h2>20 题快问快答</h2>
+  </div>
+  <p>先自己在心里答一遍，再点开对答案。<strong>目标是每题 15 秒内说清楚。</strong></p>
+
+  <div class="qa">
+    <details class="q"><summary>StatelessWidget 和 StatefulWidget 什么时候用哪个？</summary>
+      <div class="ans"><p>看它<strong>有没有需要跨重建保留的内部状态</strong>。
+        样子完全由参数决定 → Stateless。有 controller、有开关、有本地筛选值 → Stateful。
+        默认选 Stateless，需要了再升级。</p></div></details>
+
+    <details class="q"><summary>为什么 Widget 是 immutable 的？</summary>
+      <div class="ans"><p>因为 widget 只是<strong>配置说明书</strong>，Flutter 每帧都可能重建它们。
+        immutable 让重建变得极廉价（只是创建描述对象），真正昂贵的渲染对象（RenderObject）被复用。
+        状态则放在独立的 State 里，活得比 widget 久。</p></div></details>
+
+    <details class="q"><summary>BuildContext 到底是什么？</summary>
+      <div class="ans"><p>它是<strong>你这个 widget 在树里位置的句柄</strong>。
+        通过它可以向上查找祖先——<code>Theme.of(context)</code>、<code>MediaQuery.of(context)</code>、
+        <code>context.read&lt;Provider&gt;()</code> 全都是"从我这个位置往上找"。</p></div></details>
+
+    <details class="q"><summary>setState 做了什么？不调用会怎样？</summary>
+      <div class="ans"><p>两件事：执行回调改状态；把这个 Element 标记为 dirty，
+        Flutter 下一帧会重新调用它的 build()。<strong>不调用 setState，
+        字段虽然改了但界面不会刷新。</strong></p></div></details>
+
+    <details class="q"><summary>为什么在 initState 里要用 addPostFrameCallback？</summary>
+      <div class="ans"><p>因为 initState 执行时 widget 树正在构建中，
+        直接调会 <code>notifyListeners()</code> 的方法会抛
+        <em class="q">setState() called during build</em>。
+        addPostFrameCallback 把它推迟到<strong>这一帧画完之后</strong>。</p></div></details>
+
+    <details class="q"><summary>context.watch 和 context.read 的区别？</summary>
+      <div class="ans"><p><code>watch</code> 建立订阅——被监听的 ChangeNotifier 一 notify，本 widget 就重建，
+        <strong>只能在 build 里用</strong>。<code>read</code> 只取一次不订阅，
+        <strong>用在事件回调和 initState 里</strong>。用反了：build 里 read → 界面不更新；
+        回调里 watch → 报错。</p></div></details>
+
+    <details class="q"><summary>ChangeNotifierProvider 的 .value 和 create: 差在哪？</summary>
+      <div class="ans"><p><code>create:</code> Provider 负责创建<strong>并 dispose</strong>；
+        <code>.value</code> 只是引用现成对象，<strong>不管生命周期</strong>。
+        我们的 <code>_auth</code> 在 main 的 initState 里手动创建（因为路由要它），
+        手动 dispose，所以必须用 <code>.value</code>，否则会被 dispose 两次。</p></div></details>
+
+    <details class="q"><summary>为什么用 6 个 Provider 而不是 1 个大的？</summary>
+      <div class="ans"><p><strong>重建粒度</strong>。只 watch <code>ProjectsProvider</code> 的 widget
+        不会因为 <code>MarketProvider</code> 变化而重建。
+        按 feature 切分（auth / projects / growth / matches / collab / market）
+        也让每个类的职责清晰、可以单独测试。</p></div></details>
+
+    <details class="q"><summary>notifyListeners 为什么放在 finally 里？</summary>
+      <div class="ans"><p>保证<strong>无论请求成功还是抛异常，loading 状态一定会被关掉</strong>，
+        UI 不会永远卡在转圈。同一个方法里 notify 两次：一次进 loading，一次出结果。</p></div></details>
+
+    <details class="q"><summary>context.push 和 context.go 什么时候用哪个？</summary>
+      <div class="ans"><p><code>push</code> 压栈、可返回——进详情页、进表单用它。
+        <code>go</code> 替换整个栈、回不去——<strong>登出</strong>、
+        onboarding 完成进主页用它。登出必须用 <code>go</code>，
+        否则按返回键能回到已登录页面。</p></div></details>
+
+    <details class="q"><summary>go_router 的 redirect 返回 null 是什么意思？</summary>
+      <div class="ans"><p><strong>放行，不重定向。</strong>返回字符串才是"跳到那里去"。
+        所以每个分支都要写 <code>loc == 'xxx' ? null : 'xxx'</code>——
+        已经在目标位置时必须返回 null，否则无限重定向循环。</p></div></details>
+
+    <details class="q"><summary>refreshListenable 起什么作用？</summary>
+      <div class="ans"><p>把 <code>AuthProvider</code> 交给 go_router 监听。
+        它每次 <code>notifyListeners()</code>，<strong>redirect 就重跑一遍</strong>。
+        所以登录、绑定 LinkedIn、选角色之后，路由守卫自动重新判定该停在哪一步——
+        这就是声明式路由：我不手动 push，我只声明"什么状态该在什么页面"。</p></div></details>
+
+    <details class="q"><summary>路由里那个 linkedinResync 布尔量为什么存在？</summary>
+      <div class="ans"><p>LinkedIn 真实 OIDC 是整页重定向回来，回来时本地 user 还是旧的，
+        必须重新 <code>loadMe()</code>。但 loadMe 会 notify → redirect 重跑 → 又 loadMe →
+        <strong>死循环</strong>。这个一次性标志位打破循环；
+        因为整页重定向本身就是完整重载，变量自然重置。</p></div></details>
+
+    <details class="q"><summary>Future 和 async/await 的关系？</summary>
+      <div class="ans"><p><code>Future&lt;T&gt;</code> 是"以后会给你一个 T"的凭证。
+        <code>async</code> 让函数<strong>立刻返回一个 Future</strong> 而不阻塞；
+        <code>await</code> 暂停这个函数直到 Future 完成，
+        <strong>但不阻塞主线程</strong>，UI 照常渲染。</p></div></details>
+
+    <details class="q"><summary>await 之后为什么要检查 context.mounted？</summary>
+      <div class="ans"><p>await 期间用户可能已经离开页面，widget 被销毁。
+        这时再用 context 导航或弹 SnackBar 会抛
+        <em class="q">Looking up a deactivated widget's ancestor</em>。
+        这是官方 lint <code>use_build_context_synchronously</code> 强制的。</p></div></details>
+
+    <details class="q"><summary>ApiClient 为什么做成单例？</summary>
+      <div class="ans"><p>Dio 内部维护连接池和拦截器链。每次请求 new 一个既浪费资源，
+        又要重复注册拦截器。私有构造 <code>ApiClient._internal()</code> +
+        <code>static final instance</code> 保证全局唯一，且 Dart 的 static final 是惰性初始化的。</p></div></details>
+
+    <details class="q"><summary>拦截器解决了什么问题？</summary>
+      <div class="ans"><p>把 <code>Authorization: Bearer &lt;token&gt;</code> 的注入
+        <strong>集中到一处</strong>，而不是在 58 个文件的每次调用里手写 header。
+        DRY。而且 token 从 SharedPreferences 读、内存缓存，也统一在这里。</p></div></details>
+
+    <details class="q"><summary>上传截图为什么要用另一个"裸" Dio？</summary>
+      <div class="ans"><p>两个理由：<strong>① 安全</strong>——不能把我们的 Bearer token 发给第三方对象存储；
+        <strong>② 技术</strong>——预签名 URL 本身就是凭证，多余的 Authorization header
+        会破坏 S3 签名校验导致失败。Content-Type 也必须跟签名时完全一致，否则 403。</p></div></details>
+
+    <details class="q"><summary>fromJson 里为什么全是 as String? ?? 默认值？</summary>
+      <div class="ans"><p>防御式解析。后端是并行开发的，少一个字段或类型不对，
+        如果直接 <code>as String</code> 就抛异常、<strong>整个列表页白屏</strong>。
+        降级成合理默认值，用户至少能看到其他内容。同理
+        <code>whereType&lt;Map&lt;String, dynamic&gt;&gt;()</code> 会跳过数组里的脏数据。</p></div></details>
+
+    <details class="q"><summary>IndexedStack 和条件渲染的取舍？</summary>
+      <div class="ans"><p><code>IndexedStack</code> 把 4 个 tab 全建好留在树里，只显示一个——
+        <strong>切 tab 不丢状态</strong>（滚动位置、搜索框、已加载数据都在），
+        代价是内存占用高。条件渲染省内存但每次切换都销毁重建、要重新请求网络。
+        底部导航这种高频切换的场景，IndexedStack 是对的选择。</p></div></details>
+  </div>
+</section>
+
+<!-- ══════════════ 掌握度清单 ══════════════ -->
+<section id="final">
+  <div class="sechead">
+    <div class="num">★</div>
+    <div class="tag">SELF-ASSESSMENT</div>
+    <h2>掌握度清单</h2>
+  </div>
+  <p>能<strong>不看稿、口头说清楚</strong>才算勾上。进度自动存在浏览器里。</p>
+
+  <div class="check">
+    <div class="hd">
+      <h4 style="margin:0">Viva Readiness</h4>
+      <div style="display:flex; align-items:center; gap:14px">
+        <span class="score" id="score">0 / 16</span>
+        <button class="reset" id="reset">清空</button>
+      </div>
+    </div>
+    <div id="list">
+      <label><input type="checkbox"><span>能解释 <code class="inl">final</code> / <code class="inl">const</code> / <code class="inl">late</code> 的区别</span></label>
+      <label><input type="checkbox"><span>能解释 <code class="inl">?.</code> <code class="inl">??</code> <code class="inl">!</code>，并说出我们哪里故意用 <code class="inl">!</code> 让它抛</span></label>
+      <label><input type="checkbox"><span>能解释为什么 StatefulWidget 拆成 Widget + State 两个类</span></label>
+      <label><input type="checkbox"><span>能解释 setState 做了什么、不调用会怎样</span></label>
+      <label><input type="checkbox"><span>能解释 dispose 里为什么要释放 TextEditingController</span></label>
+      <label><input type="checkbox"><span>能解释 <code class="inl">addPostFrameCallback</code> 解决了什么问题</span></label>
+      <label><input type="checkbox"><span>能解释 <code class="inl">watch</code> vs <code class="inl">read</code>，并指出代码里两种用法</span></label>
+      <label><input type="checkbox"><span>能解释 <code class="inl">.value</code> vs <code class="inl">create:</code>，以及 auth 为什么特殊</span></label>
+      <label><input type="checkbox"><span>能完整复述一次 Plaza 筛选的 7 步状态流转</span></label>
+      <label><input type="checkbox"><span>能解释 <code class="inl">push</code> vs <code class="inl">go</code>，并说出登出为什么用 go</span></label>
+      <label><input type="checkbox"><span>能讲清 redirect 守卫的三步 gating 和防循环写法</span></label>
+      <label><input type="checkbox"><span>能讲清 <code class="inl">refreshListenable</code> 和 <code class="inl">linkedinResync</code></span></label>
+      <label><input type="checkbox"><span>能解释 <code class="inl">context.mounted</code> 检查的必要性</span></label>
+      <label><input type="checkbox"><span>能讲清单例 + 拦截器 + 裸 Dio 三步上传</span></label>
+      <label><input type="checkbox"><span>能解释防御式 <code class="inl">fromJson</code> 的动机</span></label>
+      <label><input type="checkbox"><span>能主动承认 <code class="inl">_index ??=</code> 那处副作用并给出改进方案</span></label>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════ 开场陈述 ══════════════ -->
+<section id="pitch">
+  <div class="sechead">
+    <div class="num">★</div>
+    <div class="tag">THE OPENING · 30 SECONDS</div>
+    <h2>开场就说这一段</h2>
+  </div>
+
+  <div class="pitch">
+    <span class="mk">“</span>前端是 Flutter，分五层：<br><br>
+    <b>models/</b> 是纯数据类，每个都有防御式的 <code class="inl">fromJson</code>；<br>
+    <b>api/</b> 是一个 Dio 单例，用拦截器自动注入 Bearer token；<br>
+    <b>state/</b> 是六个 <code class="inl">ChangeNotifier</code>，持有状态、调 API、
+      通过 <code class="inl">notifyListeners()</code> 广播变化；<br>
+    <b>screens/</b> 和 <b>widgets/</b> 用 <code class="inl">context.watch</code> 订阅 provider 重建，
+      用 <code class="inl">context.read</code> 触发动作；<br>
+    <b>router.dart</b> 用 go_router 声明式路由，把 <code class="inl">AuthProvider</code> 作为
+      <code class="inl">refreshListenable</code>，所以登录状态一变，
+      路由守卫自动重新判定三步 onboarding 该停在哪一步。<br><br>
+    UI 层还做了响应式：<code class="inl">LayoutBuilder</code> 在 700px 断点切换底部导航和侧边栏。
+  </div>
+
+  <footer>
+    BUILDER PLAZA · FLUTTER FRONTEND VIVA PREP<br>
+    58 dart files · 9,001 lines · provider 6.1 · go_router 17.3 · dio 5.10<br>
+    每一段代码引用都指向仓库真实行号 · Cmd/Ctrl+P 可直接打印成纸质小抄
+  </footer>
+</section>
+
+</div><!-- /wrap -->
+</main>
+</div><!-- /shell -->
+
+<button class="top" id="top" title="回到顶部">↑</button>
+
+<script>
+/* ══ Dart 语法高亮（无外部依赖）══ */
+const KW = ['abstract','as','async','await','bool','break','case','catch','class','const',
+'continue','default','do','double','dynamic','else','enum','extends','external','factory',
+'false','final','finally','for','get','if','implements','import','in','int','is','late',
+'library','mixin','new','null','num','on','operator','required','return','set','static',
+'super','switch','this','throw','true','try','typedef','var','void','while','with'];
+
+const RE = new RegExp(
+  "(\\/\\/[^\\n]*)" +                          // 1 comment
+  "|('(?:\\\\.|[^'\\\\\\n])*'|\"(?:\\\\.|[^\"\\\\\\n])*\")" + // 2 string
+  "|(@\\w+)" +                                 // 3 annotation
+  "|\\b(" + KW.join('|') + ")\\b" +            // 4 keyword
+  "|\\b([A-Z][A-Za-z0-9_]*)\\b" +              // 5 Type
+  "|\\b(\\d[\\w.]*)\\b",                       // 6 number
+  'g');
+
+const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+document.querySelectorAll('.code pre code').forEach(el => {
+  const src = el.textContent;
+  let out = '', last = 0, m;
+  RE.lastIndex = 0;
+  while ((m = RE.exec(src)) !== null) {
+    out += esc(src.slice(last, m.index));
+    const cls = m[1] ? 'c' : m[2] ? 's' : m[3] ? 'a' : m[4] ? 'k' : m[5] ? 't' : 'n';
+    out += '<span class="' + cls + '">' + esc(m[0]) + '</span>';
+    last = m.index + m[0].length;
+  }
+  out += esc(src.slice(last));
+  el.innerHTML = out;
+});
+
+/* ══ 阅读进度条 ══ */
+const bar = document.getElementById('bar');
+const topBtn = document.getElementById('top');
+function progress(){
+  const h = document.documentElement;
+  const p = h.scrollTop / (h.scrollHeight - h.clientHeight || 1);
+  bar.style.width = Math.min(100, p * 100) + '%';
+  topBtn.classList.toggle('show', h.scrollTop > 700);
+}
+addEventListener('scroll', progress, {passive:true});
+progress();
+topBtn.onclick = () => scrollTo({top:0, behavior:'smooth'});
+
+/* ══ 目录 scroll-spy ══ */
+const links = [...document.querySelectorAll('nav.toc a')];
+const targets = links.map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+const spy = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (!e.isIntersecting) return;
+    links.forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + e.target.id));
+  });
+}, {rootMargin:'-15% 0px -70% 0px'});
+targets.forEach(t => spy.observe(t));
+
+/* ══ 掌握度清单 · localStorage 持久化 ══ */
+const KEY = 'bp_viva_checklist_v1';
+const boxes = [...document.querySelectorAll('#list input')];
+const score = document.getElementById('score');
+const saved = JSON.parse(localStorage.getItem(KEY) || '[]');
+boxes.forEach((b,i) => { b.checked = !!saved[i]; });
+
+function sync(){
+  const done = boxes.filter(b => b.checked).length;
+  score.textContent = done + ' / ' + boxes.length;
+  score.style.color = done === boxes.length ? 'var(--lime)'
+                    : done >= boxes.length * 0.6 ? 'var(--teal)' : 'var(--copper)';
+  localStorage.setItem(KEY, JSON.stringify(boxes.map(b => b.checked)));
+}
+boxes.forEach(b => b.addEventListener('change', sync));
+document.getElementById('reset').onclick = () => {
+  boxes.forEach(b => b.checked = false); sync();
+};
+sync();
+</script>
+</body>
+</html>
