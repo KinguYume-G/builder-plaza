@@ -54,6 +54,23 @@ def test_team_role_missing_required_fields_is_422(
     assert res.status_code == 422
 
 
+def test_team_role_patch_cannot_clear_required_fields(
+    client: TestClient, db_session: Session
+) -> None:
+    owner = make_user(db_session)
+    created = client.post(
+        "/role-postings", json=TEAM_ROLE_PAYLOAD, headers=auth_headers(owner)
+    )
+
+    res = client.patch(
+        f"/role-postings/{created.json()['id']}",
+        json={"tech_stack": None},
+        headers=auth_headers(owner),
+    )
+
+    assert res.status_code == 400
+
+
 def test_create_maintainer_posting_requires_own_verified_project(
     client: TestClient, db_session: Session
 ) -> None:

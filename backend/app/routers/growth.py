@@ -1,6 +1,7 @@
 """F4 Growth Plaza: manual refresh, the plaza feed, and the scheduled-refresh
 hook EventBridge calls daily in production."""
 
+import secrets
 import uuid
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
@@ -79,7 +80,9 @@ def growth_refresh_all(
 ) -> dict:
     """Scheduled path (EventBridge daily, ADR-0002). Guarded by a shared
     secret header, not user JWTs; disabled when no token is configured."""
-    if not settings.internal_task_token or x_internal_token != settings.internal_task_token:
+    if not settings.internal_task_token or not secrets.compare_digest(
+        x_internal_token, settings.internal_task_token
+    ):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
     written = growth_service.refresh_all_active(db)
     return {"refreshed_projects": written}

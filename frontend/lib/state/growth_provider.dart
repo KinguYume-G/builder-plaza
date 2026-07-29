@@ -15,6 +15,7 @@ class GrowthProvider extends ChangeNotifier {
 
   List<PlazaItem> _feed = const [];
   bool _loadingFeed = false;
+  int _feedRequestId = 0;
   bool _refreshing = false;
   String? _error;
 
@@ -31,10 +32,7 @@ class GrowthProvider extends ChangeNotifier {
 
   /// GET /plaza → growth posts across all active projects, newest first.
   Future<void> fetchFeed({String? role, String? stage}) async {
-    // Same overlapping-request race as ProjectsProvider.fetchDiscovery /
-    // MatchesProvider.fetchMatches -- serialise so a slower, older response
-    // can't win and clobber a newer filter selection.
-    if (_loadingFeed) return;
+    final requestId = ++_feedRequestId;
     _loadingFeed = true;
     _error = null;
     notifyListeners();
@@ -46,6 +44,7 @@ class GrowthProvider extends ChangeNotifier {
           if (stage != null && stage.isNotEmpty) 'stage': stage,
         },
       );
+      if (requestId != _feedRequestId) return;
       _feed = (res.data ?? const [])
           .whereType<Map<String, dynamic>>()
           .map(PlazaItem.fromJson)
@@ -56,9 +55,11 @@ class GrowthProvider extends ChangeNotifier {
         await prefs.setString(_feedCacheKey, jsonEncode(res.data));
       }
     } catch (e) {
+      if (requestId != _feedRequestId) return;
       _error = ApiClient.describeError(e);
       final prefs = await SharedPreferences.getInstance();
       final cached = prefs.getString(_feedCacheKey);
+      if (requestId != _feedRequestId) return;
       if (cached != null) {
         _feed = (jsonDecode(cached) as List<dynamic>)
             .whereType<Map<String, dynamic>>()
@@ -67,8 +68,10 @@ class GrowthProvider extends ChangeNotifier {
         _feedFromCache = true;
       }
     } finally {
-      _loadingFeed = false;
-      notifyListeners();
+      if (requestId == _feedRequestId) {
+        _loadingFeed = false;
+        notifyListeners();
+      }
     }
   }
 

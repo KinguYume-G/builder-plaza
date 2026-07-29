@@ -32,6 +32,7 @@ class _ConversationScreenState extends State<ConversationScreen> {
   List<MessageItem> _messages = const [];
   Timer? _pollTimer;
   bool _sending = false;
+  bool _polling = false;
 
   @override
   void initState() {
@@ -63,17 +64,27 @@ class _ConversationScreenState extends State<ConversationScreen> {
   }
 
   Future<void> _poll() async {
-    if (!mounted) return;
+    // If a round trip takes longer than the 10s tick, the next timer fire
+    // would start a second poll with the same stale afterId, and both
+    // results would land -- producing duplicate message bubbles.
+    if (!mounted || _polling) return;
+    _polling = true;
     try {
       final afterId = _messages.isEmpty ? null : _messages.last.id;
       final fresh = await context
           .read<CollabProvider>()
           .fetchMessages(widget.conversationId, afterId: afterId);
       if (!mounted || fresh.isEmpty) return;
-      setState(() => _messages = [..._messages, ...fresh]);
+      // Belt-and-suspenders id de-dup on top of the in-flight guard above.
+      final knownIds = _messages.map((m) => m.id).toSet();
+      final newOnes = fresh.where((m) => !knownIds.contains(m.id));
+      if (newOnes.isEmpty) return;
+      setState(() => _messages = [..._messages, ...newOnes]);
       _jumpToEnd();
     } catch (_) {
       // Transient poll failure: try again next tick.
+    } finally {
+      _polling = false;
     }
   }
 

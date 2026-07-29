@@ -118,6 +118,11 @@ def list_reviews(
         .scalars()
         .all()
     )
+    # Same identity-map warm-up as matches.py's list_matches: one batched
+    # SELECT for all reviewers instead of one db.get() per review.
+    reviewer_ids = {review.reviewer for review in reviews}
+    if reviewer_ids:
+        db.execute(select(User).where(User.id.in_(reviewer_ids))).scalars().all()
     return [_review_out(db, review) for review in reviews]
 
 

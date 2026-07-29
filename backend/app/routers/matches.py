@@ -67,6 +67,12 @@ def list_matches(
             .scalars()
             .all()
         )
+    # Warm the session identity map with every candidate row in one query, so
+    # the per-match db.get() inside _match_out() below hits the identity map
+    # instead of issuing a separate SELECT per match.
+    candidate_ids = {match.candidate for match in matches}
+    if candidate_ids:
+        db.execute(select(User).where(User.id.in_(candidate_ids))).scalars().all()
     return [_match_out(db, match) for match in matches]
 
 

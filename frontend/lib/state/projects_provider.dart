@@ -37,6 +37,7 @@ class ProjectsProvider extends ChangeNotifier {
 
   bool _loadingMine = false;
   bool _loadingDiscovery = false;
+  int _discoveryRequestId = 0;
   bool _uploading = false;
   String? _error;
 
@@ -77,10 +78,9 @@ class ProjectsProvider extends ChangeNotifier {
 
   /// GET /projects?stage=&q= → active projects for the public Plaza feed.
   Future<void> fetchDiscovery({String? stage, String? q}) async {
-    // Rapidly toggling the stage filter/search dispatches overlapping calls;
-    // without this an older, slower response can arrive after a newer one and
-    // silently clobber _discovery with stale results (see MatchesProvider).
-    if (_loadingDiscovery) return;
+    // Filter changes must not be dropped while a previous request is running.
+    // Let them overlap, but only the newest request may publish its result.
+    final requestId = ++_discoveryRequestId;
     _loadingDiscovery = true;
     _error = null;
     notifyListeners();
@@ -92,6 +92,7 @@ class ProjectsProvider extends ChangeNotifier {
           if (q != null && q.isNotEmpty) 'q': q,
         },
       );
+      if (requestId != _discoveryRequestId) return;
       _discovery = _parseList(res.data);
       _discoveryFromCache = false;
       // NFR: persist the unfiltered feed for offline read-only viewing.
@@ -100,17 +101,21 @@ class ProjectsProvider extends ChangeNotifier {
         await prefs.setString(_discoveryCacheKey, jsonEncode(res.data));
       }
     } catch (e) {
+      if (requestId != _discoveryRequestId) return;
       _error = ApiClient.describeError(e);
       // NFR offline fallback: serve the cached feed read-only.
       final prefs = await SharedPreferences.getInstance();
       final cached = prefs.getString(_discoveryCacheKey);
+      if (requestId != _discoveryRequestId) return;
       if (cached != null) {
         _discovery = _parseList(jsonDecode(cached) as List<dynamic>);
         _discoveryFromCache = true;
       }
     } finally {
-      _loadingDiscovery = false;
-      notifyListeners();
+      if (requestId == _discoveryRequestId) {
+        _loadingDiscovery = false;
+        notifyListeners();
+      }
     }
   }
 

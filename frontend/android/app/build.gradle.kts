@@ -79,3 +79,30 @@ dependencies {
     androidTestImplementation("androidx.test:rules:1.2.0")
     androidTestImplementation("junit:junit:4.12")
 }
+
+// Flutter 3.44 can leave the dev-only integration_test plugin in the generated
+// main registrant even for a release build, while correctly excluding its
+// Android implementation from the release classpath. Remove only that generated
+// registration block immediately before javac; debug/instrumentation builds are
+// untouched and regenerate the full registrant normally.
+tasks.matching { it.name == "compileReleaseJavaWithJavac" }.configureEach {
+    doFirst {
+        val registrant =
+            file("src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java")
+        if (registrant.exists()) {
+            val integrationTestBlock =
+                Regex(
+                    """(?ms)^\s*try \{\r?\n""" +
+                        """\s*flutterEngine\.getPlugins\(\)\.add\(new dev\.flutter\.plugins\.integration_test\.IntegrationTestPlugin\(\)\);\r?\n""" +
+                        """\s*\} catch \(Exception e\) \{\r?\n""" +
+                        """\s*Log\.e\(TAG, "Error registering plugin integration_test,[^\r\n]*\r?\n""" +
+                        """\s*\}\r?\n""",
+                )
+            val original = registrant.readText()
+            val sanitized = original.replace(integrationTestBlock, "")
+            if (sanitized != original) {
+                registrant.writeText(sanitized)
+            }
+        }
+    }
+}

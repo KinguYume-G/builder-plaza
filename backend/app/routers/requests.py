@@ -9,6 +9,7 @@ import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select, update
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.security import get_current_user
@@ -98,7 +99,16 @@ def send_request(
         state="pending",
     )
     db.add(request)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        # The partial unique index is the final guard against two concurrent
+        # senders both passing the history check before either insert commits.
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="You already have a pending request to this person",
+        )
     db.refresh(request)
     return _request_out(db, request)
 

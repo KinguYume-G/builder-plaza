@@ -126,7 +126,10 @@ def fetch_repo_activity(full_name: str) -> dict:
         return {"repo": full_name, "error": f"request failed: {exc}"}
 
     if response.status_code == 200:
-        data = response.json()
+        try:
+            data = response.json()
+        except ValueError as exc:
+            return {"repo": full_name, "error": f"unparsable response: {exc}"}
         return {
             "repo": full_name,
             "html_url": data.get("html_url"),
@@ -175,21 +178,21 @@ class GitHubDev:
         if response.status_code == 404:
             raise GitHubUserNotFound(login)
         self._raise_for_status(response)
-        return response.json()
+        return self._parse_json(response)
 
     def _get_repos(self, client: httpx.Client, login: str) -> list[dict]:
         response = self._request(
             client, f"/users/{login}/repos", params={"sort": "updated", "per_page": 100}
         )
         self._raise_for_status(response)
-        return response.json()
+        return self._parse_json(response)
 
     def _get_events(self, client: httpx.Client, login: str) -> list[dict]:
         response = self._request(
             client, f"/users/{login}/events/public", params={"per_page": 100}
         )
         self._raise_for_status(response)
-        return response.json()
+        return self._parse_json(response)
 
     def _request(
         self, client: httpx.Client, path: str, params: dict | None = None
@@ -198,6 +201,18 @@ class GitHubDev:
             return client.get(f"{GITHUB_API_BASE}{path}", params=params)
         except httpx.HTTPError as exc:
             raise GitHubAPIError(f"GitHub request failed: {exc}") from exc
+
+    @staticmethod
+    def _parse_json(response: httpx.Response):
+        # A 200 status doesn't guarantee a well-formed body -- GitHub
+        # occasionally returns an empty/truncated response near a timeout or
+        # rate-limit edge. Without this, json.JSONDecodeError (not an
+        # httpx.HTTPError) propagates uncaught as a raw 500 instead of the
+        # documented graceful GitHubAPIError path.
+        try:
+            return response.json()
+        except ValueError as exc:
+            raise GitHubAPIError(f"GitHub returned an unparsable response: {exc}") from exc
 
     @staticmethod
     def _raise_for_status(response: httpx.Response) -> None:
