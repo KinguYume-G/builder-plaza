@@ -1,12 +1,27 @@
-# Builder Plaza — Backend
+# Builder Plaza — FastAPI backend
 
 FastAPI backend for Builder Plaza. See [`../PRD.md`](../PRD.md) for product scope and [`../docs/adr/`](../docs/adr/) for the architecture decisions — mainly [ADR-0002](../docs/adr/0002-backend-python-fastapi-aws.md) (Python/FastAPI on AWS, ECS Fargate) and [ADR-0001](../docs/adr/0001-matching-engine-sbert-gpr.md) (matching engine).
 
 **For current status, read [`../docs/REPORT.md`](../docs/REPORT.md) and [`../docs/DEPLOYMENT.md`](../docs/DEPLOYMENT.md), not the "What was verified" log at the bottom of this file** — that log is a historical record from when this really was just a scaffold (2026-07-14/15) and was, for a while, incorrectly copied into other docs as if it were still current. It isn't; see below.
 
-## Current state (corrected 2026-07-20)
+## Current state (updated 2026-07-29)
 
-This is a working feature build, not a scaffold. All F1–F10 modules from the PRD are implemented (F9 is intentionally Mocked — see PRD's Live/Mocked tiering): Dual-Source Trust Gateway (GitHub OAuth + LinkedIn OIDC live/simulated), Profile & Completeness, Project Card CRUD + S3 screenshots, Growth Plaza (GitHub polling + Bedrock summarisation), Discovery/Matching (SBERT + pgvector + GaussianProcessRegressor), Trust Score, Controlled DM, Request Market, and Verified Activity Timeline. It's deployed on AWS ECS Fargate behind an ALB (see `docs/DEPLOYMENT.md` for the live URL). The database schema (11 tables) is at Alembic revision `0003` (initial schema + trust-gateway JSONB fields + cached GitHub events). Test suite: 171 pytest cases — 141 pure unit tests plus 30 API integration tests (`tests/test_integration_*.py`, added 2026-07-20) that exercise real routes against a real Postgres+pgvector database via `TestClient` + transactional fixtures (see `tests/conftest.py` and `docker-compose.yml` for the local throwaway test DB; CI runs the same suite against a Postgres service container).
+This is a working feature build, not a scaffold. F1-F8 and F10 are Live;
+F9 is intentionally Simulated and visibly labelled. The implemented backend
+includes GitHub OAuth, LinkedIn OIDC Live/Simulated paths, profiles and
+completeness, Project Card CRUD with private S3 media, Growth Plaza,
+MiniLM/pgvector/Gaussian-process matching, Trust Score, controlled requests and
+messages, Request Market, and verified activity/evidence.
+
+The database contains 11 domain tables and is at Alembic revision
+`0004_indexes_and_constraints`. The latest migration adds hot-path foreign-key
+indexes and a database-level partial unique guard against duplicate pending
+collaboration requests. The current hardening pass also adds transactional
+request acceptance, conditional state transitions, a 5 MB S3 upload limit,
+Role Posting invariants, fail-closed configuration, controlled OAuth/provider
+errors, and query-path improvements. CI exercises the pytest suite against a
+PostgreSQL/pgvector service container. Use the latest test output for the exact
+executed total because parameterised cases may change as coverage grows.
 
 ## Stack
 
@@ -36,12 +51,12 @@ backend/
     main.py              # FastAPI app, router registration, daily growth-refresh task
   alembic/
     env.py               # wired to app.core.config.settings, not alembic.ini
-    versions/            # 0001_initial_schema, 0002_trust_gateway, 0003_github_events
+    versions/            # 0001 initial through 0004 indexes/concurrency guards
   alembic.ini
   tests/
     conftest.py                 # fixtures for the integration layer below (real DB + TestClient)
-    test_integration_*.py       # 5 files, 30 cases: auth, me, projects, requests, role_postings
-    test_*.py                   # 13 files of pure unit tests (schemas, services, scoring, etc.)
+    test_integration_*.py       # auth, me, projects, requests, and role postings
+    test_*.py                   # schemas, services, scoring, security, and trust
   docker-compose.yml     # throwaway local Postgres+pgvector for the integration test layer only
   requirements.txt       # runtime deps
   requirements-dev.txt   # runtime deps + pytest

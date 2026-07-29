@@ -1,25 +1,104 @@
-# Builder Plaza — Ubiquitous Language
+# Builder Plaza — Ubiquitous Language and Claim Boundaries
+
+This file defines the terminology used across code, documentation, the report,
+and the demo. When another document conflicts with these definitions, update the
+other document rather than introducing a new synonym.
 
 ## Implementation tiers
 
-- **Live Feature** — implemented with real logic and real data. Uses an actual external API or our own backend. Demoable end-to-end without hardcoded results.
-- **Mocked Feature** — the full frontend UI is built, but the data behind it is hardcoded, simulated, or served from a stub. Exists because the external dependency (e.g. a partner-API approval process) costs application/approval time, not coding time. Every Mocked Feature is explicitly labelled as simulated in the report and demo.
+- **Live feature** — implemented with application logic and persisted or
+  provider-backed data. It can be demonstrated end to end without hardcoded
+  feature results.
+- **Simulated feature** — an implemented UI interaction backed by local demo
+  state or a stub response. It demonstrates a future workflow and is visibly
+  labelled `SIMULATED`.
+- **Fallback** — deterministic behaviour used when an optional provider is
+  unavailable. A fallback is not evidence that the provider call succeeded.
 
-## Core domain terms
+Current boundary:
 
-- **Builder** — a user role: someone making a product and publishing its progress. Owns Project Cards, posts to the Growth Plaza and Maintainer Request Market. (Absorbs the research personas of indie builder, maintainer, agent-native builder.)
-- **Collaborator** — a user role: someone looking to join or contribute to projects. Consumes discovery, plain-language credibility summaries, Match Reasons; initiates Controlled DMs.
-- **Founder** — a user role: someone hiring or shortlisting talent (canonical name for "Recruiter / Founder / Project Owner"). Uses search, shortlists, and Trust Score detail.
-- **Primary Role** — a per-user preference field (`builder | collaborator | founder`) chosen at onboarding and switchable in settings. It selects which navigation shell and home screen the app renders; it is *not* an identity or permission boundary. Identity is established solely by the Dual-Source Trust Gateway, and all data belongs to the same user_id regardless of the active role.
+- **Live:** F1-F8 and F10.
+- **Simulated:** F9 Sandbox, AI Shortlist, Agent Access, and Proof of Work.
+- **Simulated component:** payment identity inside Trust Score.
+- **Dual implementation:** LinkedIn has Live OIDC and an explicitly simulated
+  path used for repeatable automated testing and demonstrations.
 
-- **Project Card** — a builder-authored card representing one product-in-progress: description, stage, current needs. The primary unit of discovery in the plaza.
-- **Intent Badge** — a first-class, visible field stating what a user is currently open to (e.g. "open to co-founder", "maintenance help wanted"). Distinct from profile bio.
-- **Match Reason** — the human-readable explanation attached to every recommendation. No match is shown without one.
-- **Trust Score** — composite credibility score from GitHub contribution signals, LinkedIn tenure, Stripe revenue badge (mocked), and in-platform peer review.
-- **Dual-Source Trust Gateway** — the sign-up gate requiring GitHub + LinkedIn binding before a profile exists.
-- **Controlled DM** — contact that can only be initiated through a structured collaboration request; raw contact details are never exposed.
-- **Request Market** — the single board of Role Postings, browsable by Collaborators. Renamed from "Maintainer Request Market" when Founder team-role postings were unified into it.
-- **Role Posting** — one posting on the Request Market; `posting_type ∈ {maintainer, team_role}`. A maintainer posting (by a Builder) describes a repository help-wanted role with an access tier; a team_role posting (by a Founder) is a structured recruitment card requiring stage, tech stack, and commitment period.
-- **Verified Activity Timeline** — a profile tab rendering the user's stored, verified GitHub events chronologically. Contains no self-declared content; the raw material for Ownership Evidence.
-- **Ownership Evidence** — a tab on a candidate's Trust Score page showing commit continuity and repository roles, derived entirely from verified GitHub data. Answers the Founder question "does this project really belong to this person?"
-- **Growth Plaza** — the feed of auto-generated "product growth" updates derived from real code activity.
+## Roles and identity
+
+- **Builder** — creates Project Cards, links repositories, publishes project
+  progress, declares collaboration intent, and can post maintainer roles.
+- **Collaborator** — discovers projects and candidates, reads Match Reasons and
+  credibility evidence, and initiates structured collaboration requests.
+- **Founder** — publishes team roles and evaluates candidates using matching,
+  Trust Score, and ownership evidence.
+- **Primary Role** — the switchable `builder | collaborator | founder`
+  preference stored on one user account. It changes the initial home emphasis,
+  title, and accent colour inside the shared navigation shell. It is not an
+  identity, ownership, or permission boundary.
+- **Dual-Source Trust Gateway** — the ordered onboarding gate that connects
+  GitHub, connects LinkedIn, and records the Primary Role.
+
+## Product and collaboration terms
+
+- **Project Card** — a builder-authored product-in-progress record containing a
+  title, stage, needs, optional demo URL, team division, linked repositories,
+  and private-S3-backed screenshots.
+- **Intent Badge** — the current collaboration state: seeking a co-founder,
+  seeking a maintainer, open to chat, or not open, with an optional note.
+- **Growth Plaza** — the feed of product-progress summaries derived from recent
+  GitHub repository activity.
+- **Growth Post** — one stored Plaza update. Amazon Bedrock may generate the
+  summary; a deterministic fallback is used when the model is unavailable.
+- **Match Reason** — the human-readable explanation attached to every matching
+  result. A raw score is not presented as a sufficient explanation.
+- **Exploration Match** — the single candidate slot in a refreshed matching
+  round selected from beyond the strongest alignment set and labelled
+  `EXPLORE`.
+- **Controlled DM** — contact that begins with a structured Collaboration
+  Request. A Conversation opens only after acceptance.
+- **Collaboration Request** — a request with intent, pitch, and optional project
+  or posting context. At most one pending request may exist for the same ordered
+  sender/recipient pair.
+- **Conversation** — the post-acceptance message thread shared only by the two
+  request participants.
+- **Request Market** — the unified board of maintainer and team-role postings.
+- **Role Posting** — either `maintainer`, which may use staged repository access,
+  or `team_role`, which requires stage, technology stack, and commitment.
+
+## Trust and evidence terms
+
+- **Trust Score** — a transparent blend of GitHub contribution, LinkedIn tenure,
+  peer review, and a visibly simulated payment-identity component.
+- **Verified Activity Timeline** — chronological public GitHub events used as
+  evidence rather than self-declared profile content.
+- **Ownership Evidence** — repository roles and activity continuity derived from
+  GitHub data to support project-ownership assessment.
+- **Credibility Summary** — a concise explanation of candidate evidence used by
+  the matching and controlled-contact journey.
+
+## Data and security terms
+
+- **Presigned upload** — an authenticated request obtains a short-lived S3 PUT
+  URL, the client uploads bytes directly without a Builder Plaza JWT, and the
+  API validates the object before registering its key.
+- **Screenshot registration** — the backend checks project ownership, the
+  project-specific key namespace, S3 existence, and the 5 MB object-size limit
+  before storing the key.
+- **Archive** — a soft delete. The record remains for relational consistency but
+  is excluded from active discovery.
+- **Current matching round** — active match rows returned by the latest refresh.
+  Dismissed history is retained so a dismissed candidate does not resurface.
+
+## Claims that must not be made
+
+- Do not describe F9 as a production sandbox, autonomous agent system, AI hiring
+  service, or cryptographic Proof-of-Work implementation.
+- Do not describe the simulated payment-identity component as Stripe
+  verification.
+- Do not describe the Android emulator Monkey crawl as Firebase Robo Test.
+- Do not claim that a Bedrock-generated summary was used when the deterministic
+  fallback produced the stored Growth Post.
+- Do not describe Primary Role switching as three separate accounts or three
+  separate navigation systems.
+- Do not publish exact test totals without checking the latest test/CI output;
+  parameterised pytest cases can change the executed total.
