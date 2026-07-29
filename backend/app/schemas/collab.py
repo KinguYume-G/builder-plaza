@@ -30,6 +30,14 @@ class CollabRequestIn(BaseModel):
             )
         return value
 
+    @field_validator("pitch")
+    @classmethod
+    def _meaningful_pitch(cls, value: str) -> str:
+        value = value.strip()
+        if len(value) < 20:
+            raise ValueError("pitch must contain at least 20 non-whitespace characters")
+        return value
+
 
 class CollabRequestOut(BaseModel):
     id: uuid.UUID
@@ -46,6 +54,14 @@ class CollabRequestOut(BaseModel):
 
 class MessageIn(BaseModel):
     body: str = Field(min_length=1, max_length=2000)
+
+    @field_validator("body")
+    @classmethod
+    def _meaningful_body(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("message body cannot be blank")
+        return value
 
 
 class MessageOut(BaseModel):

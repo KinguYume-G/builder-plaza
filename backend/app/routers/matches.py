@@ -49,7 +49,12 @@ def list_matches(
     """The current user's match round. With refresh=true (default) the full
     pipeline runs: embed -> recall -> GPR -> epsilon-greedy -> reasons."""
     if refresh:
-        matches = engine.refresh_matches(db, current_user)
+        # An explicit UI refresh reserves the epsilon-greedy exploration slot
+        # and rotates it away from the previous pick where possible. This
+        # makes the documented "new round" interaction visible and reliable.
+        matches = engine.refresh_matches(
+            db, current_user, guarantee_exploration=True
+        )
     else:
         from app.db.models import Match
 

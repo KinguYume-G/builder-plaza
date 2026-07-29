@@ -26,6 +26,11 @@ class CollabProvider extends ChangeNotifier {
       _inbox.where((request) => request.state == 'pending').length;
 
   Future<void> fetchAll() async {
+    // Same overlapping-request race as the other list providers (e.g. the
+    // requests screen's 10s conversation poll firing again while a manual
+    // pull-to-refresh is still in flight) -- serialise to avoid a stale
+    // response clobbering a newer one.
+    if (_loading) return;
     _loading = true;
     _error = null;
     notifyListeners();

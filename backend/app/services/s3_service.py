@@ -22,6 +22,13 @@ _CONTENT_TYPE_EXT = {
     "image/webp": "webp",
 }
 
+# Per docs/PRD: uploads default to <= 5 MB. A presigned PUT URL can't enforce
+# this itself (S3's Content-Length-Range condition is a POST-policy-only
+# feature), so callers must check the actually-uploaded object's size via
+# `object_size()` after the client reports completion, and reject/delete it
+# if it's over budget.
+MAX_UPLOAD_BYTES = 5 * 1024 * 1024
+
 _client = None
 
 
@@ -81,6 +88,17 @@ def object_exists(key: str) -> bool:
         if exc.response.get("Error", {}).get("Code") in ("404", "NoSuchKey", "NotFound"):
             return False
         raise
+
+
+def object_size(key: str) -> int | None:
+    """Return the uploaded object's size in bytes, or None if it doesn't exist."""
+    try:
+        head = _s3().head_object(Bucket=settings.s3_bucket_name, Key=key)
+    except ClientError as exc:
+        if exc.response.get("Error", {}).get("Code") in ("404", "NoSuchKey", "NotFound"):
+            return None
+        raise
+    return head["ContentLength"]
 
 
 def delete_object(key: str) -> None:

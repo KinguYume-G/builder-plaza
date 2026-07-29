@@ -22,6 +22,18 @@ class MatchesBody extends StatefulWidget {
 }
 
 class _MatchesBodyState extends State<MatchesBody> {
+  Future<void> _refresh() async {
+    final provider = context.read<MatchesProvider>();
+    await provider.fetchMatches();
+    if (!mounted) return;
+    final message = provider.error == null
+        ? 'New match round loaded'
+        : 'Refresh failed: ${provider.error}';
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
   @override
   void initState() {
     super.initState();
@@ -55,8 +67,9 @@ class _MatchesBodyState extends State<MatchesBody> {
 
     return RefreshIndicator(
       color: Palette.ink,
-      onRefresh: () => context.read<MatchesProvider>().fetchMatches(),
+      onRefresh: _refresh,
       child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(20),
         children: [
           Text(

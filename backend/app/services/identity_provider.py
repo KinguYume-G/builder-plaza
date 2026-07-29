@@ -102,6 +102,13 @@ def get_identity_provider() -> IdentityProvider:
     sense for the simulated, in-app consent flow -- are simulated-mode-only
     by design, not an unfinished live implementation.
     """
+    if settings.linkedin_mode not in ("simulated", "live"):
+        # Fail closed on a typo/unset value rather than silently serving the
+        # simulated preset profiles as if that were the deliberate choice.
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"LINKEDIN_MODE must be 'simulated' or 'live', got {settings.linkedin_mode!r}",
+        )
     if settings.linkedin_mode == "live":
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,

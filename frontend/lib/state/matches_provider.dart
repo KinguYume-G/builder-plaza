@@ -21,6 +21,10 @@ class MatchesProvider extends ChangeNotifier {
   /// GET /matches — refresh=true re-runs the engine (embed → recall → GPR →
   /// ε-greedy → reasons), so pull-to-refresh genuinely reshuffles exploration.
   Future<void> fetchMatches({bool refresh = true}) async {
+    // RefreshIndicator can dispatch again while a slow mobile request is
+    // still in flight. Serialising here prevents an older response from
+    // winning the race and making a successful refresh appear unchanged.
+    if (_loading) return;
     _loading = true;
     _error = null;
     notifyListeners();

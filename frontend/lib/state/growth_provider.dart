@@ -31,6 +31,10 @@ class GrowthProvider extends ChangeNotifier {
 
   /// GET /plaza → growth posts across all active projects, newest first.
   Future<void> fetchFeed({String? role, String? stage}) async {
+    // Same overlapping-request race as ProjectsProvider.fetchDiscovery /
+    // MatchesProvider.fetchMatches -- serialise so a slower, older response
+    // can't win and clobber a newer filter selection.
+    if (_loadingFeed) return;
     _loadingFeed = true;
     _error = null;
     notifyListeners();
