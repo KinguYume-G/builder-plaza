@@ -8,13 +8,14 @@ inherit the same structured-pitch + accept-gated-conversation flow.
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.security import get_current_user
 from app.db.models import ProjectCard, RolePosting, User
 from app.db.session import get_db
 from app.schemas.role_posting import (
+    ACCESS_TIERS,
     PostingOwnerOut,
     PostingRepoOut,
     RolePostingIn,
@@ -80,6 +81,17 @@ def create_posting(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="The linked project has no verified repositories",
             )
+    elif payload.project_id is not None:
+        # team_role postings may optionally reference a project too (surfaced
+        # as project_title in the listing) -- but, same as maintainer, it must
+        # actually belong to the caller. Without this check anyone could
+        # attach someone else's project to their own recruiting posting.
+        project = db.get(ProjectCard, payload.project_id)
+        if project is None or project.owner_id != current_user.id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="project_id must be one of YOUR projects",
+            )
 
     posting = RolePosting(
         owner_id=current_user.id,
@@ -116,15 +128,14 @@ def list_postings(
         stmt = stmt.where(RolePosting.status == "open")
     if posting_type is not None:
         stmt = stmt.where(RolePosting.posting_type == posting_type)
+    if skill:
+        # Filter in SQL before limit/offset -- applying the skill filter in
+        # Python AFTER paginating would silently return fewer than `limit`
+        # results (or zero) even when plenty more matching postings exist
+        # beyond the already-truncated page.
+        stmt = stmt.where(func.lower(func.array_to_string(RolePosting.skills, ",")).contains(skill.lower()))
     stmt = stmt.order_by(RolePosting.created_at.desc()).limit(limit).offset(offset)
     postings = db.execute(stmt).scalars().all()
-    if skill:
-        lowered = skill.lower()
-        postings = [
-            posting
-            for posting in postings
-            if any(lowered in entry.lower() for entry in posting.skills)
-        ]
     return [_posting_out(db, posting) for posting in postings]
 
 
@@ -156,6 +167,38 @@ def update_posting(
     if updates.get("status") not in (None, "open", "closed"):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="status must be open|closed"
+        )
+
+    # PATCH must preserve the same type-specific invariants enforced at
+    # creation. Otherwise a valid team-role posting can be turned into a vague
+    # one by clearing a required field.
+    if posting.posting_type == "team_role":
+        if updates.get("access_tier") is not None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="access_tier only applies to maintainer postings",
+            )
+        merged = {
+            field: updates.get(field, getattr(posting, field))
+            for field in ("stage", "tech_stack", "commitment")
+        }
+        missing = [
+            field
+            for field, value in merged.items()
+            if value is None or not str(value).strip()
+        ]
+        if missing:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=(
+                    "team_role postings require stage, tech_stack and commitment "
+                    f"(missing: {', '.join(missing)})"
+                ),
+            )
+    elif "access_tier" in updates and updates["access_tier"] not in ACCESS_TIERS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"access_tier must be one of {ACCESS_TIERS}",
         )
     for field, value in updates.items():
         setattr(posting, field, value)

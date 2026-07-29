@@ -59,17 +59,24 @@ def verify_state_token(state: str) -> bool:
 
 async def exchange_code_for_token(code: str) -> str:
     """Swap an authorization ``code`` for a GitHub access token."""
-    async with httpx.AsyncClient(timeout=10.0) as client:
-        response = await client.post(
-            GITHUB_TOKEN_URL,
-            headers={"Accept": "application/json"},
-            data={
-                "client_id": settings.github_client_id,
-                "client_secret": settings.github_client_secret,
-                "code": code,
-                "redirect_uri": settings.github_redirect_uri,
-            },
-        )
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.post(
+                GITHUB_TOKEN_URL,
+                headers={"Accept": "application/json"},
+                data={
+                    "client_id": settings.github_client_id,
+                    "client_secret": settings.github_client_secret,
+                    "code": code,
+                    "redirect_uri": settings.github_redirect_uri,
+                },
+            )
+    except httpx.HTTPError as exc:
+        # Network/DNS/timeout failures aren't GitHubOAuthError by default, so
+        # without this they'd bypass the router's `except GitHubOAuthError`
+        # and surface as an unhandled 500 instead of the documented graceful
+        # redirect back to the frontend.
+        raise GitHubOAuthError(f"could not reach GitHub: {exc}") from exc
 
     if response.status_code != 200:
         raise GitHubOAuthError(f"token exchange failed: HTTP {response.status_code}")
@@ -87,14 +94,17 @@ async def exchange_code_for_token(code: str) -> str:
 
 async def fetch_github_login(access_token: str) -> str:
     """Return the authenticated user's GitHub login (username)."""
-    async with httpx.AsyncClient(timeout=10.0) as client:
-        response = await client.get(
-            GITHUB_USER_URL,
-            headers={
-                "Authorization": f"Bearer {access_token}",
-                "Accept": "application/vnd.github+json",
-            },
-        )
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.get(
+                GITHUB_USER_URL,
+                headers={
+                    "Authorization": f"Bearer {access_token}",
+                    "Accept": "application/vnd.github+json",
+                },
+            )
+    except httpx.HTTPError as exc:
+        raise GitHubOAuthError(f"could not reach GitHub: {exc}") from exc
 
     if response.status_code != 200:
         raise GitHubOAuthError(f"profile fetch failed: HTTP {response.status_code}")

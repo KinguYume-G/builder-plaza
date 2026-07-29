@@ -8,7 +8,7 @@ request opens, per the PRD's controlled-DM stance.
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
 from app.core.security import get_current_user
@@ -155,12 +155,25 @@ def _transition(
     allowed_actor = getattr(request, actor_field)
     if actor.id != allowed_actor:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not allowed")
-    if request.state != must_be:
+
+    # Conditional UPDATE (not read-check-then-write): two concurrent
+    # accept/decline/withdraw calls on the same request both read
+    # state == must_be before either commits, and would otherwise both
+    # "succeed" -- e.g. a double-tapped Accept creating two Conversations.
+    # Only one UPDATE can match the WHERE state = :must_be at a time; the
+    # loser's rowcount is 0 and gets a clean 409 instead.
+    result = db.execute(
+        update(CollabRequest)
+        .where(CollabRequest.id == request.id, CollabRequest.state == must_be)
+        .values(state=new_state)
+    )
+    if result.rowcount == 0:
+        db.rollback()
+        db.refresh(request)
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=f"Request is {request.state}, expected {must_be}",
         )
-    request.state = new_state
     db.commit()
     db.refresh(request)
     return request
@@ -173,12 +186,35 @@ def accept(
     db: Session = Depends(get_db),
 ) -> CollabRequestOut:
     """Accepting opens the conversation -- the ONLY way a DM channel exists."""
-    request = _transition(
-        db, _get_request(db, request_id), current_user, "pending", "accepted", "to_user"
+    request = _get_request(db, request_id)
+    if current_user.id != request.to_user:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not allowed")
+
+    # Conditional UPDATE, not read-check-then-write: two concurrent accept
+    # calls on the same request both read state == "pending" before either
+    # commits, and would otherwise both "succeed" -- e.g. a double-tapped
+    # Accept creating two Conversations. Only one UPDATE can match
+    # WHERE state = 'pending' at a time; the loser's rowcount is 0.
+    result = db.execute(
+        update(CollabRequest)
+        .where(CollabRequest.id == request.id, CollabRequest.state == "pending")
+        .values(state="accepted")
     )
+    if result.rowcount == 0:
+        db.rollback()
+        db.refresh(request)
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Request is {request.state}, expected pending",
+        )
+
+    # State transition and conversation creation are one transaction. The old
+    # two-commit flow could leave an accepted request with no conversation if
+    # the process failed between commits.
     if _conversation_for(db, request.id) is None:
         db.add(Conversation(collab_request_id=request.id))
-        db.commit()
+    db.commit()
+    db.refresh(request)
     return _request_out(db, request)
 
 

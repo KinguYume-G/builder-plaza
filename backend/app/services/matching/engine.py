@@ -11,7 +11,7 @@ matches are excluded from future rounds.
 import random
 import uuid
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from app.db.models import Intent, Match, SkillEmbedding, User
@@ -70,7 +70,11 @@ def recall_candidates(db: Session, user: User, k: int = RECALL_K) -> list[tuple[
 
 
 def refresh_matches(
-    db: Session, user: User, rng: random.Random | None = None
+    db: Session,
+    user: User,
+    rng: random.Random | None = None,
+    *,
+    guarantee_exploration: bool = False,
 ) -> list[Match]:
     """Run the full pipeline for one user and persist the round's matches."""
     rng = rng or random.Random()
@@ -118,7 +122,40 @@ def refresh_matches(
 
     top = ranked[:RESULT_N]
     beyond = ranked[RESULT_N:]
-    exploration_index = scoring.pick_exploration_slot(len(top), len(beyond), rng)
+
+    # The interactive refresh contract is stronger than the background
+    # epsilon-greedy policy: a user who explicitly pulls to refresh expects a
+    # visibly new exploration pick. Remember the previous one and, when there
+    # is a choice, exclude it for this round.
+    previous_exploratory = db.execute(
+        select(Match.candidate).where(
+            Match.for_user == user.id,
+            Match.state == "active",
+            Match.exploratory.is_(True),
+        )
+    ).scalars().first()
+    if guarantee_exploration and beyond:
+        alternatives = [
+            index
+            for index, (candidate, _score) in enumerate(beyond)
+            if candidate.id != previous_exploratory
+        ]
+        pool = alternatives or list(range(len(beyond)))
+        exploration_index = rng.choice(pool)
+    else:
+        exploration_index = scoring.pick_exploration_slot(len(top), len(beyond), rng)
+
+    # A round has at most one exploration badge. Clear stale badges left on
+    # candidates that fell out of the current top ten before writing the new
+    # round.
+    for old_match in db.execute(
+        select(Match).where(
+            Match.for_user == user.id,
+            Match.state == "active",
+            Match.exploratory.is_(True),
+        )
+    ).scalars():
+        old_match.exploratory = False
     if exploration_index is not None:
         # Replace the last top slot with the exploration pick.
         top = top[:-1] + [beyond[exploration_index]]
@@ -145,6 +182,18 @@ def refresh_matches(
         match.match_reason = reason
         match.state = "active"
         result.append(match)
+
+    # `active` means the current round, not every candidate ever returned.
+    # Remove stale active rows that fell out of this round; dismissed rows are
+    # retained so they can never resurface.
+    current_candidates = [match.candidate for match in result]
+    stale_active = delete(Match).where(
+        Match.for_user == user.id,
+        Match.state == "active",
+    )
+    if current_candidates:
+        stale_active = stale_active.where(Match.candidate.notin_(current_candidates))
+    db.execute(stale_active)
     db.commit()
     for match in result:
         db.refresh(match)

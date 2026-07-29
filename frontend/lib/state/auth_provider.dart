@@ -17,6 +17,19 @@ import '../models/user.dart';
 class AuthProvider extends ChangeNotifier {
   AuthProvider({ApiClient? api}) : _api = api ?? ApiClient.instance {
     tuneConnectionReuse(_storageDio);
+    ApiClient.onUnauthorized = _handleUnauthorized;
+  }
+
+  /// A 401 from anywhere means the token is no longer valid -- clear the
+  /// session so the router gate sends the user back to login instead of
+  /// leaving a stale [_currentUser] that keeps rendering as "logged in"
+  /// while every request silently fails.
+  void _handleUnauthorized() {
+    if (_currentUser == null) return;
+    _api.clearToken();
+    _currentUser = null;
+    _githubSummary = null;
+    notifyListeners();
   }
 
   final ApiClient _api;

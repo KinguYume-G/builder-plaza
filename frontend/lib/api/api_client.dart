@@ -37,9 +37,23 @@ class ApiClient {
           }
           handler.next(options);
         },
+        onError: (error, handler) {
+          if (error.response?.statusCode == 401) {
+            // The token is invalid/expired/revoked. Without this, a stale
+            // AuthProvider._currentUser stays "logged in" forever while every
+            // subsequent request just 401s again with no way back to login
+            // short of the user finding a manual Logout button.
+            onUnauthorized?.call();
+          }
+          handler.next(error);
+        },
       ),
     );
   }
+
+  /// Set by [AuthProvider] so a 401 anywhere clears the session globally
+  /// instead of leaving stale state behind.
+  static void Function()? onUnauthorized;
 
   static const String _tokenKey = 'bp_access_token';
 

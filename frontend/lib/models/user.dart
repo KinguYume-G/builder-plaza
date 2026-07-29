@@ -43,10 +43,14 @@ class User {
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
-      id: json['id'] as String,
-      githubLogin: json['github_login'] as String,
+      // Defensive parsing, same convention as every other model in
+      // models/*.dart: a missing/wrong-typed field must degrade to a
+      // sensible default instead of throwing and taking down the whole
+      // screen (this previously force-cast these three fields).
+      id: json['id'] as String? ?? '',
+      githubLogin: json['github_login'] as String? ?? '',
       linkedinSub: json['linkedin_sub'] as String?,
-      primaryRole: json['primary_role'] as String,
+      primaryRole: json['primary_role'] as String? ?? 'builder',
       completenessPct: (json['completeness_pct'] as num?)?.toInt() ?? 0,
       // trust_score may arrive as int or double.
       trustScore: (json['trust_score'] as num?)?.toDouble() ?? 0,

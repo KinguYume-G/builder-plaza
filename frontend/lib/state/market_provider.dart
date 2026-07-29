@@ -19,6 +19,9 @@ class MarketProvider extends ChangeNotifier {
   String? get error => _error;
 
   Future<void> fetchPostings({String? postingType, String? skill}) async {
+    // Same overlapping-request race as the other list providers -- serialise
+    // so a slower, older response can't win and clobber a newer filter.
+    if (_loading) return;
     _loading = true;
     _error = null;
     notifyListeners();

@@ -1,7 +1,7 @@
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 from sqlalchemy.orm import Session
 
 from app.core.security import get_current_user
@@ -73,10 +73,17 @@ def set_avatar(
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Not your avatar key"
         )
-    if not s3_service.object_exists(payload.key):
+    size = s3_service.object_size(payload.key)
+    if size is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Object not uploaded to S3 yet",
+        )
+    if size > s3_service.MAX_UPLOAD_BYTES:
+        s3_service.delete_object(payload.key)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Image exceeds the {s3_service.MAX_UPLOAD_BYTES // (1024 * 1024)}MB limit",
         )
     old_key = current_user.avatar_s3_key
     current_user.avatar_s3_key = payload.key
@@ -115,4 +122,13 @@ def read_github_summary(current_user: User = Depends(get_current_user)) -> Githu
             status_code=status.HTTP_404_NOT_FOUND,
             detail="No GitHub profile connected",
         )
-    return GithubSummary.model_validate(current_user.github_profile)
+    try:
+        return GithubSummary.model_validate(current_user.github_profile)
+    except ValidationError:
+        # The cached JSONB blob predates a schema change (a field was added/
+        # renamed since this user last connected GitHub) -- surface a clear,
+        # actionable 409 instead of an unhandled 500.
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Cached GitHub profile is stale; reconnect GitHub to refresh it",
+        )

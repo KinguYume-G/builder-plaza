@@ -77,6 +77,10 @@ class ProjectsProvider extends ChangeNotifier {
 
   /// GET /projects?stage=&q= → active projects for the public Plaza feed.
   Future<void> fetchDiscovery({String? stage, String? q}) async {
+    // Rapidly toggling the stage filter/search dispatches overlapping calls;
+    // without this an older, slower response can arrive after a newer one and
+    // silently clobber _discovery with stale results (see MatchesProvider).
+    if (_loadingDiscovery) return;
     _loadingDiscovery = true;
     _error = null;
     notifyListeners();

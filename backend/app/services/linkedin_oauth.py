@@ -90,18 +90,25 @@ def verify_state_token(state: str) -> str | None:
 
 async def exchange_code_for_token(code: str) -> str:
     """Swap an authorization ``code`` for a LinkedIn access token."""
-    async with httpx.AsyncClient(timeout=10.0) as client:
-        response = await client.post(
-            LINKEDIN_TOKEN_URL,
-            headers={"Content-Type": "application/x-www-form-urlencoded"},
-            data={
-                "grant_type": "authorization_code",
-                "code": code,
-                "client_id": settings.linkedin_client_id,
-                "client_secret": settings.linkedin_client_secret,
-                "redirect_uri": settings.linkedin_redirect_uri,
-            },
-        )
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.post(
+                LINKEDIN_TOKEN_URL,
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
+                data={
+                    "grant_type": "authorization_code",
+                    "code": code,
+                    "client_id": settings.linkedin_client_id,
+                    "client_secret": settings.linkedin_client_secret,
+                    "redirect_uri": settings.linkedin_redirect_uri,
+                },
+            )
+    except httpx.HTTPError as exc:
+        # Network/DNS/timeout failures aren't LinkedInOAuthError by default,
+        # so without this they'd bypass the callback's `except
+        # LinkedInOAuthError` and surface as an unhandled 500 instead of the
+        # documented graceful redirect back to the frontend.
+        raise LinkedInOAuthError(f"could not reach LinkedIn: {exc}") from exc
 
     if response.status_code != 200:
         raise LinkedInOAuthError(f"token exchange failed: HTTP {response.status_code}")
@@ -118,11 +125,14 @@ async def exchange_code_for_token(code: str) -> str:
 
 async def fetch_userinfo(access_token: str) -> dict:
     """Return the OIDC userinfo claims for the authenticated LinkedIn member."""
-    async with httpx.AsyncClient(timeout=10.0) as client:
-        response = await client.get(
-            LINKEDIN_USERINFO_URL,
-            headers={"Authorization": f"Bearer {access_token}"},
-        )
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.get(
+                LINKEDIN_USERINFO_URL,
+                headers={"Authorization": f"Bearer {access_token}"},
+            )
+    except httpx.HTTPError as exc:
+        raise LinkedInOAuthError(f"could not reach LinkedIn: {exc}") from exc
 
     if response.status_code != 200:
         raise LinkedInOAuthError(f"userinfo fetch failed: HTTP {response.status_code}")

@@ -63,3 +63,14 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+# Fail loudly at import time rather than silently signing every JWT with a
+# publicly-known default secret. HS256 is a shared-secret scheme, so anyone
+# who knows "change-me" could forge a token for any user_id on a deployment
+# that forgot to set JWT_SECRET. "local" and "test" are exempt since they
+# never serve real users or real data.
+if settings.environment not in ("local", "test") and settings.jwt_secret == "change-me":
+    raise RuntimeError(
+        "JWT_SECRET is still the default 'change-me' outside a local/test "
+        "environment. Set a real secret before starting the app."
+    )

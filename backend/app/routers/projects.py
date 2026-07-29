@@ -212,10 +212,21 @@ def add_screenshot(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not a screenshot key for this project",
         )
-    if not s3_service.object_exists(payload.key):
+    size = s3_service.object_size(payload.key)
+    if size is None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Object not uploaded to S3 yet",
+        )
+    if size > s3_service.MAX_UPLOAD_BYTES:
+        # A presigned PUT can't cap size up front, so enforce it here: the
+        # object already landed in S3, so reject AND clean it up rather than
+        # just refusing to reference it (an orphaned oversized object would
+        # otherwise sit in the bucket forever).
+        s3_service.delete_object(payload.key)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Image exceeds the {s3_service.MAX_UPLOAD_BYTES // (1024 * 1024)}MB limit",
         )
     if payload.key not in card.screenshot_s3_keys:
         # Reassign (not .append) so SQLAlchemy tracks the ARRAY mutation.
