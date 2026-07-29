@@ -97,7 +97,12 @@ def _fetch_events(login: str) -> list[dict] | None:
         return None
     if response.status_code != 200:
         return None
-    return response.json()
+    try:
+        return response.json()
+    except ValueError:
+        # A 200 with an unparsable body must degrade like any other failure
+        # (see module docstring) rather than raising uncaught.
+        return None
 
 
 def get_user_events(db: Session, user: User, now: datetime | None = None) -> list[dict]:

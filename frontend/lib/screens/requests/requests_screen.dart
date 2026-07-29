@@ -187,6 +187,9 @@ class _RequestCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final provider = context.read<CollabProvider>();
     final other = isInbox ? request.fromUser : request.toUser;
+    // Rebuilds whenever CollabProvider notifies (the parent screen already
+    // watches it), so this reflects the current in-flight state.
+    final isPending = context.watch<CollabProvider>().isActionPending(request.id);
 
     return BrutalCard(
       flat: true,
@@ -233,15 +236,18 @@ class _RequestCard extends StatelessWidget {
                     label: 'Accept',
                     color: Palette.lime,
                     textColor: Palette.ink,
-                    onPressed: () async {
-                      final updated = await provider.accept(request.id);
-                      if (updated?.conversationId != null &&
-                          context.mounted) {
-                        context.push(
-                            '/conversations/${updated!.conversationId}',
-                            extra: other.githubLogin);
-                      }
-                    },
+                    loading: isPending,
+                    onPressed: isPending
+                        ? null
+                        : () async {
+                            final updated = await provider.accept(request.id);
+                            if (updated?.conversationId != null &&
+                                context.mounted) {
+                              context.push(
+                                  '/conversations/${updated!.conversationId}',
+                                  extra: other.githubLogin);
+                            }
+                          },
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -249,7 +255,9 @@ class _RequestCard extends StatelessWidget {
                   child: BrutalButton(
                     label: 'Decline',
                     color: Palette.tomato,
-                    onPressed: () => provider.decline(request.id),
+                    loading: isPending,
+                    onPressed:
+                        isPending ? null : () => provider.decline(request.id),
                   ),
                 ),
               ],
@@ -259,7 +267,9 @@ class _RequestCard extends StatelessWidget {
               label: 'Withdraw',
               color: Palette.cream100,
               textColor: Palette.tomato,
-              onPressed: () => provider.withdraw(request.id),
+              loading: isPending,
+              onPressed:
+                  isPending ? null : () => provider.withdraw(request.id),
             )
           else if (request.state == 'accepted' &&
               request.conversationId != null)

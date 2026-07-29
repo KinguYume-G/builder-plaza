@@ -16,11 +16,18 @@ class CollabProvider extends ChangeNotifier {
   bool _loading = false;
   String? _error;
 
+  /// Request ids with an accept/decline/withdraw currently in flight, so the
+  /// screen can disable that request's buttons and a double-tap can't fire
+  /// the same action twice.
+  final Set<String> _pendingActionIds = {};
+
   List<CollabRequestItem> get inbox => _inbox;
   List<CollabRequestItem> get sent => _sent;
   List<ConversationItem> get conversations => _conversations;
   bool get loading => _loading;
   String? get error => _error;
+
+  bool isActionPending(String requestId) => _pendingActionIds.contains(requestId);
 
   int get pendingInboxCount =>
       _inbox.where((request) => request.state == 'pending').length;
@@ -84,19 +91,23 @@ class CollabProvider extends ChangeNotifier {
   }
 
   Future<CollabRequestItem?> _action(String requestId, String action) async {
+    if (_pendingActionIds.contains(requestId)) return null;
+    _pendingActionIds.add(requestId);
     _error = null;
+    notifyListeners();
     try {
       final res = await _api.dio
           .post<Map<String, dynamic>>('/requests/$requestId/$action');
       final updated = CollabRequestItem.fromJson(res.data!);
       _inbox = _replace(_inbox, updated);
       _sent = _replace(_sent, updated);
-      notifyListeners();
       return updated;
     } catch (e) {
       _error = ApiClient.describeError(e);
-      notifyListeners();
       return null;
+    } finally {
+      _pendingActionIds.remove(requestId);
+      notifyListeners();
     }
   }
 

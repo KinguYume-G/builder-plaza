@@ -35,6 +35,14 @@ class _PostingFormScreenState extends State<PostingFormScreen> {
   String _accessTier = 'claim_an_issue';
   bool _saving = false;
   String? _error;
+  bool _submitted = false; // show validation only after a submit attempt
+
+  // Inline validation errors, same pattern as project_form_screen.dart.
+  String? _descError;
+  String? _stageFieldError;
+  String? _stackError;
+  String? _commitmentError;
+  String? _projectError;
 
   @override
   void initState() {
@@ -54,7 +62,53 @@ class _PostingFormScreenState extends State<PostingFormScreen> {
     super.dispose();
   }
 
+  bool _validate() {
+    final desc = _descController.text.trim();
+    String? descErr;
+    if (desc.isEmpty) {
+      descErr = 'Role description is required.';
+    } else if (desc.length < 10) {
+      descErr = 'Give a bit more detail (at least 10 characters).';
+    } else if (desc.length > 2000) {
+      descErr = 'Keep the description under 2000 characters.';
+    }
+
+    String? stageErr;
+    String? stackErr;
+    String? commitmentErr;
+    String? projectErr;
+    if (_type == 'team_role') {
+      if (_stageController.text.trim().isEmpty) {
+        stageErr = 'Stage is required.';
+      }
+      if (_stackController.text.trim().isEmpty) {
+        stackErr = 'Tech stack is required.';
+      }
+      if (_commitmentController.text.trim().isEmpty) {
+        commitmentErr = 'Commitment is required.';
+      }
+    } else if (_projectId == null) {
+      projectErr = 'Pick one of your projects.';
+    }
+
+    setState(() {
+      _descError = descErr;
+      _stageFieldError = stageErr;
+      _stackError = stackErr;
+      _commitmentError = commitmentErr;
+      _projectError = projectErr;
+    });
+    return descErr == null &&
+        stageErr == null &&
+        stackErr == null &&
+        commitmentErr == null &&
+        projectErr == null;
+  }
+
   Future<void> _submit() async {
+    setState(() => _submitted = true);
+    if (!_validate()) return;
+
     setState(() {
       _saving = true;
       _error = null;
@@ -137,6 +191,10 @@ class _PostingFormScreenState extends State<PostingFormScreen> {
                   controller: _descController,
                   hintText: 'What the role owns, what success looks like…',
                   maxLines: 4,
+                  errorText: _descError,
+                  onChanged: (_) {
+                    if (_submitted) _validate();
+                  },
                 ),
                 const SizedBox(height: 14),
                 BrutalField(
@@ -150,24 +208,38 @@ class _PostingFormScreenState extends State<PostingFormScreen> {
                     label: 'STAGE *',
                     controller: _stageController,
                     hintText: 'idea / mvp / launched…',
+                    errorText: _stageFieldError,
+                    onChanged: (_) {
+                      if (_submitted) _validate();
+                    },
                   ),
                   const SizedBox(height: 14),
                   BrutalField(
                     label: 'TECH STACK *',
                     controller: _stackController,
                     hintText: 'Flutter + FastAPI + Postgres',
+                    errorText: _stackError,
+                    onChanged: (_) {
+                      if (_submitted) _validate();
+                    },
                   ),
                   const SizedBox(height: 14),
                   BrutalField(
                     label: 'COMMITMENT *',
                     controller: _commitmentController,
                     hintText: '10h/week, evenings…',
+                    errorText: _commitmentError,
+                    onChanged: (_) {
+                      if (_submitted) _validate();
+                    },
                   ),
                 ] else ...[
                   Text('LINK YOUR PROJECT *',
                       style: AppType.mono(
                           size: 11,
-                          color: Palette.ink400,
+                          color: _projectError != null
+                              ? Palette.tomato
+                              : Palette.ink400,
                           weight: FontWeight.w700)),
                   const SizedBox(height: 8),
                   if (myProjects.isEmpty)
@@ -193,11 +265,21 @@ class _PostingFormScreenState extends State<PostingFormScreen> {
                                 ? Palette.paper
                                 : Palette.ink,
                             selected: _projectId == project.id,
-                            onTap: () => setState(
-                                () => _projectId = project.id),
+                            onTap: () => setState(() {
+                              _projectId = project.id;
+                              if (_submitted) _projectError = null;
+                            }),
                           ),
                       ],
                     ),
+                  if (_projectError != null) ...[
+                    const SizedBox(height: 6),
+                    Text(_projectError!,
+                        style: AppType.mono(
+                            size: 12,
+                            color: Palette.tomato,
+                            weight: FontWeight.w700)),
+                  ],
                   const SizedBox(height: 14),
                   Text('ACCESS TIER *',
                       style: AppType.mono(

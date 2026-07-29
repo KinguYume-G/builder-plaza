@@ -154,6 +154,10 @@ class _PostingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Rebuilds whenever MarketProvider notifies (the parent screen already
+    // watches it), so this reflects the current in-flight close state.
+    final isClosing =
+        context.watch<MarketProvider>().isClosing(posting.id);
     final typeColor =
         posting.isMaintainer ? Palette.lime : Palette.mustard;
     final isMine = posting.owner.id == myId;
@@ -228,9 +232,12 @@ class _PostingCard extends StatelessWidget {
                   child: BrutalButton(
                     label: 'Close',
                     color: Palette.tomato,
-                    onPressed: () => context
-                        .read<MarketProvider>()
-                        .closePosting(posting.id),
+                    loading: isClosing,
+                    onPressed: isClosing
+                        ? null
+                        : () => context
+                            .read<MarketProvider>()
+                            .closePosting(posting.id),
                   ),
                 )
               else

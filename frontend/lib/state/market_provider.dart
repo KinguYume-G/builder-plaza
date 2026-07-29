@@ -12,16 +12,21 @@ class MarketProvider extends ChangeNotifier {
 
   List<RolePosting> _postings = const [];
   bool _loading = false;
+  int _postingsRequestId = 0;
   String? _error;
+
+  /// Posting ids with a close currently in flight, so the screen can disable
+  /// that posting's Close button and a double-tap can't fire it twice.
+  final Set<String> _closingIds = {};
 
   List<RolePosting> get postings => _postings;
   bool get loading => _loading;
   String? get error => _error;
 
+  bool isClosing(String postingId) => _closingIds.contains(postingId);
+
   Future<void> fetchPostings({String? postingType, String? skill}) async {
-    // Same overlapping-request race as the other list providers -- serialise
-    // so a slower, older response can't win and clobber a newer filter.
-    if (_loading) return;
+    final requestId = ++_postingsRequestId;
     _loading = true;
     _error = null;
     notifyListeners();
@@ -33,15 +38,19 @@ class MarketProvider extends ChangeNotifier {
           'skill': ?skill,
         },
       );
+      if (requestId != _postingsRequestId) return;
       _postings = (res.data ?? const [])
           .whereType<Map<String, dynamic>>()
           .map(RolePosting.fromJson)
           .toList();
     } catch (e) {
+      if (requestId != _postingsRequestId) return;
       _error = ApiClient.describeError(e);
     } finally {
-      _loading = false;
-      notifyListeners();
+      if (requestId == _postingsRequestId) {
+        _loading = false;
+        notifyListeners();
+      }
     }
   }
 
@@ -71,18 +80,22 @@ class MarketProvider extends ChangeNotifier {
   }
 
   Future<RolePosting?> closePosting(String id) async {
+    if (_closingIds.contains(id)) return null;
+    _closingIds.add(id);
     _error = null;
+    notifyListeners();
     try {
       final res =
           await _api.dio.delete<Map<String, dynamic>>('/role-postings/$id');
       final posting = RolePosting.fromJson(res.data!);
       _postings = _postings.where((entry) => entry.id != id).toList();
-      notifyListeners();
       return posting;
     } catch (e) {
       _error = ApiClient.describeError(e);
-      notifyListeners();
       return null;
+    } finally {
+      _closingIds.remove(id);
+      notifyListeners();
     }
   }
 }

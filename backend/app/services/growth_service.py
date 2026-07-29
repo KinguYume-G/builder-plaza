@@ -93,7 +93,13 @@ def _fetch_repo_events(client: httpx.Client, repo_full_name: str) -> list[dict]:
     )
     if response.status_code != 200:
         return []
-    return response.json()
+    try:
+        return response.json()
+    except ValueError:
+        # Must degrade the same as any other per-repo failure (see
+        # collect_new_events, which only catches httpx.HTTPError around this
+        # call) -- an unparsable body must not abort the whole refresh.
+        return []
 
 
 def collect_new_events(card: ProjectCard, since: datetime) -> list[dict]:

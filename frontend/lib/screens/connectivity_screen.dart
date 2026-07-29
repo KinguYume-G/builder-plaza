@@ -38,16 +38,20 @@ class _ConnectivityScreenState extends State<ConnectivityScreen> {
     try {
       final res = await dio.get<Map<String, dynamic>>('/health');
       final env = res.data?['environment'] ?? 'unknown';
+      if (!mounted) return;
       setState(() => _health = _CheckState.ok('Backend OK — environment: $env'));
     } catch (e) {
+      if (!mounted) return;
       setState(() => _health = _CheckState.error(ApiClient.describeError(e)));
     }
 
     try {
       final res = await dio.get<Map<String, dynamic>>('/health/db');
       final count = res.data?['users_count'] ?? '?';
+      if (!mounted) return;
       setState(() => _db = _CheckState.ok('DB OK — users: $count'));
     } catch (e) {
+      if (!mounted) return;
       setState(() => _db = _CheckState.error(ApiClient.describeError(e)));
     }
   }

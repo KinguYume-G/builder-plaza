@@ -78,6 +78,28 @@ def test_duplicate_pending_request_is_blocked(
     assert second.status_code == 409
 
 
+def test_blank_pitch_and_message_are_rejected(
+    client: TestClient, db_session: Session
+) -> None:
+    sender = make_user(db_session)
+    recipient = make_user(db_session)
+
+    blank_pitch = _send(client, sender, str(recipient.id), pitch=" " * 25)
+    assert blank_pitch.status_code == 422
+
+    sent = _send(client, sender, str(recipient.id))
+    accepted = client.post(
+        f"/requests/{sent.json()['id']}/accept", headers=auth_headers(recipient)
+    )
+    conversation_id = accepted.json()["conversation_id"]
+    blank_message = client.post(
+        f"/conversations/{conversation_id}/messages",
+        json={"body": "   "},
+        headers=auth_headers(sender),
+    )
+    assert blank_message.status_code == 422
+
+
 def test_non_participant_cannot_read_conversation(
     client: TestClient, db_session: Session
 ) -> None:

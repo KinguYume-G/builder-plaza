@@ -30,8 +30,17 @@ OIDC_SCOPE = "openid profile email"
 # The `state` param is a short-lived JWT we sign ourselves so the callback can
 # verify it came from us (CSRF defence) AND recover which logged-in user started
 # the bind, without any server-side session store.
+#
+# The state isn't bound to the browser/session that requested it, so it could
+# in principle be replayed by a third party (request your own authorize_url,
+# then get a victim to complete a real LinkedIn consent against it -- their
+# identity would bind to your account instead of theirs). A short TTL doesn't
+# close this off entirely, but it shrinks the exploit window from "any time
+# in the next 10 minutes" to "within 2 minutes of generating the link", which
+# is a meaningful practical reduction for a low-value link a victim would
+# have no reason to sit on.
 _STATE_MARKER = "linkedin_oauth_state"
-_STATE_TTL = timedelta(minutes=10)
+_STATE_TTL = timedelta(minutes=2)
 
 
 class LinkedInOAuthError(Exception):

@@ -42,6 +42,27 @@ def upgrade() -> None:
         "ix_skill_embeddings_user_id", "skill_embeddings", ["user_id"]
     )
 
+    # Make the constraint safe to apply to an existing demo database. If an
+    # older application race already created duplicate pending rows, retain
+    # the newest as pending and withdraw the older duplicates before adding
+    # the unique index.
+    op.execute(
+        """
+        WITH ranked AS (
+            SELECT id,
+                   row_number() OVER (
+                       PARTITION BY from_user, to_user
+                       ORDER BY created_at DESC, id DESC
+                   ) AS position
+            FROM collab_requests
+            WHERE state = 'pending'
+        )
+        UPDATE collab_requests
+        SET state = 'withdrawn', updated_at = now()
+        WHERE id IN (SELECT id FROM ranked WHERE position > 1)
+        """
+    )
+
     # Partial unique index: at most one PENDING request per (from_user,
     # to_user) pair. Declined/withdrawn/accepted history is untouched --
     # `can_send` already allows a fresh request once the old one leaves
